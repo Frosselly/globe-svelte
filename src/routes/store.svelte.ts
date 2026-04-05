@@ -1,19 +1,19 @@
 // import { getCountryGeneralInfo } from "$lib/components/countryData/country-general";
-import { getCountryHealthInfo } from "$lib/components/countryData/country-health";
-import { getCountryMetadataClean } from "$lib/components/countryData/country-metadata";
-import type { FullCountryData } from "$lib/components/countryData/types/c_full";
+// import { getCountryHealthInfo } from "$lib/components/countryData/country-health";
+// import { getCountryMetadataClean } from "$lib/components/countryData/country-metadata";
+// import type { FullCountryData } from "$lib/components/countryData/types/c_full";
 
 let countryData: FullCountryData | undefined = $state(undefined);
 export async function load(iso3: string) {
-  const meta = await getCountryMetadataClean(iso3);
-  if (!meta) return;
+  // const meta = await getCountryMetadataClean(iso3);
+  // if (!meta) return;
   // const general = await getCountryGeneralInfo(meta.region, meta.cca2);
-  const health = await getCountryHealthInfo(meta.name);
+  // const health = await getCountryHealthInfo(meta.name);
 
   countryData = {
-    metadata: meta,
+    metadata: undefined,
     // generalInfo: general,
-    healthInfo: health
+    healthInfo: undefined
   };
   return countryData;
 }

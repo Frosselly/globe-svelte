@@ -1,9 +1,20 @@
 <script lang="ts">
+	import './styles.css';
+	import CountryBubble from '$lib/components/countryBubble.svelte';
 	import { layers, namedFlavor } from '@protomaps/basemaps';
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import * as pmtiles from 'pmtiles';
-	import { onDestroy, onMount } from 'svelte';
+	import { mount, onDestroy, onMount } from 'svelte';
+
+	let tempC = $state({
+		flag: '🇯🇵',
+		name: 'Japan',
+		capital: 'Tokyo',
+		population: '125.7M',
+		region: 'East Asia',
+		currency: '¥ Yen (JPY)'
+	});
 
 	let map: maplibregl.Map;
 	let mapContainer: string | HTMLElement;
@@ -24,6 +35,20 @@
 		lng = map.getCenter().lng;
 		lat = map.getCenter().lat;
 	}
+
+	let componentMount;
+
+	// $effect(() => {
+	// 	if (!countryGeneralInfo || !countryInfo) return;
+	// 	tempC = {
+	// 		flag: countryGeneralInfo.flag,
+	// 		name: countryInfo.name,
+	// 		capital: countryGeneralInfo.capital,
+	// 		population: countryGeneralInfo.population,
+	// 		region: countryGeneralInfo.subregion,
+	// 		currency: countryGeneralInfo.currencies
+	// 	};
+	// });
 
 	onMount(() => {
 		map = new maplibregl.Map({
@@ -49,11 +74,19 @@
 			updateData();
 		});
 
+		const componentDom = document.createElement('div');
+		componentMount = mount(CountryBubble, {
+			target: componentDom,
+			props: {
+				country: tempC
+			}
+		});
 		const popup = new maplibregl.Popup({
 			closeButton: false,
 			closeOnClick: false,
-			offset: [0, -20]
-		});
+			className: 'custom-popup',
+			offset: 25
+		}).setDOMContent(componentDom);
 
 		let hoveredStateId: any = null;
 
@@ -96,6 +129,7 @@
 					}
 					hoveredStateId = e.features[0].id;
 					map.setFeatureState({ source: 'countries', id: hoveredStateId }, { hover: true });
+					map.getCanvas().style.cursor = 'pointer';
 				}
 			});
 
@@ -106,11 +140,20 @@
 					map.setFeatureState({ source: 'countries', id: hoveredStateId }, { hover: false });
 				}
 				hoveredStateId = null;
+				map.getCanvas().style.cursor = '';
 			});
 
-			map.on('click', 'state-fills', (e) => {
+			map.on('click', 'state-fills', async (e) => {
 				// handle country click and fetch additional info
-				handleCountryClick(e.features[0]);
+				await handleCountryClick(e.features[0]);
+				// handleClick(e.point);
+				popup.setLngLat(e.lngLat).addTo(map);
+
+				tempC.flag = countryGeneralInfo.flag;
+				tempC.name = countryInfo.name;
+				tempC.capital = countryGeneralInfo.capital;
+				tempC.region = countryGeneralInfo.subregion;
+				tempC.currency = countryGeneralInfo.currencies;
 			});
 		});
 	});
@@ -209,6 +252,11 @@
 </div>
 
 <style>
+	.abs {
+		z-index: 12;
+		position: absolute;
+		transform: translate(-50%, calc(-100% - 8px));
+	}
 	h1 {
 		color: #ff3e00;
 	}
@@ -216,6 +264,7 @@
 	.window {
 		position: relative;
 		flex: 1;
+		max-height: 95%;
 	}
 
 	.mapContainer {
@@ -229,7 +278,7 @@
 	.map {
 		height: 100%;
 		width: 100%;
-		overflow: clip;
+		/* overflow: clip; */
 	}
 
 	.sidebar {

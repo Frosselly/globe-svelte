@@ -16,6 +16,7 @@
 	<a href="/testing">Test</a>
 	<a href="/chat">Chat</a>
 	<a href="/topics">Topics nav</a>
+	<a href="/auth/login">Auth</a>
 </nav>
 
 <article>

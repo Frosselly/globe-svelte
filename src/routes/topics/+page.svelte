@@ -9,7 +9,7 @@
 	import Military from './military/military.svelte';
 	import Health from './health/health.svelte';
 	import { fly } from 'svelte/transition';
-	import { getCountryMetadataClean } from '$lib/components/countryData/country-metadata';
+	// import { getCountryMetadataClean } from '$lib/components/countryData/country-metadata';
 	// import { getCountryGeneralInfo } from '$lib/components/countryData/country-general';
 	import { load as loadCountryData, getCountryData } from '../store.svelte';
 	import { CurrencyDollarIcon, MapPinIcon, UserIcon } from 'phosphor-svelte';

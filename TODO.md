@@ -27,7 +27,7 @@ Add fake data for now in:
 
 Get real data to test for these topics:
 
-- [ ] _Tourism_
+- [x] _Tourism_
   - Annual visitors (now, trend, over teh years)
   - Revenue from visitors
   - Ranking in tourism
@@ -70,3 +70,9 @@ Get real data to test for these topics:
   - Part of global organizations
   - Capabilities (some facts) _Add later_
   - Defense spending trend (some comparison)
+
+Data left to fill or discard:
+Tourism:
+
+- [ ] calculate percentage of GDP using country metadata gdp
+- [ ] add daily budget or use current (only containes travel and services)
