@@ -28,6 +28,7 @@
 		body,
 		html {
 			height: 100%;
+			overflow: hidden;
 		}
 		* {
 			margin: 0;
@@ -37,6 +38,7 @@
 		}
 	}
 	nav {
+		height: 3dvh;
 		padding: 1rem;
 		display: flex;
 		gap: 1rem;
@@ -53,9 +55,12 @@
 	}
 
 	article {
+		max-height: 95%;
+		height: 100%;
+
 		display: flex;
 		flex-direction: column;
-		height: 100%;
+
 		width: 100%;
 	}
 </style>

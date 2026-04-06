@@ -22,13 +22,14 @@
 		country: Country;
 		open?: boolean;
 		onclose?: () => void;
+		toggleMore?: () => void;
 	};
 
-	let { country, open = $bindable(false), onclose }: Props = $props();
+	let { country, open = $bindable(false), onclose, toggleMore }: Props = $props();
 
-	function toggleMore() {
-		open = !open;
-	}
+	// function toggleMore() {
+	// 	open = !open;
+	// }
 
 	function handleBackdropClick() {
 		open = false;
@@ -82,10 +83,10 @@
 			aria-controls="popout-{country.name}"
 		>
 			More info
-			<span class="btn-arrow" class:open>↓</span>
+			<!-- <span class="btn-arrow" class:open>↓</span> -->
 		</button>
 
-		{#if open}
+		<!-- {#if open}
 			<div
 				id="popout-{country.name}"
 				class="popout"
@@ -122,7 +123,7 @@
 					</div>
 				</div>
 			</div>
-		{/if}
+		{/if} -->
 	</div>
 </div>
 

@@ -16,7 +16,7 @@
 	import Graph from '$lib/components/graph.svelte';
 
 	let selectedTopic = $state('overview');
-	let visible = $state(true);
+	let { visible } = $props();
 	// let countryData = $state(loadCountryData('FRA'));
 	let countryData = $state({
 		metadata: {
@@ -197,7 +197,6 @@
 	.window {
 		position: relative;
 		flex: 1;
-		background-color: black;
 	}
 
 	.container {

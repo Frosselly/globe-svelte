@@ -6,6 +6,7 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import * as pmtiles from 'pmtiles';
 	import { mount, onDestroy, onMount } from 'svelte';
+	import TopicsSidebar from '../topics/topicsSidebar.svelte';
 
 	let tempC = $state({
 		flag: '🇯🇵',
@@ -15,6 +16,8 @@
 		region: 'East Asia',
 		currency: '¥ Yen (JPY)'
 	});
+
+	let topicsVisible = $state(false);
 
 	let map: maplibregl.Map;
 	let mapContainer: string | HTMLElement;
@@ -64,7 +67,7 @@
 							'<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
 					}
 				},
-				layers: layers('protomaps', namedFlavor('dark'), { lang: 'en' })
+				layers: layers('protomaps', namedFlavor('light'), { lang: 'en' })
 			},
 			center: [lng, lat],
 			zoom: zoom
@@ -78,7 +81,11 @@
 		componentMount = mount(CountryBubble, {
 			target: componentDom,
 			props: {
-				country: tempC
+				country: tempC,
+
+				toggleMore: () => {
+					topicsVisible = !topicsVisible;
+				}
 			}
 		});
 		const popup = new maplibregl.Popup({
@@ -224,6 +231,7 @@
 </script>
 
 <div class="window">
+	<TopicsSidebar visible={topicsVisible} />
 	<div class="mapContainer">
 		<div class="map" bind:this={mapContainer}></div>
 	</div>
@@ -264,7 +272,7 @@
 	.window {
 		position: relative;
 		flex: 1;
-		max-height: 95%;
+		height: 100%;
 	}
 
 	.mapContainer {
