@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Graph from '$lib/components/graph.svelte';
+	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import {
 		GlobeIcon,
 		MedalMilitaryIcon,
@@ -52,7 +52,7 @@
 				<br />
 				<div>
 					<b class="num-big">{props.defenseBudget}B</b>
-					<Graph sign="+" trend={props.budgetChange} />
+					<SmallGraphIcon sign="+" trend={props.budgetChange} />
 				</div>
 				<div class="graph"></div>
 			</div>

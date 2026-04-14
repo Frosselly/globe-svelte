@@ -1,7 +1,6 @@
 <script>
-	import Graph from '$lib/components/graph.svelte';
+	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import { ChartBarIcon, FactoryIcon, LeafIcon, TargetIcon } from 'phosphor-svelte';
-	import MissingData from '../missingData.svelte';
 
 	const props = {
 		renewableGrowth: 22.4,
@@ -52,7 +51,7 @@
 				<br />
 				<div>
 					<b class="num-big">{props.renewableGrowth.toFixed(1)}%</b>
-					<Graph sign="+" trend={props.renewableGrowth} />
+					<SmallGraphIcon sign="+" trend={props.renewableGrowth} />
 				</div>
 				<div class="graph"></div>
 			</div>

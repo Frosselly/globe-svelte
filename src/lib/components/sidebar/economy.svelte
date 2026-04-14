@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Graph from '$lib/components/graph.svelte';
+	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import {
 		CalendarIcon,
 		ChartBarIcon,
@@ -63,7 +63,7 @@
 				<br />
 				<div>
 					<b class="num-big">{props.gdpTrend.value}</b>
-					<Graph sign="+" trend={props.gdpTrend.change} />
+					<SmallGraphIcon sign="+" trend={props.gdpTrend.change} />
 				</div>
 				<div class="graph"></div>
 			</div>

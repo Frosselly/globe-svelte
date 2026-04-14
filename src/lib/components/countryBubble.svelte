@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
+	import { formatLargeNumbers } from './utils/utils';
 
 	export type Country = {
 		flag: string;
@@ -59,7 +60,7 @@
 	<div class="col-stats">
 		<div class="stat-row">
 			<span class="stat-label">Population</span>
-			<span class="stat-value">{country.population}</span>
+			<span class="stat-value">{formatLargeNumbers(Number(country.population))}</span>
 		</div>
 		<div class="stat-row">
 			<span class="stat-label">Region</span>
@@ -83,7 +84,9 @@
 			aria-controls="popout-{country.name}"
 		>
 			More info
-			<!-- <span class="btn-arrow" class:open>↓</span> -->
+		</button>
+		<button class="close-btn" onclick={onclose} aria-controls="close-{country.name}">
+			Close
 		</button>
 
 		<!-- {#if open}
@@ -255,9 +258,13 @@
 	/* Col 3 */
 	.col-action {
 		padding: 1.25rem 1.5rem 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 
-	.more-btn {
+	.more-btn,
+	.close-btn {
 		width: 100%;
 		font-family: 'Sora', sans-serif;
 		font-size: 13px;
@@ -277,10 +284,18 @@
 			transform 0.15s;
 	}
 
+	.close-btn {
+		background: #f8a793;
+	}
+	.close-btn:hover {
+		background: #da9281;
+	}
+
 	.more-btn:hover {
 		background: #ebebeb;
 	}
-	.more-btn:active {
+	.more-btn:active,
+	.close-btn:active {
 		transform: scale(0.97);
 	}
 

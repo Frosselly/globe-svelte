@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Graph from '$lib/components/graph.svelte';
+	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import {
 		CalendarIcon,
 		ClockIcon,
@@ -71,17 +71,17 @@
 	</div>
 	<div class="flex-col">
 		<div class="flex-row">
-			<div class="card flex-col flex">
+			<div class="card card-selectable flex-col flex">
 				<div class="text-gray bold">Annual Visitors</div>
 				<div>
 					<b class="num-big">{props.annualVisitors}</b>
-					<Graph sign="+" trend={props.trend} />
+					<SmallGraphIcon sign="+" trend={props.trend} />
 				</div>
 				<div class="graph"></div>
 			</div>
 			<div class=" flex-col flex">
 				<div class="flex-row">
-					<div class="card flex-col flex">
+					<div class="card card-selectable flex-col flex">
 						<div class="text-gray bold">Revenue</div>
 						<div><b class="num-mid">{props.revenue}</b></div>
 					</div>
@@ -90,7 +90,7 @@
 						<div><b class="num-mid">{props.worldRank}</b></div>
 					</div>
 				</div>
-				<div class="card flex-row between">
+				<div class="card card-selectable flex-row between">
 					<div class="text-gray">UNESCO Heritage Sites</div>
 					<div><b class="num-mid">{props.unescoSites}</b></div>
 				</div>
