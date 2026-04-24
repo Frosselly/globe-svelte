@@ -76,6 +76,9 @@
 </div>
 
 <style>
+	.display {
+		height: 100%;
+	}
 	.header {
 		padding: 16px 12px;
 		justify-content: space-between;

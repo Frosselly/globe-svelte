@@ -461,7 +461,7 @@
 
 	.graphContainer {
 		width: 100%;
-		height: 600px;
+		height: 100%;
 		border-radius: 8px;
 		background-color: white;
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
