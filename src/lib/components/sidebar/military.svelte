@@ -7,6 +7,7 @@
 		TrendUpIcon,
 		WarehouseIcon
 	} from 'phosphor-svelte';
+	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 
 	const props = {
 		defenseBudget: 31.9,
@@ -41,126 +42,124 @@
 </script>
 
 <section class="topicSection" id="military">
-	<div>
-		<h2>Military</h2>
-		<hr />
-	</div>
-	<div class="flex-col">
-		<div class="flex-row">
-			<div class="card flex-col flex">
-				<div class="text-gray bold">Defense Budget</div>
-				<br />
-				<div>
-					<b class="num-big">{props.defenseBudget}B</b>
-					<SmallGraphIcon sign="+" trend={props.budgetChange} />
-				</div>
-				<div class="graph"></div>
-			</div>
-			<div class=" flex-col flex">
-				<div class="flex-row">
-					<div class="card flex-col flex">
-						<div class="text-gray bold">Global Rank</div>
-						<div><b class="num-mid">{props.globalRank}</b></div>
-					</div>
-					<div class="card flex-col flex">
-						<div class="text-gray bold">% of GDP</div>
-						<div><b class="num-mid">{props.gdpPercent}%</b></div>
-					</div>
-				</div>
+	<CollapsibleTopic topicName={'Military'}>
+		<div class="flex-col">
+			<div class="flex-row">
 				<div class="card flex-col flex">
-					<div class="text-gray bold between">
-						<span>Total Personnel</span><span>Reserve</span>
+					<div class="text-gray bold">Defense Budget</div>
+					<br />
+					<div>
+						<b class="num-big">{props.defenseBudget}B</b>
+						<SmallGraphIcon sign="+" trend={props.budgetChange} />
 					</div>
-					<div class="between">
-						<b class="num-mid">{props.personnel}</b><b>{props.reserve}</b>
+					<div class="graph"></div>
+				</div>
+				<div class=" flex-col flex">
+					<div class="flex-row">
+						<div class="card flex-col flex">
+							<div class="text-gray bold">Global Rank</div>
+							<div><b class="num-mid">{props.globalRank}</b></div>
+						</div>
+						<div class="card flex-col flex">
+							<div class="text-gray bold">% of GDP</div>
+							<div><b class="num-mid">{props.gdpPercent}%</b></div>
+						</div>
+					</div>
+					<div class="card flex-col flex">
+						<div class="text-gray bold between">
+							<span>Total Personnel</span><span>Reserve</span>
+						</div>
+						<div class="between">
+							<b class="num-mid">{props.personnel}</b><b>{props.reserve}</b>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="card flex-col wide">
-			<div class="text-gray bold align-center">
-				<WarehouseIcon size={20} /> Military Branches
-			</div>
-			<br />
-			<div class="flex-row">
-				{#each Object.entries(props.miliatryBranch) as [key, value]}
-					<div class="info-card flex-col flex">
-						<div class="text-gray">{key}</div>
-						<div><b>{value}</b></div>
-					</div>
-				{/each}
-			</div>
-		</div>
-		<div class="card flex-col wide">
-			<div class="text-gray bold align-center">
-				<TargetIcon size={20} /> Military Equipment
-			</div>
-			<br />
-			<div class="flex-row">
-				{#each Object.entries(props.militaryEquipment) as [key, value]}
-					<div class="info-card flex-col flex">
-						<div class="text-gray">{key}</div>
-						<div><b>{value}</b></div>
-					</div>
-				{/each}
-			</div>
-			<div class="flex-row">
-				<div class="info-card flex-col flex">
-					<div class="text-gray">Max Stay</div>
-					<div><b>90 days</b></div>
-				</div>
-				<div class="info-card flex-col flex">
-					<div class="text-gray">Max Stay</div>
-					<div><b>90 days</b></div>
-				</div>
-			</div>
-		</div>
-		<div class="flex-row">
-			<div class="card flex-col flex">
+			<div class="card flex-col wide">
 				<div class="text-gray bold align-center">
-					<GlobeIcon size={20} /> Alliances
+					<WarehouseIcon size={20} /> Military Branches
 				</div>
 				<br />
-				<div class="flex-col">
-					{#each props.alliances as alliance}
-						<div class="info-card">{alliance}</div>
-					{/each}
-				</div>
-				<div>Organizations</div>
 				<div class="flex-row">
-					{#each props.organizations as organization}
-						<div class="small-card">{organization}</div>
-					{/each}
-				</div>
-			</div>
-			<div class="card flex-col flex">
-				<div class="text-gray bold align-center">
-					<MedalMilitaryIcon size={20} /> Capabilities
-				</div>
-				<br />
-				<div class="flex-col">
-					{#each Object.entries(props.capabilities) as [key, value]}
-						<div class=" flex-row between">
-							<div class="text-gray">
-								{key}
-							</div>
-							<div><b>{value}%</b></div>
+					{#each Object.entries(props.miliatryBranch) as [key, value]}
+						<div class="info-card flex-col flex">
+							<div class="text-gray">{key}</div>
+							<div><b>{value}</b></div>
 						</div>
 					{/each}
 				</div>
 			</div>
-		</div>
-		<div class="card flex-col wide">
-			<div class="text-gray bold align-center">
-				<TrendUpIcon size={20} /> Defense Spending Trend
+			<div class="card flex-col wide">
+				<div class="text-gray bold align-center">
+					<TargetIcon size={20} /> Military Equipment
+				</div>
+				<br />
+				<div class="flex-row">
+					{#each Object.entries(props.militaryEquipment) as [key, value]}
+						<div class="info-card flex-col flex">
+							<div class="text-gray">{key}</div>
+							<div><b>{value}</b></div>
+						</div>
+					{/each}
+				</div>
+				<div class="flex-row">
+					<div class="info-card flex-col flex">
+						<div class="text-gray">Max Stay</div>
+						<div><b>90 days</b></div>
+					</div>
+					<div class="info-card flex-col flex">
+						<div class="text-gray">Max Stay</div>
+						<div><b>90 days</b></div>
+					</div>
+				</div>
 			</div>
-			<br />
-			<div class="flex-col">
-				<div class="num-big bold">{props.trend.status}</div>
-				<div class="text-gray">{props.trend.note}</div>
+			<div class="flex-row">
+				<div class="card flex-col flex">
+					<div class="text-gray bold align-center">
+						<GlobeIcon size={20} /> Alliances
+					</div>
+					<br />
+					<div class="flex-col">
+						{#each props.alliances as alliance}
+							<div class="info-card">{alliance}</div>
+						{/each}
+					</div>
+					<div>Organizations</div>
+					<div class="flex-row">
+						{#each props.organizations as organization}
+							<div class="small-card">{organization}</div>
+						{/each}
+					</div>
+				</div>
+				<div class="card flex-col flex">
+					<div class="text-gray bold align-center">
+						<MedalMilitaryIcon size={20} /> Capabilities
+					</div>
+					<br />
+					<div class="flex-col">
+						{#each Object.entries(props.capabilities) as [key, value]}
+							<div class=" flex-row between">
+								<div class="text-gray">
+									{key}
+								</div>
+								<div><b>{value}%</b></div>
+							</div>
+						{/each}
+					</div>
+				</div>
+			</div>
+			<div class="card flex-col wide">
+				<div class="text-gray bold align-center">
+					<TrendUpIcon size={20} /> Defense Spending Trend
+				</div>
+				<br />
+				<div class="flex-col">
+					<div class="num-big bold">{props.trend.status}</div>
+					<div class="text-gray">{props.trend.note}</div>
+				</div>
 			</div>
 		</div>
-	</div>
+	</CollapsibleTopic>
 </section>
 
 <style>
