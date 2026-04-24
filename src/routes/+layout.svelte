@@ -1,23 +1,32 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 
-	let { children } = $props();
+	let { data, children } = $props();
+
+	let loginState = $derived(data.user ? data.user.username : 'Sign in');
+	let link = $derived(data.user ? '/auth/user' : '/auth/login');
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<nav>
-	<a href="/">Home</a>
-	<a href="/map">Map</a>
-	<a href="/tables">Tables</a>
-	<a href="/sources">Sources</a>
-	<a href="/testing">Test</a>
-	<a href="/chat">Chat</a>
-	<a href="/topics">Topics nav</a>
-	<a href="/auth/login">Auth</a>
-</nav>
+<header>
+	<nav>
+		<a href="/">Home</a>
+		<input type="text" name="countrySearch" id="countrySearch" placeholder="Search country..." />
+
+		<!-- <a href="/auth/login">Auth</a> -->
+	</nav>
+	<nav>
+		<div>
+			<button>Explore</button>
+			<button>Analysis</button>
+			<button>Saved</button>
+		</div>
+		<a href={link} class="profile">{loginState}</a>
+	</nav>
+</header>
 
 <article>
 	{@render children()}
@@ -37,14 +46,19 @@
 			text-decoration: underline;
 		}
 	}
-	nav {
-		height: 3dvh;
+	header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		padding: 1rem;
+		height: 3dvh;
+		font-size: 1.3rem;
+
+		border-bottom: black solid 1px;
+	}
+	nav {
 		display: flex;
 		gap: 1rem;
-		width: 100%;
-		border-bottom: black solid 1px;
-		font-size: 1.3rem;
 
 		a:visited {
 			color: black;
@@ -62,5 +76,8 @@
 		flex-direction: column;
 
 		width: 100%;
+	}
+	.profile {
+		box-sizing: border-box;
 	}
 </style>

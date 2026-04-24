@@ -1,43 +1,44 @@
 import { fail, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
-export const actions = {
+export const actions: Actions = {
 	login: async ({ cookies, request }) => {
 		const data = await request.formData();
 
-		const phone = data.get('phone');
+		const email = data.get('email');
+		const password = data.get('password');
 
-		if (!phone || phone!.toString().trim() === '') {
+		if (!email || email.toString().trim() === '') {
 			return fail(400, {
-				error: 'Tuščias numeris'
+				error: 'El. paštas yra privalomas'
 			});
 		}
 
-		const myHeaders = new Headers();
-		myHeaders.append('Content-Type', 'application/json');
-
-		const raw = JSON.stringify({
-			phone: phone
-		});
-
-		const requestOptions: RequestInit = {
-			method: 'POST',
-			headers: myHeaders,
-			body: raw,
-			redirect: 'follow'
-		};
-
-		const response = await fetch('https://api.awqms.cloud/api/auth/login/initiate', requestOptions);
-		const result = await response.json();
-
-		if (!result.success) {
+		if (!password || password.toString().trim() === '') {
 			return fail(400, {
-				error: 'Neatitinkamas numeris'
+				error: 'Slaptažodis yra privalomas'
 			});
 		}
 
-		// Save operation id to current environment
-		cookies.set('operation_id', result.data.operation_id, { path: '/' });
+		const dbResponse = await fetch('http://localhost:5173/tempAuthDB.json');
+		const db = await dbResponse.json();
 
-		redirect(303, '/login/code');
+		// Find user
+		const user = db.users.find(
+			(u: any) => u.email.toLowerCase() === email.toString().toLowerCase()
+		);
+
+		if (!user || user.password !== password.toString()) {
+			return fail(401, {
+				error: 'Neteisingas el. paštas arba slaptažodis'
+			});
+		}
+
+		console.log('logged in!:', user);
+
+		// Set session cookie
+		cookies.set('user_id', user.id.toString(), { path: '/' });
+
+		redirect(303, '/auth/user');
 	}
 };

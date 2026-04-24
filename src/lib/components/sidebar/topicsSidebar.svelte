@@ -7,7 +7,6 @@
 	import Environment from './environment.svelte';
 	import Demographics from './demographics.svelte';
 	import Military from './military.svelte';
-	import Health from './health.svelte';
 	import { fly } from 'svelte/transition';
 	// import { getCountryMetadataClean } from '$lib/components/countryData/country-metadata';
 	// import { getCountryGeneralInfo } from '$lib/components/countryData/country-general';
@@ -51,6 +50,10 @@
 
 {#if visible}
 	<div class="content" in:fly={{ x: 300, duration: 300 }} out:fly={{ x: 300, duration: 300 }}>
+		<div class="drag-point">
+			<hr />
+		</div>
+		<br />
 		<section class="topicSection">
 			<div class="row">
 				{#await countryData then cData}
@@ -124,17 +127,29 @@
 					{/await} -->
 		</section>
 		<Overview />
+		<Demographics />
 		<Tourism />
 		<Economy />
 		<Energy />
 		<Environment />
 		<Military />
-		<Demographics />
-		<Health />
 	</div>
 {/if}
 
 <style>
+	.drag-point {
+		display: none;
+	}
+	@media (max-width: 1200px) {
+		.drag-point {
+			display: block;
+			position: fixed;
+			width: 100%;
+			background-color: hsl(0, 0%, 97%);
+			border: hsl(0, 0%, 95%) solid 1px;
+			height: 20px;
+		}
+	}
 	.between {
 		display: flex;
 		justify-content: space-between;
@@ -207,7 +222,8 @@
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
-			padding: 2rem;
+			padding-inline: 2rem;
+			padding-block: 1rem;
 		}
 	}
 </style>

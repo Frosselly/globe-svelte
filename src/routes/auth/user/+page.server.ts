@@ -1,17 +1,18 @@
-// +page.server.ts
+// auth/user/+page.server.ts
+import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 
-import type { PageServerLoad } from './$types';
+export const load: PageServerLoad = async ({ parent }) => {
+	const { user } = await parent();
 
-export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user === null) {
-		return redirect(307, '/login');
+	if (!user) {
+		redirect(307, '/auth/login');
 	}
 
 	return {
-		first_name: locals.user.first_name,
-		last_name: locals.user.last_name,
-		email: locals.user.email,
-		role: locals.user.role
+		firstName: user.firstName,
+		lastName: user.lastName,
+		email: user.email,
+		role: user.role
 	};
 };

@@ -1,14 +1,10 @@
-// +page.server.ts
 import { redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
-import type { PageServerLoad } from './$types';
+export const actions: Actions = {
+	default: async ({ cookies }) => {
+		cookies.delete('user_id', { path: '/' });
 
-export const load: PageServerLoad = async ({ locals, cookies }) => {
-	if (locals.user === null) {
-		return redirect(307, '/login');
+		throw redirect(303, '/');
 	}
-
-	locals.user = null;
-	cookies.delete('token', { path: '/' });
-	redirect(307, '/');
 };

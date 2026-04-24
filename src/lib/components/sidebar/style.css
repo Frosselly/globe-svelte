@@ -14,7 +14,9 @@
 	color: #686868;
 }
 .center {
-	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 .p-0 {
 	padding: 0;
@@ -47,12 +49,46 @@ hr {
 	height: 100%;
 }
 
+/* divided progress bar */
+.progress-bar-divided {
+	display: flex;
+	width: 100%;
+	height: 24px;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.segment {
+	flex: 0 0 auto;
+	transition: width 0.3s ease;
+}
+
+.segment:hover {
+	opacity: 0.8;
+}
+
 /* INFO CARDS */
 .info-card {
-	border: 1px solid #b5d4fa;
+	border: 1px solid var(--border-color, #b5d4fa);
 	border-radius: 8px;
 	padding: 16px;
-	background-color: #f6faff;
+	background-color: var(--bg-color, #f6faff);
+}
+
+.info-card.white {
+	--border-color: #e0e0e0;
+	--bg-color: #ffffff;
+}
+
+.info-card.blue {
+	--border-color: #b5d4fa;
+	--bg-color: #f6faff;
+}
+
+.info-card.red {
+	--border-color: #f5b5b5;
+	--bg-color: #fff6f6;
 }
 .small-card {
 	border-radius: 8px;

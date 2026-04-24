@@ -1,73 +1,83 @@
 import { fail, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
+import fs from 'fs';
+import path from 'path';
 
-export const actions = {
+export const actions: Actions = {
 	signup: async ({ cookies, request }) => {
 		const data = await request.formData();
 
-		const phone = data.get('phone');
-		const first_name = data.get('first_name');
-		const last_name = data.get('last_name');
+		const username = data.get('username');
 		const email = data.get('email');
+		const password = data.get('password');
+		const firstName = data.get('firstName');
+		const lastName = data.get('lastName');
 
-		if (!phone || phone!.toString().trim() === '') {
+		// Validation
+		if (!username || username.toString().trim() === '') {
 			return fail(400, {
-				error: 'Tuščias numeris'
-			});
-		}
-		if (!first_name || first_name!.toString().trim() === '') {
-			return fail(400, {
-				error: 'Tuščias vardas'
-			});
-		}
-		if (!last_name || last_name!.toString().trim() === '') {
-			return fail(400, {
-				error: 'Tuščia pavardė'
-			});
-		}
-		if (!email || email!.toString().trim() === '') {
-			return fail(400, {
-				error: 'Tuščias el. paštas'
+				error: 'Naudotojo vardas yra privalomas'
 			});
 		}
 
-		const myHeaders = new Headers();
-		myHeaders.append('Content-Type', 'application/json');
+		if (!email || email.toString().trim() === '') {
+			return fail(400, {
+				error: 'El. paštas yra privalomas'
+			});
+		}
 
-		const raw = JSON.stringify({
-			phone: phone,
-			first_name: first_name,
-			last_name: last_name,
-			email: email
-		});
+		if (!password || password.toString().trim() === '') {
+			return fail(400, {
+				error: 'Slaptažodis yra privalomas'
+			});
+		}
 
-		const requestOptions: RequestInit = {
-			method: 'POST',
-			headers: myHeaders,
-			body: raw,
-			redirect: 'follow'
+		if (!firstName || firstName.toString().trim() === '') {
+			return fail(400, {
+				error: 'Vardas yra privalomas'
+			});
+		}
+
+		if (!lastName || lastName.toString().trim() === '') {
+			return fail(400, {
+				error: 'Pavardė yra privaloma'
+			});
+		}
+
+		// Load JSON database
+		const dbPath = path.join(process.cwd(), 'static', 'tempAuthDB.json');
+		const dbData = fs.readFileSync(dbPath, 'utf-8');
+		const db = JSON.parse(dbData);
+
+		// Check if user already exists
+		const existingUser = db.users.find(
+			(u: any) => u.email.toLowerCase() === email.toString().toLowerCase()
+		);
+
+		if (existingUser) {
+			return fail(400, {
+				error: 'El. paštas jau naudojamas'
+			});
+		}
+
+		// Create new user
+		const newUser = {
+			id: db.users.length + 1,
+			username: username.toString(),
+			email: email.toString(),
+			password: password.toString(),
+			firstName: firstName.toString(),
+			lastName: lastName.toString(),
+			role: 'user'
 		};
 
-		const response = await fetch(
-			'https://api.awqms.cloud/api/auth/registration/initiate',
-			requestOptions
-		);
-		const result = await response.json();
+		// Add to database and save to file
+		db.users.push(newUser);
+		fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 
-		if (result.error) {
-			return fail(400, {
-				error: 'Įvyko klaida'
-			});
-		}
+		// Set session cookie
+		cookies.set('user_id', newUser.id.toString(), { path: '/' });
 
-		if (!result.success) {
-			return fail(400, {
-				error: 'Neatitinkamas numeris'
-			});
-		}
-
-		// Save operation id to current environment
-		cookies.set('operation_id', result.data.operation_id, { path: '/' });
-
-		redirect(303, '/signup/code');
+		redirect(303, '/auth/user');
 	}
 };
