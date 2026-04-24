@@ -1,3 +1,25 @@
+# Front
+
+Need to do:
+
+- [ ] Adjust compare diagram length
+- [ ] Give ability to change selected value show in analysis mode
+- [ ] Country search
+- [ ] Option search
+- [ ] Fully realise the layout in the sidebar
+  - [ ] Add color to sidebar
+  - [ ] Select global font to use
+  - [ ] Add missing icons
+- [ ] Create the comparison to use
+- [ ] Create toggle analysis and map
+- [ ] Add data display in a table with export
+- [ ] Adjust all the layout based on general design from claude
+- [ ] Add loaders
+  - [ ] Map
+  - [ ] Analysis
+  - [ ] AI chat
+  - [ ] Searching
+
 Missing global elements:
 
 - [x] icons
@@ -24,6 +46,8 @@ Add fake data for now in:
 - [ ] Demographics
 - [ ] Health
 - [ ] Environment
+
+# Back
 
 Get real data to test for these topics:
 

@@ -1,0 +1,57 @@
+[
+  { "name": "Population", "key": "demographics.population.value", "timeSeries": true },
+  { "name": "GDP", "key": "meta.gdp.value", "timeSeries": true },
+  { "name": "Area", "key": "meta.area.value", "timeSeries": false },
+
+  { "name": "Population Density", "key": "demographics.urbanization.density", "timeSeries": false },
+
+  { "name": "Life Expectancy (Total)", "key": "demographics.lifeExpectancy.total.value", "timeSeries": false },
+  { "name": "Life Expectancy (Male)", "key": "demographics.lifeExpectancy.male", "timeSeries": false },
+  { "name": "Life Expectancy (Female)", "key": "demographics.lifeExpectancy.female", "timeSeries": false },
+
+  { "name": "Literacy Rate", "key": "demographics.literacyRate", "timeSeries": false },
+
+  { "name": "Healthcare Spending", "key": "demographics.healthcare.healthCareSpending", "timeSeries": false },
+  { "name": "Hospital Beds", "key": "demographics.healthcare.hospitalBeds", "timeSeries": false },
+  { "name": "Physicians", "key": "demographics.healthcare.physicians", "timeSeries": false },
+  { "name": "Infant Mortality", "key": "demographics.healthcare.infantMortality", "timeSeries": false },
+  { "name": "Vaccination Rate", "key": "demographics.healthcare.vaccinationRate", "timeSeries": false },
+
+  { "name": "Urbanization Rate", "key": "demographics.urbanization.value", "timeSeries": false },
+
+  { "name": "Annual Visitors", "key": "tourism.annualVisitors.value", "timeSeries": true },
+  { "name": "Tourism Revenue", "key": "tourism.revenue", "timeSeries": false },
+  { "name": "UNESCO Sites", "key": "tourism.unescoSites", "timeSeries": false },
+  { "name": "Safety Score", "key": "tourism.safetyScore", "timeSeries": false },
+
+  { "name": "GDP Growth Trend", "key": "economy.gdpTrend.value", "timeSeries": true },
+  { "name": "Per Capita GDP", "key": "economy.perCapitaGDP", "timeSeries": true },
+  { "name": "Inflation", "key": "economy.inflation", "timeSeries": false },
+  { "name": "Unemployment", "key": "economy.unemployment", "timeSeries": false },
+
+  { "name": "Exports", "key": "economy.trade.exports", "timeSeries": true },
+  { "name": "Imports", "key": "economy.trade.imports", "timeSeries": true },
+  { "name": "Trade Balance", "key": "economy.trade.tradeBalance", "timeSeries": false },
+
+  { "name": "Average Salary", "key": "economy.labourMarket.avgSalary", "timeSeries": true },
+  { "name": "Minimum Wage", "key": "economy.labourMarket.minWage", "timeSeries": true },
+  { "name": "Work Week Hours", "key": "economy.labourMarket.workWeek", "timeSeries": true },
+
+  { "name": "Renewable Energy Growth", "key": "energy.renewableGrowth.value", "timeSeries": true },
+  { "name": "Renewable Energy Percentage", "key": "energy.renewablePercentage", "timeSeries": false },
+
+  { "name": "Total Energy Production", "key": "energy.totalProduction", "timeSeries": true },
+  { "name": "Total Energy Consumption", "key": "energy.totalConsumption", "timeSeries": true },
+
+  { "name": "CO2 Emissions Total", "key": "environment.co2.totalEmissions", "timeSeries": false },
+  { "name": "CO2 Per Capita", "key": "environment.co2.co2PerCapita", "timeSeries": false },
+
+  { "name": "Air Quality Index", "key": "environment.airQuality", "timeSeries": false },
+  { "name": "Water Access", "key": "environment.waterAccess", "timeSeries": false },
+  { "name": "Recycling Rate", "key": "environment.recyclingRate", "timeSeries": false },
+
+  { "name": "Defense Budget", "key": "military.defenseBudget.value", "timeSeries": true },
+  { "name": "Military GDP Percent", "key": "military.gdpPercent", "timeSeries": false },
+  { "name": "Military Personnel", "key": "military.personnel", "timeSeries": false },
+  { "name": "Reserve Personnel", "key": "military.reserve", "timeSeries": false }
+]
