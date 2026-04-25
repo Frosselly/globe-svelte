@@ -26,7 +26,7 @@
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import * as pmtiles from 'pmtiles';
-	import { mount, onDestroy, onMount, setContext } from 'svelte';
+	import { mount, unmount, onDestroy, onMount } from 'svelte'; // FIX: added unmount
 	import type { DataSource } from '$lib/types';
 
 	const { toggleTopics, onPosChange } = $props();
@@ -37,13 +37,16 @@
 	let mapContainer: string | HTMLElement;
 	let map: maplibregl.Map = $state();
 	let popup: any;
-	let currentPopup: any = null;
+	let currentPopup: maplibregl.Popup | null = $state(null);
 	let currentComponent: any = null;
 
 	let deck: any = null;
 	let scale: any = null;
 	let geoData: any = null;
 	let valueData: any = null;
+
+	// FIX: guard so setupMapInteractions is only registered once
+	let interactionsSetup = false;
 
 	let countryGeneralInfo = $state({
 		flag: '🇯🇵',
@@ -66,9 +69,10 @@
 			value: 'population'
 		}
 	};
+
 	$effect(() => {
 		if (mapState.currentDataset) {
-			console.log('changes gere', mapState.currentDataset);
+			console.log('changes here', mapState.currentDataset);
 			setDisplayMode('flat');
 			loadDataset(mapState.currentDataset);
 		} else {
@@ -83,6 +87,9 @@
 
 	onDestroy(() => {
 		cleanupDeckGL(deck);
+		// FIX: clean up popup and mounted component on destroy
+		if (currentComponent) unmount(currentComponent);
+		if (currentPopup) currentPopup.remove();
 	});
 
 	async function initializeMap(mapContainer: string | HTMLElement) {
@@ -122,7 +129,6 @@
 				promoteId: 'adm0_a3'
 			});
 
-			// Load initial dataset
 			loadDataset('');
 		});
 	}
@@ -145,7 +151,6 @@
 			valueData = result.valueData;
 			scale = result.scale;
 
-			// Render based on current display mode
 			await onDataDisplayChange(mapState.displayMode);
 		} catch (error) {
 			console.error('Error loading dataset:', error);
@@ -154,22 +159,21 @@
 
 	async function onDataDisplayChange(mode: 'flat' | 'columns' | 'none') {
 		try {
-			// Clean up deck.gl if switching away from columns
 			if (mode !== 'columns' && deck) {
 				cleanupDeckGL(deck);
 				deck = null;
 				setDeckInstance(null);
 			}
-			if (mode == 'none') {
+
+			if (mode === 'none') {
 				setupMapLayers(map, [0.5, 0]);
-				setupMapInteractions(map, handleCountryClick);
+				setupMapInteractionsOnce(); // FIX: guarded registration
 			} else if (mode === 'flat') {
 				const colorExpression = createColorExpression(scale.min, scale.max);
 				console.log('flat: ' + mapState.currentDataset);
 				setupFlatDisplay(map, colorExpression, dataSources[mapState.currentDataset]?.value);
-				setupMapInteractions(map, handleCountryClick);
+				setupMapInteractionsOnce(); // FIX: guarded registration
 
-				// Hide deck canvas
 				const canvas = document.getElementById('deck-canvas');
 				if (canvas) {
 					canvas.style.display = 'none';
@@ -180,7 +184,6 @@
 					return;
 				}
 
-				// Hide map layers
 				if (map.getLayer('state-fills')) {
 					map.setLayoutProperty('state-fills', 'visibility', 'none');
 				}
@@ -188,18 +191,24 @@
 					map.setLayoutProperty('state-borders', 'visibility', 'none');
 				}
 
-				// Setup deck.gl columns
 				deck = setupColumnsDisplay(map, geoData, valueData, scale);
 				setDeckInstance(deck);
 			}
 
-			setDeckInstance(mode);
+			// FIX: removed the erroneous setDeckInstance(mode) that was here
 		} catch (error) {
 			console.error('Error changing display mode:', error);
 		}
 	}
 
-	function createPopup() {
+	// FIX: only register click/hover handlers once across dataset changes
+	function setupMapInteractionsOnce() {
+		if (interactionsSetup) return;
+		interactionsSetup = true;
+		setupMapInteractions(map, handleCountryClick);
+	}
+
+	function createPopup(): maplibregl.Popup {
 		return new maplibregl.Popup({
 			closeButton: false,
 			closeOnClick: false,
@@ -209,9 +218,18 @@
 	}
 
 	async function handleCountryClick(e: any) {
-		// Close previous popup
+		if (!e.features?.length) return;
+
+		// FIX: unmount previous Svelte component before creating a new one
+		if (currentComponent) {
+			unmount(currentComponent);
+			currentComponent = null;
+		}
+
+		// FIX: remove previous popup cleanly before making a new one
 		if (currentPopup) {
 			currentPopup.remove();
+			currentPopup = null;
 		}
 
 		await handleCountryClickLogic(e.features[0]);
@@ -225,9 +243,14 @@
 					toggleTopics();
 				},
 				onclose: () => {
-					currentPopup.remove();
-					currentPopup = null;
-					currentComponent = null;
+					if (currentPopup) {
+						currentPopup.remove();
+						currentPopup = null;
+					}
+					if (currentComponent) {
+						unmount(currentComponent);
+						currentComponent = null;
+					}
 				}
 			}
 		});
@@ -237,17 +260,17 @@
 		currentPopup.setLngLat(e.lngLat).addTo(map);
 	}
 
-	async function handleCountryClickLogic(feature: any) {
-		// Your existing country click logic
-		// await handleCountryClick(feature);
+	$effect(() => {
+		$inspect(currentPopup);
+	});
 
+	async function handleCountryClickLogic(feature: any) {
 		const props = feature.properties || {};
 		const name = props.name || 'N/A';
 		countryGeneralInfo.name = name;
 
 		let iso3 = feature.id;
 
-		// If missing, resolve via restcountries.com
 		if (iso3) {
 			try {
 				const res = await fetch(
@@ -277,14 +300,10 @@
 			}
 		}
 
-		// If we still don't have detailed info, at least store name and codes
 		countryGeneralInfo = {
 			name,
 			iso3: iso3
 		};
-
-		// Note: data.un.org doesn't offer a simple public JSON profile endpoint here.
-		// We provide the resolved ISO and a search link to data.un.org for convenience.
 	}
 
 	function updateData() {
@@ -301,11 +320,6 @@
 
 <style>
 	.mapContainer {
-		/* position: absolute;
-		top: 0;
-		bottom: 0;
-		right: 0;
-		left: 0; */
 		flex: 2;
 		height: 100%;
 		width: 100%;
@@ -314,6 +328,5 @@
 	.map {
 		height: 100%;
 		width: 100%;
-		/* overflow: clip; */
 	}
 </style>

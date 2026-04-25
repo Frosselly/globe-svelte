@@ -3,11 +3,13 @@
 	import TopicsSidebar from '$lib/components/sidebar/topicsSidebar.svelte';
 	import Map from '$lib/components/map/map.svelte';
 	import AnalysisMode from '$lib/components/analysis mode/analysisMode.svelte';
+	import { modeState, setSelectedMode } from './store.svelte.js';
 
 	let { data } = $props();
+	// let isMapSelected = $derived(modeState.selected !== 'map');
 
 	let topicsVisible = $state(false);
-	let selectedMode: 'view' | 'analysis' = $state('analysis');
+	// let selectedMode: 'view' | 'analysis' = $state('analysis');
 
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
@@ -26,38 +28,41 @@
 
 	$effect(() => {
 		if (data.msg) console.log(data.msg);
+		if (modeState.selected) console.log(modeState.selected);
 	});
 </script>
 
 <div class="window">
-	{#if selectedMode === 'view'}
-		<div class="main-content">
-			<Map
-				toggleTopics={() => {
-					topicsVisible = !topicsVisible;
-				}}
-				onPosChange={(nlng, nlat, nzoom) => {
-					lng = nlng;
-					lat = nlat;
-					zoom = nzoom;
-				}}
-			/>
-			<div class="mapInfo">
-				Longitude: {lng.toFixed(4)} | Latitude: {lat.toFixed(4)} | Zoom:
-				{zoom.toFixed(2)}
-			</div>
+	<div class="main-content" class:hidden={modeState.selected !== 'map'}>
+		<Map
+			toggleTopics={() => {
+				topicsVisible = !topicsVisible;
+			}}
+			onPosChange={(nlng, nlat, nzoom) => {
+				lng = nlng;
+				lat = nlat;
+				zoom = nzoom;
+			}}
+		/>
+		<div class="mapInfo">
+			Longitude: {lng.toFixed(4)} | Latitude: {lat.toFixed(4)} | Zoom:
+			{zoom.toFixed(2)}
 		</div>
-	{:else}
-		<div class="main-content">
-			<AnalysisMode />
-		</div>
-	{/if}
+	</div>
+
+	<div class="main-content" class:hidden={modeState.selected !== 'analysis'}>
+		<AnalysisMode onClose={() => setSelectedMode('map')} />
+	</div>
+
 	<div class="sidebar">
 		<TopicsSidebar visible={true} />
 	</div>
 </div>
 
 <style>
+	.hidden {
+		display: none !important;
+	}
 	.window {
 		position: relative;
 		flex: 1;

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
+	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
+	import { setSelectedMode } from './store.svelte.js';
 
 	let { data, children } = $props();
 
@@ -14,14 +16,19 @@
 <header>
 	<nav>
 		<a href="/">Home</a>
-		<input type="text" name="countrySearch" id="countrySearch" placeholder="Search country..." />
-
+		<!-- <input type="text" name="countrySearch" id="countrySearch" placeholder="Search country..." /> -->
+		<CountrySearch
+			onSelect={(country) => {
+				console.log(country.cca2, country.name.common);
+				// feed into your existing handleCountryClickLogic or store
+			}}
+		/>
 		<!-- <a href="/auth/login">Auth</a> -->
 	</nav>
 	<nav>
 		<div>
-			<button>Explore</button>
-			<button>Analysis</button>
+			<button onclick={() => setSelectedMode('map')}>Explore</button>
+			<button onclick={() => setSelectedMode('analysis')}>Analysis</button>
 			<button>Saved</button>
 		</div>
 		<a href={link} class="profile">{loginState}</a>

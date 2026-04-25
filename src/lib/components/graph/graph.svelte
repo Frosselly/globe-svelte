@@ -63,11 +63,11 @@
 	// let containerHeight = $derived(containerEl?.clientHeight);
 
 	// --- Dimensions ---
-	const W = $derived(Math.max(containerEl?.clientWidth ?? 1000));
-	const H = $derived(Math.max(containerEl?.clientHeight ?? 550));
+	let W = $state(1000);
+	let H = $state(550);
 	const margin = { top: 40, right: 40, bottom: 40, left: 100 };
-	const innerW = $derived(W - margin.left - margin.right);
-	const innerH = $derived(H - margin.top - margin.bottom);
+	const innerW = $derived(Math.max(W - margin.left - margin.right, 1));
+	const innerH = $derived(Math.max(H - margin.top - margin.bottom, 1));
 
 	// --- Colors ---
 	const BAR_COLOR = '#4f8ef7';
@@ -81,6 +81,19 @@
 		if (!svgEl) return;
 		if (view === 'bar') drawBar();
 		else drawLine();
+	});
+
+	$effect(() => {
+		if (!containerEl) return;
+
+		const ro = new ResizeObserver((entries) => {
+			const { width, height } = entries[0].contentRect;
+			W = Math.max(width, 1);
+			H = Math.max(height, 1);
+		});
+
+		ro.observe(containerEl);
+		return () => ro.disconnect();
 	});
 
 	// --- Draw helpers ---

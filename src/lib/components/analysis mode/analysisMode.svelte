@@ -2,6 +2,7 @@
 	import { ChartBarHorizontalIcon, MapTrifoldIcon, TrendUpIcon } from 'phosphor-svelte';
 	import Graph from '../graph/graph.svelte';
 
+	const { onClose } = $props();
 	let selectedTopic = $state('Annual Visitors');
 	let selectedOption = $state(0);
 	// type ViewMode = 'bar' | 'line' | 'map';
@@ -36,7 +37,7 @@
 			<div class="search"></div>
 		</div>
 		<div>
-			<button>Close</button>
+			<button onclick={onClose}>Close</button>
 		</div>
 	</div>
 	<hr />

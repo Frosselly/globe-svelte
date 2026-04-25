@@ -1,23 +1,43 @@
-// import { getCountryGeneralInfo } from "$lib/components/countryData/country-general";
-// import { getCountryHealthInfo } from "$lib/components/countryData/country-health";
-// import { getCountryMetadataClean } from "$lib/components/countryData/country-metadata";
-// import type { FullCountryData } from "$lib/components/countryData/types/c_full";
+import { writable, derived } from 'svelte/store';
 
-let countryData: FullCountryData | undefined = $state(undefined);
-export async function load(iso3: string) {
-  // const meta = await getCountryMetadataClean(iso3);
-  // if (!meta) return;
-  // const general = await getCountryGeneralInfo(meta.region, meta.cca2);
-  // const health = await getCountryHealthInfo(meta.name);
+export type Mode = 'map' | 'analysis';
 
-  countryData = {
-    metadata: undefined,
-    // generalInfo: general,
-    healthInfo: undefined
-  };
-  return countryData;
+export interface CountryData {
+	code: string;
+	name: string;
+	population: number;
+	gdp: number;
+	// ... your full shape here
 }
 
-export function getCountryData() {
-  return countryData;
+export const modeState = $state({ selected: 'map' as 'map' | 'analysis' });
+export const countryData = writable<CountryData | null>(null);
+export const isLoading = writable(false);
+
+export function setSelectedMode(mode: 'map' | 'analysis') {
+	modeState.selected = mode;
+}
+
+// Derived: only show panel when data is ready and mode is analysis
+// export const showAnalysis = derived(
+// 	[selectedMode, countryData],
+// 	([$mode, $data]) => $mode === 'analysis' && $data !== null
+// );
+
+// Actions — colocate with stores to keep components thin
+export async function loadCountryData(code: string) {
+	isLoading.set(true);
+	countryData.set(null);
+	try {
+		const res = await fetch(`/api/countries/${code}`);
+		const data: CountryData = await res.json();
+		countryData.set(data);
+	} finally {
+		isLoading.set(false);
+	}
+}
+
+export function resetCountry() {
+	countryData.set(null);
+	isLoading.set(false);
 }

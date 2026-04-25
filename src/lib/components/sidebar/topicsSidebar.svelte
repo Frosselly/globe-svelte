@@ -10,7 +10,6 @@
 	import { fly } from 'svelte/transition';
 	// import { getCountryMetadataClean } from '$lib/components/countryData/country-metadata';
 	// import { getCountryGeneralInfo } from '$lib/components/countryData/country-general';
-	import { load as loadCountryData, getCountryData } from '../../../routes/store.svelte';
 	import { CurrencyDollarIcon, MapPinIcon, UserIcon } from 'phosphor-svelte';
 	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import { mapState, setCurrentDataset } from '$lib/components/map/mapStore.svelte';
