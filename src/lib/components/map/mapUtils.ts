@@ -1,8 +1,8 @@
+import { formatLargeNumbers } from '$lib/utils/utils';
 import { Deck } from '@deck.gl/core';
 import { ColumnLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import maplibregl from 'maplibre-gl';
-import { formatLargeNumbers } from '../utils/utils';
 
 // mapUtils.ts - Reusable map functions
 export async function loadGeoData(url: string) {

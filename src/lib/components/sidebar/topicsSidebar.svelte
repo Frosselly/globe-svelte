@@ -10,22 +10,28 @@
 	import { fly } from 'svelte/transition';
 	// import { getCountryMetadataClean } from '$lib/components/countryData/country-metadata';
 	// import { getCountryGeneralInfo } from '$lib/components/countryData/country-general';
-	import { CurrencyDollarIcon, MapPinIcon, UserIcon } from 'phosphor-svelte';
+	import CurrencyDollarIcon from 'phosphor-svelte/lib/CurrencyDollarIcon';
+	import MapPinIcon from 'phosphor-svelte/lib/MapPinIcon';
+	import UserIcon from 'phosphor-svelte/lib/UserIcon';
+
 	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import { mapState, setCurrentDataset } from '$lib/components/map/mapStore.svelte';
 	import { getContext } from 'svelte';
+	import { countriesStore, modeState, selectedCountryStore } from '../../../routes/store.svelte';
+	import { formatLargeNumbers } from '$lib/utils/utils';
 
 	let selectedTopic = $state('overview');
 	let { visible } = $props();
 	// let countryData = $state(loadCountryData('FRA'));
-	let countryData = $state({
-		metadata: {
-			name: 'France',
-			population: 67000000,
-			gdp: 3000000000000,
-			area: 640679
-		}
-	});
+	// let countryData = $state({
+	// 	metadata: {
+	// 		name: 'France',
+	// 		population: 67000000,
+	// 		gdp: 3000000000000,
+	// 		area: 640679
+	// 	}
+	// });
+	const countryData = $derived(selectedCountryStore.country);
 
 	const topics = [
 		{ id: 'overview', label: 'Overview' },
@@ -45,6 +51,11 @@
 			element.scrollIntoView({ behavior: 'smooth' });
 		}
 	}
+
+	$effect(() => {
+		if (selectedCountryStore.country)
+			console.log('cahnges', selectedCountryStore.country?.metadata);
+	});
 </script>
 
 {#if visible}
@@ -55,7 +66,7 @@
 		<br />
 		<section class="topicSection">
 			<div class="row">
-				{#await countryData then cData}
+				{#if countryData}
 					<div class="row">
 						<figure class="country-flag">
 							<picture>
@@ -63,11 +74,11 @@
 							</picture>
 						</figure>
 						<div>
-							<h2>{cData?.metadata?.name}</h2>
-							<h3>Paris</h3>
+							<h2>{countryData?.metadata?.name.common}</h2>
+							<h3>{countryData?.metadata?.capital[0]}</h3>
 						</div>
 					</div>
-				{/await}
+				{/if}
 			</div>
 			<hr />
 			<div class="carousel">
@@ -88,33 +99,33 @@
 						<span><UserIcon size={16} /></span>
 						<span><b> Population</b></span>
 					</div>
-					<div><b>125.7M</b></div>
-					<div class="between">
+					<div><b>{formatLargeNumbers(Number(countryData?.metadata?.population))}</b></div>
+					<!-- <div class="between">
 						<span>Rank #11</span>
 						<SmallGraphIcon sign="+" trend={1.2} />
-					</div>
+					</div> -->
 				</div>
 				<div class="card card-selectable flex">
 					<div class="flex-row">
 						<span><CurrencyDollarIcon size={16} /></span>
 						<span><b> GDP</b></span>
 					</div>
-					<div><b>125.7M</b></div>
-					<div class="between">
+					<div><b>{formatLargeNumbers(Number(countryData?.economyInfo?.gdp?.current))}</b></div>
+					<!-- <div class="between">
 						<span>Rank #11</span>
 						<SmallGraphIcon sign="+" trend={0.3} />
-					</div>
+					</div> -->
 				</div>
 				<div class="card card-selectable flex">
 					<div class="flex-row">
 						<span><MapPinIcon size={16} /></span>
 						<span><b> Area</b></span>
 					</div>
-					<div><b>125.7M</b></div>
-					<div class="between">
+					<div><b>{formatLargeNumbers(Number(countryData?.metadata?.area))}</b></div>
+					<!-- <div class="between">
 						<span>Rank #11</span>
 						<span>~Germany</span>
-					</div>
+					</div> -->
 				</div>
 			</div>
 			<!-- {#await getMetadata}
@@ -125,14 +136,23 @@
 						<p>Area: {meta.area}</p>
 					{/await} -->
 		</section>
-		<Overview />
-		<Demographics />
-		<Tourism />
-		<Economy />
-		<Energy />
-		<Environment />
-		<Military />
+		<!-- TODO: add later then data is wrangled -->
+		<!-- <Overview />
+		<Demographics /> -->
+		{#if countryData?.tourismInfo}
+			<Economy {...countryData?.economyInfo} />
+		{/if}
+		{#if countryData?.energyInfo}
+			<Energy {...countryData?.energyInfo} />
+		{/if}
+		{#if countryData?.tourismInfo}
+			<Tourism {...countryData?.tourismInfo} />
+		{/if}
+		<!-- <Environment /> -->
+		<!-- <Military /> -->
 	</div>
+{:else}
+	<div>Click on a country</div>
 {/if}
 
 <style>

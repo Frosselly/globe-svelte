@@ -1,14 +1,12 @@
 <script lang="ts">
-	import {
-		FactoryIcon,
-		LeafIcon,
-		MedalIcon,
-		RecycleIcon,
-		ShieldIcon,
-		TreeIcon,
-		WarningIcon,
-		WindIcon
-	} from 'phosphor-svelte';
+	import FactoryIcon from 'phosphor-svelte/lib/FactoryIcon';
+	import LeafIcon from 'phosphor-svelte/lib/LeafIcon';
+	import MedalIcon from 'phosphor-svelte/lib/MedalIcon';
+	import RecycleIcon from 'phosphor-svelte/lib/RecycleIcon';
+	import ShieldIcon from 'phosphor-svelte/lib/ShieldIcon';
+	import TreeIcon from 'phosphor-svelte/lib/TreeIcon';
+	import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+	import WindIcon from 'phosphor-svelte/lib/WindIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 
 	const props = {

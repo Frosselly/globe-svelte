@@ -1,5 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 
+//TODO remove later
+export const ssr = false;
+
 const unprotectedRoutes = ['/', '/auth/login', '/auth/signup'];
 const authRoutes = ['/auth/login', '/auth/signup'];
 

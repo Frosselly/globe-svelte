@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { CityIcon, FirstAidIcon, GraduationCapIcon, HeartIcon, UsersIcon } from 'phosphor-svelte';
+	import CityIcon from 'phosphor-svelte/lib/CityIcon';
+	import FirstAidIcon from 'phosphor-svelte/lib/FirstAidIcon';
+	import GraduationCapIcon from 'phosphor-svelte/lib/GraduationCapIcon';
+	import HeartIcon from 'phosphor-svelte/lib/HeartIcon';
+	import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 
 	const props = {

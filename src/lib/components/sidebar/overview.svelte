@@ -1,16 +1,15 @@
 <script lang="ts">
-	import {
-		CalendarIcon,
-		CarIcon,
-		CityIcon,
-		CrossIcon,
-		CurrencyDollarIcon,
-		GlobeIcon,
-		MapPinIcon,
-		TranslateIcon
-	} from 'phosphor-svelte';
+	import CalendarIcon from 'phosphor-svelte/lib/CalendarIcon';
+	import CarIcon from 'phosphor-svelte/lib/CarIcon';
+	import CityIcon from 'phosphor-svelte/lib/CityIcon';
+	import CrossIcon from 'phosphor-svelte/lib/CrossIcon';
+	import CurrencyDollarIcon from 'phosphor-svelte/lib/CurrencyDollarIcon';
+	import GlobeIcon from 'phosphor-svelte/lib/GlobeIcon';
+	import MapPinIcon from 'phosphor-svelte/lib/MapPinIcon';
+	import TranslateIcon from 'phosphor-svelte/lib/TranslateIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 
+	// const props = $props();
 	const props = {
 		countryInfo: {
 			capital: 'Tokyo',

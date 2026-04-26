@@ -1,55 +1,59 @@
 <script lang="ts">
 	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
-	import {
-		CalendarIcon,
-		ChartBarIcon,
-		CurrencyCircleDollar,
-		CurrencyCircleDollarIcon,
-		GlobeIcon,
-		GraphIcon,
-		PiggyBankIcon,
-		ScalesIcon,
-		TruckIcon,
-		UsersIcon
-	} from 'phosphor-svelte';
+	import CalendarIcon from 'phosphor-svelte/lib/CalendarIcon';
+	import ChartBarIcon from 'phosphor-svelte/lib/ChartBarIcon';
+	import CurrencyCircleDollar from 'phosphor-svelte/lib/CurrencyCircleDollar';
+	import CurrencyCircleDollarIcon from 'phosphor-svelte/lib/CurrencyCircleDollarIcon';
+	import GlobeIcon from 'phosphor-svelte/lib/GlobeIcon';
+	import GraphIcon from 'phosphor-svelte/lib/GraphIcon';
+	import PiggyBankIcon from 'phosphor-svelte/lib/PiggyBankIcon';
+	import ScalesIcon from 'phosphor-svelte/lib/ScalesIcon';
+	import TruckIcon from 'phosphor-svelte/lib/TruckIcon';
+	import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
+	import { formatLargeNumbers } from '$lib/utils/utils';
+	import MediumGraph from '../mediumGraph.svelte';
 
-	const props = {
-		gdpTrend: {
-			value: '31.9M',
-			change: '12.4%',
-			graph: '' // placeholder for graph data
-		},
-		worldRank: '€12.4B',
-		perCapitaGDP: '#11',
-		inflation: '€12.4B',
-		unemployment: '#11',
-		economicSectors: {
-			services: 12.1,
-			industry: 58.5,
-			agriculture: 29.4
-		},
-		trade: {
-			exports: '31.9M',
-			imports: '31.9M',
-			tradeBalance: '31.9M',
+	const props = $props();
+	$effect(() => {
+		$inspect(props);
+	});
+	// const props = {
+	// 	gdpTrend: {
+	// 		value: '31.9M',
+	// 		change: '12.4%',
+	// 		graph: '' // placeholder for graph data
+	// 	},
+	// 	worldRank: '€12.4B',
+	// 	perCapitaGDP: '#11',
+	// 	inflation: '€12.4B',
+	// 	unemployment: '#11',
+	// 	economicSectors: {
+	// 		services: 12.1,
+	// 		industry: 58.5,
+	// 		agriculture: 29.4
+	// 	},
+	// 	trade: {
+	// 		exports: '31.9M',
+	// 		imports: '31.9M',
+	// 		tradeBalance: '31.9M',
 
-			exportVanities: ['Valid passport', 'Return ticket', 'Accommodation proof']
-		},
-		businessEnvironment: {
-			easeOfDoingBusiness: '31.9M',
-			corruptionPerceptionsIndex: '31.9M',
-			globalCompetitivenessIndex: '31.9M',
-			globalInnovationIndex: '31.9M',
-			majorCompanies: ['Company s', 'Company Name', 'Company Name', 'Company Name']
-		},
-		labourMarket: {
-			workforce: '68.9M',
-			avgSalary: '$3,456/month',
-			minWage: '$12.4/hr',
-			workWeek: '40 hours'
-		}
-	};
+	// 		exportVanities: ['Valid passport', 'Return ticket', 'Accommodation proof']
+	// 	},
+	// 	businessEnvironment: {
+	// 		easeOfDoingBusiness: '31.9M',
+	// 		corruptionPerceptionsIndex: '31.9M',
+	// 		globalCompetitivenessIndex: '31.9M',
+	// 		globalInnovationIndex: '31.9M',
+	// 		majorCompanies: ['Company s', 'Company Name', 'Company Name', 'Company Name']
+	// 	},
+	// 	labourMarket: {
+	// 		workforce: '68.9M',
+	// 		avgSalary: '$3,456/month',
+	// 		minWage: '$12.4/hr',
+	// 		workWeek: '40 hours'
+	// 	}
+	// };
 
 	const colors = ['black', 'red', 'orange'];
 </script>
@@ -62,61 +66,91 @@
 					<div class="text-gray bold">GDP Trend</div>
 					<br />
 					<div>
-						<b class="num-big">{props.gdpTrend.value}</b>
-						<SmallGraphIcon sign="+" trend={props.gdpTrend.change} />
+						<b class="num-big">{formatLargeNumbers(props.gdp.current)}</b>
+						<SmallGraphIcon sign="+" trend={props.gdp.trend} />
 					</div>
-					<div class="graph"></div>
+					<div class="graph" style="flex: 1; max-height: 180px;">
+						<MediumGraph data={props.gdp.yearOverYear} />
+					</div>
 				</div>
 				<div class=" flex-col flex">
 					<div class="flex-row">
 						<div class="card flex-col flex">
 							<div class="text-gray bold">World Rank</div>
-							<div><b class="num-mid">{props.worldRank}</b></div>
+							<div><b class="num-mid">{props.worldRankInEconomy}</b></div>
 						</div>
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Per Capita GDP</div>
-							<div><b class="num-mid">{props.perCapitaGDP}</b></div>
+							<div><b class="num-mid">{formatLargeNumbers(props.perCapitaGDP)}</b></div>
 						</div>
 					</div>
 					<div class="flex-row">
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Inflation</div>
-							<div><b class="num-mid">{props.inflation}</b></div>
+							<div><b class="num-mid">{props.inflation.current}</b></div>
 						</div>
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Unemployment</div>
-							<div><b class="num-mid">{props.unemployment}</b></div>
+							<div><b class="num-mid">{props.unemploymentRank + 20}</b></div>
 						</div>
 					</div>
 				</div>
 			</div>
+
 			<div class="card flex-col wide">
 				<div class="text-gray bold align-center">
-					<ChartBarIcon size={20} /> Economic Sectors
+					<ChartBarIcon size={20} />
+					Economic Sectors of GDP
 				</div>
+
 				<br />
+
 				<div class="between">
 					<div class="progress-bar-divided">
-						{#each Object.entries(props.economicSectors) as [sector, value], i}
+						{#each props.economicalSectors as sector, i}
 							<div
 								class="segment bold center"
-								style="width: {value}%; background-color: {colors[i]}; color: white;"
-								title="{value}%"
+								style="width: {sector.percentage}%; background-color: {colors[i]}; color: white;"
+								title="{sector.percentage}%"
 							>
-								{value}%
+								{sector.percentage}%
 							</div>
 						{/each}
+
+						{#if props.economicalSectors.reduce((sum, s) => sum + s.percentage, 0) < 100}
+							{@const unknownPct =
+								100 - props.economicalSectors.reduce((sum, s) => sum + s.percentage, 0)}
+							<div
+								class="segment bold center"
+								style="width: {unknownPct}%; background-color: #9ca3af; color: white;"
+								title="{unknownPct}%"
+							>
+								{unknownPct.toFixed(1)}%
+							</div>
+						{/if}
 					</div>
 				</div>
+
 				<div class="flex-row between">
-					{#each Object.entries(props.economicSectors) as [sector, value], i}
+					{#each props.economicalSectors as sector, i}
 						<div class="flex-col align-center">
 							<div
 								style="height: 1rem; width: 1rem; background-color: {colors[i]}; border-radius: 50%"
 							></div>
-							<div>{sector.charAt(0).toUpperCase() + sector.slice(1)}</div>
+							<div>
+								{sector.name.charAt(0).toUpperCase() + sector.name.slice(1)}
+							</div>
 						</div>
 					{/each}
+
+					{#if props.economicalSectors.reduce((sum, s) => sum + s.percentage, 0) < 100}
+						<div class="flex-col align-center">
+							<div
+								style="height: 1rem; width: 1rem; background-color: #9ca3af; border-radius: 50%"
+							></div>
+							<div>Unknown</div>
+						</div>
+					{/if}
 				</div>
 			</div>
 			<div class="flex-row">
@@ -132,14 +166,14 @@
 						</div>
 					</div>
 					<div class="info-card between">
-						<span>Trade Balance</span> <span><b>{props.trade.tradeBalance}</b></span>
+						<span>Trade Balance</span> <span><b>{props.trade.balance}</b></span>
 					</div>
 				</div>
 				<div class="card flex-col flex">
 					<div class="text-gray bold align-center"><TruckIcon size={20} /> Top Exports</div>
 					<div>
 						<ol>
-							{#each props.trade.exportVanities as item}
+							{#each props.topExportedGoods as item}
 								<li>{item}</li>
 							{/each}
 						</ol>
@@ -173,8 +207,8 @@
 				</div>
 				<hr />
 				<div class="text-gray">Major Companies</div>
-				<div class="flex-row">
-					{#each props.businessEnvironment.majorCompanies as company}
+				<div class="flex-row wrap">
+					{#each props.majorCompanies.slice(0, 11) as company}
 						<div class="small-card bold">{company}</div>
 					{/each}
 				</div>
@@ -187,19 +221,19 @@
 				<div class="grid-4">
 					<div class=" flex-col">
 						<div class="text-gray">Workforce</div>
-						<div class="num-mid">{props.labourMarket.workforce}</div>
+						<div class="num-mid">{props.labourMarket.workforceGeneratedCash}</div>
 					</div>
 					<div class=" flex-col">
 						<div class="text-gray">Avg. Salary</div>
-						<div class="num-mid">{props.labourMarket.avgSalary}</div>
+						<div class="num-mid">{props.labourMarket.averageSalary}</div>
 					</div>
 					<div class=" flex-col">
 						<div class="text-gray">Min Wage</div>
-						<div class="num-mid">{props.labourMarket.minWage}</div>
+						<div class="num-mid">{props.labourMarket.minimumWage}</div>
 					</div>
 					<div class=" flex-col">
 						<div class="text-gray">Work Week</div>
-						<div class="num-mid">{props.labourMarket.workWeek}</div>
+						<div class="num-mid">{props.labourMarket.avgWorkWeek}</div>
 					</div>
 				</div>
 			</div>

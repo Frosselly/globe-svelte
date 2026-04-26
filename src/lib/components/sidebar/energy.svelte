@@ -1,9 +1,20 @@
 <script>
 	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
-	import { ChartBarIcon, FactoryIcon, LeafIcon, TargetIcon } from 'phosphor-svelte';
+	import ChartBarIcon from 'phosphor-svelte/lib/ChartBarIcon';
+	import FactoryIcon from 'phosphor-svelte/lib/FactoryIcon';
+	import LeafIcon from 'phosphor-svelte/lib/LeafIcon';
+	import TargetIcon from 'phosphor-svelte/lib/TargetIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
+	import { formatLargeNumbers } from '$lib/utils/utils';
+	import MediumGraph from '../mediumGraph.svelte';
 
-	const props = {
+	const props = $props();
+
+	$effect(() => {
+		$inspect(props);
+	});
+
+	const props2 = {
 		renewableGrowth: 22.4,
 		renewablePercentage: 45.3,
 		totalProduction: '500 TWh',
@@ -48,25 +59,27 @@
 					<div class="text-gray bold">Renewable Growth</div>
 					<br />
 					<div>
-						<b class="num-big">{props.renewableGrowth.toFixed(1)}%</b>
-						<SmallGraphIcon sign="+" trend={props.renewableGrowth} />
+						<b class="num-big">{props.renewableGrowth.current.toFixed(1)}%</b>
+						<SmallGraphIcon sign="+" trend={props.renewableGrowth.trend} />
 					</div>
-					<div class="graph"></div>
+					<div class="graph" style="flex: 1; max-height: 180px;">
+						<MediumGraph data={props.renewableGrowth.historicalData} />
+					</div>
 				</div>
 				<div class=" flex-col flex">
 					<div class="flex-row">
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Production</div>
-							<div><b class="num-mid">{props.totalProduction}</b></div>
+							<div><b class="num-mid">{formatLargeNumbers(props.production.current)}</b></div>
 						</div>
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Consumption</div>
-							<div><b class="num-mid">{props.totalConsumption}</b></div>
+							<div><b class="num-mid">{formatLargeNumbers(props.consumption.current)}</b></div>
 						</div>
 					</div>
 					<div class="card flex-col flex">
 						<div class="text-gray bold">CO2 Emissions</div>
-						<div><b class="num-mid">{props.CO2Emissions}</b></div>
+						<div><b class="num-mid">{formatLargeNumbers(props.co2Emissions.current)}</b></div>
 					</div>
 				</div>
 			</div>
@@ -74,23 +87,28 @@
 				<div class="text-gray bold align-center">
 					<ChartBarIcon size={20} /> Energy Mix
 				</div>
+
 				<br />
+
 				<div class="flex-col">
-					{#each Object.entries(props.production) as [key, value]}
-						<div class=" flex-col">
+					{#each [...props.energyMix.current].sort((a, b) => b.percentage - a.percentage) as item}
+						<div class="flex-col">
 							<div class="between">
-								<div><span><img src="" alt="from-key" /></span> {key}</div>
-								<div>{value}%</div>
+								<div>
+									{item.name}
+								</div>
+								<div>{item.percentage.toFixed(1)}%</div>
 							</div>
+
 							<div class="progress-bar">
-								<div class="progress-fill" style="width: {value}%;"></div>
+								<div class="progress-fill" style="width: {item.percentage}%;"></div>
 							</div>
 						</div>
 					{/each}
 				</div>
 			</div>
 			<div class="flex-row">
-				<div class="card flex-col flex">
+				<!-- <div class="card flex-col flex">
 					<div class="text-gray bold align-center">
 						<LeafIcon size={20} /> Renewable Sources
 					</div>
@@ -106,8 +124,8 @@
 							</div>
 						{/each}
 					</div>
-				</div>
-				<div class="card flex-col flex">
+				</div> -->
+				<!-- <div class="card flex-col flex">
 					<div class="text-gray bold align-center"><FactoryIcon size={20} /> Infrastructure</div>
 					<br />
 					{#each Object.entries(props.infrastructure) as [key, value]}
@@ -116,22 +134,24 @@
 							<div><b>{value}</b></div>
 						</div>
 					{/each}
-				</div>
+				</div> -->
 			</div>
-			<div class="card flex-col wide">
-				<div class="text-gray bold align-center">
-					<TargetIcon size={20} /> Climate & Energy Targets
+			{#if props.targets && props.targets.length > 0}
+				<div class="card flex-col wide">
+					<div class="text-gray bold align-center">
+						<TargetIcon size={20} /> Climate & Energy Targets
+					</div>
+					<br />
+					<div class="flex-col">
+						{#each props.targets as target}
+							<div class="info-card flex-col flex center">
+								<div class="text-gray">{target.title}</div>
+								<div><b>{target.startYear} - {target.endYear || ''}</b></div>
+							</div>
+						{/each}
+					</div>
 				</div>
-				<br />
-				<div class="flex-row">
-					{#each Object.entries(props.climateTargets) as [key, value]}
-						<div class="info-card flex-col flex center">
-							<div class="text-gray">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-							<div><b>{value}</b></div>
-						</div>
-					{/each}
-				</div>
-			</div>
+			{/if}
 		</div>
 	</CollapsibleTopic>
 </section>

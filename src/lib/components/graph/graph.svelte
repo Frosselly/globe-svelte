@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { formatLargeNumbers } from '$lib/utils/utils';
 	import * as d3 from 'd3';
 	import { onMount } from 'svelte';
-	import { formatLargeNumbers } from '../utils/utils';
 
 	// --- Types ---
 	type CountryData = { name: string; caa3: string; population: number };

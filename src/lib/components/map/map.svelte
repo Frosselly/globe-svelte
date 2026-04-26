@@ -28,6 +28,7 @@
 	import * as pmtiles from 'pmtiles';
 	import { mount, unmount, onDestroy, onMount } from 'svelte'; // FIX: added unmount
 	import type { DataSource } from '$lib/types';
+	import { countriesStore, selectedCountryStore } from '../../../routes/store.svelte.ts';
 
 	const { toggleTopics, onPosChange } = $props();
 	let lng = $state(-5.0684);
@@ -126,7 +127,7 @@
 			map.addSource('countries', {
 				type: 'geojson',
 				data: 'http://localhost:5173/countries.geo.json',
-				promoteId: 'adm0_a3'
+				promoteId: 'iso_a2_eh'
 			});
 
 			loadDataset('');
@@ -269,22 +270,23 @@
 		const name = props.name || 'N/A';
 		countryGeneralInfo.name = name;
 
-		let iso3 = feature.id;
+		let iso2 = feature.id;
 
-		if (iso3) {
+		if (iso2) {
 			try {
 				const res = await fetch(
-					`https://restcountries.com/v3.1/alpha?codes=${encodeURIComponent(iso3)}`
+					`https://restcountries.com/v3.1/alpha?codes=${encodeURIComponent(iso2)}`
 				);
 				console.log('restcountries res', res);
 				if (res.ok) {
 					const data = await res.json();
 					console.log('restcountries data', data);
+					selectedCountryStore.setCountry(countriesStore.countries[iso2]);
 					if (Array.isArray(data) && data.length > 0) {
 						const c = data[0];
 						countryGeneralInfo = {
 							name,
-							iso3,
+							iso2,
 							capital: c.capital ? c.capital[0] : undefined,
 							population: c.population,
 							region: c.region,
@@ -302,7 +304,7 @@
 
 		countryGeneralInfo = {
 			name,
-			iso3: iso3
+			iso2: iso2
 		};
 	}
 

@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { ChartBarHorizontalIcon, MapTrifoldIcon, TrendUpIcon } from 'phosphor-svelte';
+	import ChartBarHorizontalIcon from 'phosphor-svelte/lib/ChartBarHorizontalIcon';
+	import MapTrifoldIcon from 'phosphor-svelte/lib/MapTrifoldIcon';
+	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 	import Graph from '../graph/graph.svelte';
 
 	const { onClose } = $props();

@@ -1,10 +1,12 @@
 <script>
-	import { TrendDownIcon, TrendUpIcon } from 'phosphor-svelte';
+	import TrendDownIcon from 'phosphor-svelte/lib/TrendDownIcon';
+	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 
 	const props = $props();
+	const sign = $derived(props.trend === 'increasing' || props.trend === 'growing' ? '+' : '-');
 </script>
 
-{#if props.sign === '+'}
+{#if sign === '+'}
 	<span class="text-green">
 		<TrendUpIcon size={16} />
 		{props.trend}

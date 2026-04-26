@@ -3,7 +3,12 @@
 	import TopicsSidebar from '$lib/components/sidebar/topicsSidebar.svelte';
 	import Map from '$lib/components/map/map.svelte';
 	import AnalysisMode from '$lib/components/analysis mode/analysisMode.svelte';
-	import { modeState, setSelectedMode } from './store.svelte.js';
+	import {
+		countriesStore,
+		modeState,
+		selectedCountryStore,
+		setSelectedMode
+	} from './store.svelte.js';
 
 	let { data } = $props();
 	// let isMapSelected = $derived(modeState.selected !== 'map');
@@ -27,8 +32,15 @@
 	// });
 
 	$effect(() => {
+		$inspect(countriesStore);
+		if (data && !countriesStore.loaded) {
+			countriesStore.setCountries(data.countries);
+			selectedCountryStore.setCountry(data.countries['FR']);
+			// console.log('data', data.countries);
+		}
 		if (data.msg) console.log(data.msg);
 		if (modeState.selected) console.log(modeState.selected);
+		// if (countriesStore.loaded) console.log('from page', countriesStore.countries['FR'].tourismInfo);
 	});
 </script>
 
@@ -107,8 +119,8 @@
 	}
 
 	.mapInfo {
-		background-color: rgb(35 55 75 / 90%);
-		color: #fff;
+		background-color: rgba(255, 255, 255, 0.9);
+		color: #0e0e0e;
 		padding: 6px 12px;
 		font-family: monospace;
 		z-index: 1;

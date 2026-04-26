@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
-	import { formatLargeNumbers } from './utils/utils';
+	import { formatLargeNumbers } from '$lib/utils/utils';
 
 	export type Country = {
 		flag: string;

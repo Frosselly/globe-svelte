@@ -1,5 +1,6 @@
 <script>
-	import { CaretDownIcon, CaretUpIcon } from 'phosphor-svelte';
+	import CaretUpIcon from 'phosphor-svelte/lib/CaretUpIcon';
+	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
 
 	let { topicName, children } = $props();
 	let isOpen = $state(true);

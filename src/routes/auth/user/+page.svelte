@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { ArrowRightIcon } from 'phosphor-svelte';
+	import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
 
 	let { data }: { data: any } = $props();
 	const initials = $derived(data.firstName?.[0] + data.lastName?.[0]);

@@ -1,12 +1,10 @@
 <script lang="ts">
 	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
-	import {
-		GlobeIcon,
-		MedalMilitaryIcon,
-		TargetIcon,
-		TrendUpIcon,
-		WarehouseIcon
-	} from 'phosphor-svelte';
+	import GlobeIcon from 'phosphor-svelte/lib/GlobeIcon';
+	import MedalMilitaryIcon from 'phosphor-svelte/lib/MedalMilitaryIcon';
+	import TargetIcon from 'phosphor-svelte/lib/TargetIcon';
+	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
+	import WarehouseIcon from 'phosphor-svelte/lib/WarehouseIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 
 	const props = {

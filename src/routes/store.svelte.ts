@@ -2,20 +2,24 @@ import { writable, derived } from 'svelte/store';
 
 export type Mode = 'map' | 'analysis';
 
-export interface CountryData {
-	code: string;
-	name: string;
-	population: number;
-	gdp: number;
-	// ... your full shape here
-}
+// export interface CountryData {
+// 	code: string;
+// 	name: string;
+// 	population: number;
+// 	gdp: number;
+// 	// ... your full shape here
+// }
 
 export const modeState = $state({ selected: 'map' as 'map' | 'analysis' });
-export const countryData = writable<CountryData | null>(null);
-export const isLoading = writable(false);
+export const countryData = $state<any>({ countries: undefined });
+export const isLoading = $state();
 
 export function setSelectedMode(mode: 'map' | 'analysis') {
 	modeState.selected = mode;
+}
+
+export function setCountryData(data: any) {
+	countryData.countries = data;
 }
 
 // Derived: only show panel when data is ready and mode is analysis
@@ -24,20 +28,28 @@ export function setSelectedMode(mode: 'map' | 'analysis') {
 // 	([$mode, $data]) => $mode === 'analysis' && $data !== null
 // );
 
-// Actions — colocate with stores to keep components thin
-export async function loadCountryData(code: string) {
-	isLoading.set(true);
-	countryData.set(null);
-	try {
-		const res = await fetch(`/api/countries/${code}`);
-		const data: CountryData = await res.json();
-		countryData.set(data);
-	} finally {
-		isLoading.set(false);
+class SelectedCountryStore {
+	country = $state<any>(undefined);
+
+	loaded = $state(false);
+
+	setCountry(data: any) {
+		this.country = data;
+		this.loaded = true;
 	}
 }
 
-export function resetCountry() {
-	countryData.set(null);
-	isLoading.set(false);
+export const selectedCountryStore = new SelectedCountryStore();
+
+class CountriesStore {
+	countries = $state<any>(undefined);
+
+	loaded = $state(false);
+
+	setCountries(data: any) {
+		this.countries = data;
+		this.loaded = true;
+	}
 }
+
+export const countriesStore = new CountriesStore();
