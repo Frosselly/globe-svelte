@@ -31,6 +31,12 @@
 	import { countriesStore, selectedCountryStore } from '../../../routes/store.svelte.ts';
 
 	const { toggleTopics, onPosChange } = $props();
+
+	let loading = $state(true);
+	let progress = $state(0);
+	let fadeOut = $state(false);
+	let loadingText = $state('Initializing map...');
+
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
 	let zoom = $state(2.67);
@@ -98,6 +104,9 @@
 		maplibregl.addProtocol('pmtiles', (protocol as any).tile.bind(protocol));
 		const TILE_URL = 'pmtiles://planet_z6.pmtiles';
 
+		progress = 10;
+		loadingText = 'Loading tiles...';
+
 		map = new maplibregl.Map({
 			container: mapContainer,
 			style: {
@@ -124,6 +133,9 @@
 		setMapInstance(map);
 
 		map.on('style.load', () => {
+			progress = 60;
+			loadingText = 'Loading countries...';
+
 			map.addSource('countries', {
 				type: 'geojson',
 				data: 'http://localhost:5173/countries.geo.json',
@@ -131,6 +143,19 @@
 			});
 
 			loadDataset('');
+			progress = 85;
+			loadingText = 'Finalizing...';
+		});
+		map.on('idle', () => {
+			progress = 100;
+			loadingText = 'Ready';
+
+			setTimeout(() => {
+				fadeOut = true;
+				setTimeout(() => {
+					loading = false;
+				}, 600);
+			}, 200);
 		});
 	}
 
@@ -316,6 +341,18 @@
 	}
 </script>
 
+{#if loading}
+	<div class="map-loader" class:fade-out={fadeOut}>
+		<div class="loader-content">
+			<div class="loader-text">{loadingText}</div>
+			<div class="progress-track">
+				<div class="progress-fill" style="width: {progress}%"></div>
+			</div>
+			<div class="progress-pct">{progress}%</div>
+		</div>
+	</div>
+{/if}
+
 <div class="mapContainer">
 	<div class="map" bind:this={mapContainer}></div>
 </div>
@@ -330,5 +367,57 @@
 	.map {
 		height: 100%;
 		width: 100%;
+	}
+
+	.map-loader {
+		position: absolute;
+		inset: 0;
+		z-index: 100;
+		background: var(--color-background-primary, #fff);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: opacity 600ms ease;
+	}
+
+	.map-loader.fade-out {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.loader-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 10px;
+		width: 200px;
+	}
+
+	.loader-text {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--color-text-secondary, #666);
+		letter-spacing: 0.01em;
+	}
+
+	.progress-track {
+		width: 100%;
+		height: 3px;
+		background: var(--color-background-tertiary, #ebebeb);
+		border-radius: 99px;
+		overflow: hidden;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: var(--color-text-primary, #0f0f0f);
+		border-radius: 99px;
+		transition: width 300ms ease;
+	}
+
+	.progress-pct {
+		font-size: 12px;
+		color: var(--color-text-tertiary, #aaa);
+		font-variant-numeric: tabular-nums;
 	}
 </style>
