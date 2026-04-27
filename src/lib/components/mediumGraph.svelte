@@ -3,7 +3,11 @@
 	import * as d3 from 'd3';
 	import { formatLargeNumbers } from '$lib/utils/utils';
 
-	let { data }: { data: { year: number; value: number }[] } = $props();
+	let {
+		data,
+		toFixed,
+		extraSign = ''
+	}: { data: { year: number; value: number }[]; toFixed?: number; extraSign?: string } = $props();
 
 	let container: HTMLDivElement;
 	let resizeObserver: ResizeObserver;
@@ -12,7 +16,7 @@
 		if (!container || !data.length) return;
 
 		const { width, height } = container.getBoundingClientRect();
-		const margin = { top: 10, right: 10, bottom: 24, left: 40 };
+		const margin = { top: 10, right: 10, bottom: 24, left: 34 };
 		const innerWidth = width - margin.left - margin.right;
 		const innerHeight = height - margin.top - margin.bottom;
 
@@ -58,7 +62,7 @@
 				d3
 					.axisLeft(y)
 					.ticks(4)
-					.tickFormat((d) => `${formatLargeNumbers(d)}`)
+					.tickFormat((d) => `${formatLargeNumbers(d, toFixed) + extraSign}`)
 			)
 			.call((g) => g.select('.domain').remove())
 			.call((g) => g.selectAll('.tick line').attr('stroke', '#e5e7eb'));

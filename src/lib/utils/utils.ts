@@ -1,4 +1,4 @@
-export function formatLargeNumbers(num: number): string {
+export function formatLargeNumbers(num: number, toFixed: number = 2): string {
 	const scales = [
 		{ value: 1e12, label: 'T' },
 		{ value: 1e9, label: 'B' },
@@ -8,9 +8,9 @@ export function formatLargeNumbers(num: number): string {
 
 	for (const scale of scales) {
 		if (Math.abs(num) >= scale.value) {
-			return (num / scale.value).toFixed(2) + scale.label;
+			return (num / scale.value).toFixed(toFixed) + scale.label;
 		}
 	}
 
-	return num.toFixed(2);
+	return num.toFixed(toFixed);
 }

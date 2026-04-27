@@ -69,7 +69,7 @@
 						<b class="num-big">{formatLargeNumbers(props.gdp.current)}</b>
 						<SmallGraphIcon sign="+" trend={props.gdp.trend} />
 					</div>
-					<div class="graph" style="flex: 1; max-height: 180px;">
+					<div class="graph">
 						<MediumGraph data={props.gdp.yearOverYear} />
 					</div>
 				</div>

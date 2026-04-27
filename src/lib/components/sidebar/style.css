@@ -38,6 +38,10 @@ hr {
 	border-top: 1px solid #ececec;
 	margin: 16px 0;
 }
+.graph {
+	max-height: 115px;
+}
+
 .progress-bar {
 	background-color: #e0e0e0;
 	border-radius: 8px;

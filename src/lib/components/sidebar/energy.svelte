@@ -62,8 +62,8 @@
 						<b class="num-big">{props.renewableGrowth.current.toFixed(1)}%</b>
 						<SmallGraphIcon sign="+" trend={props.renewableGrowth.trend} />
 					</div>
-					<div class="graph" style="flex: 1; max-height: 180px;">
-						<MediumGraph data={props.renewableGrowth.historicalData} />
+					<div class="graph">
+						<MediumGraph data={props.renewableGrowth.historicalData} toFixed={0} extraSign={'%'} />
 					</div>
 				</div>
 				<div class=" flex-col flex">

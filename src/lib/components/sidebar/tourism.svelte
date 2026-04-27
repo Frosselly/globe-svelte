@@ -81,9 +81,14 @@
 						<b class="num-big">{formatLargeNumbers(props.annualVisitors?.current)}</b>
 						<SmallGraphIcon sign="+" trend={props.annualVisitors?.trend} />
 					</div>
-					<!-- <div class="graph" style="flex: 1; min-height: 150px; max-height: 180px;">
-						<MediumGraph data={props.annualVisitors?.yearOverYear} />
-					</div> -->
+					<div class="graph">
+						<MediumGraph
+							data={props.annualVisitors?.yearOverYear.map(
+								(d: { year: number; visitors: number }) => ({ value: d.visitors, year: d.year })
+							)}
+							toFixed={0}
+						/>
+					</div>
 				</div>
 				<div class=" flex-col flex">
 					<div class="flex-row">
