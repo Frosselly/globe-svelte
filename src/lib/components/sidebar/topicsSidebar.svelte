@@ -91,7 +91,7 @@
 						if (mapState.currentDataset) {
 							setCurrentDataset('');
 						} else {
-							setCurrentDataset('population');
+							setCurrentDataset('economyInfo.gdp.current');
 						}
 					}}
 				>

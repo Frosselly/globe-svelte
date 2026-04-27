@@ -1,82 +1,98 @@
 <script lang="ts">
 	import { formatLargeNumbers } from '$lib/utils/utils';
 	import * as d3 from 'd3';
-	import { onMount } from 'svelte';
+	import { selectedCountryStore } from '../../../routes/store.svelte';
 
-	// --- Types ---
-	type CountryData = { name: string; caa3: string; population: number };
-	type TimeSeriesData = { country: string; yearOverYear: { year: number; value: number }[] };
+	const {
+		selectedView: view,
+		selectedAnalysis,
+		countries
+	} = $props<{
+		selectedView: string;
+		selectedAnalysis: { name: string; key: string; timeSeries: boolean };
+		countries: Record<string, any>;
+	}>();
 
-	// --- Data ---
-	const allCountries: CountryData[] = [
-		{ name: 'France', caa3: 'FRA', population: 20000 },
-		{ name: 'Germany', caa3: 'DEU', population: 35000 },
-		{ name: 'Spain', caa3: 'ESP', population: 15000 },
-		{ name: 'Italy', caa3: 'ITA', population: 28000 },
-		{ name: 'Poland', caa3: 'POL', population: 12000 },
-		{ name: 'Greece', caa3: 'GRC', population: 9000 },
-		{ name: 'Sweden', caa3: 'SWE', population: 11000 },
-		{ name: 'Belgium', caa3: 'BEL', population: 8500 },
-		{ name: 'Francea', caa3: 'FRA', population: 2000000 },
-		{ name: 'Germanya', caa3: 'DEU', population: 35000 },
-		{ name: 'Spaina', caa3: 'ESP', population: 15000 },
-		{ name: 'Italya', caa3: 'ITA', population: 28000 },
-		{ name: 'Polanda', caa3: 'POL', population: 12000 },
-		{ name: 'Greecea', caa3: 'GRC', population: 9000 },
-		{ name: 'Swedena', caa3: 'SWE', population: 11000 },
-		{ name: 'Belgiuma', caa3: 'BEL', population: 8500 },
-		{ name: 'Franceab', caa3: 'FRA', population: 20000 },
-		{ name: 'Germanyab', caa3: 'DEU', population: 35000 },
-		{ name: 'Spainab', caa3: 'ESP', population: 15000 },
-		{ name: 'Italyab', caa3: 'ITA', population: 28000 },
-		{ name: 'Polandab', caa3: 'POL', population: 12000 },
-		{ name: 'Greeceab', caa3: 'GRC', population: 9000 },
-		{ name: 'Swedenab', caa3: 'SWE', population: 11000 },
-		{ name: 'Belgiumab', caa3: 'BEL', population: 8500 }
-	];
+	function getNestedValue(obj: any, path: string): number | null {
+		if (!path) return null;
+		const val = path.split('.').reduce((acc: any, k: string) => acc?.[k], obj);
+		return val != null && !isNaN(Number(val)) ? Number(val) : null;
+	}
 
-	const tempDataTimeSeries: TimeSeriesData = {
-		country: 'France',
-		yearOverYear: [
-			{ year: 2019, value: 8000 },
-			{ year: 2020, value: 10000 },
-			{ year: 2021, value: 14000 },
-			{ year: 2022, value: 18000 },
-			{ year: 2023, value: 20000 },
-			{ year: 2024, value: 40000 }
-		]
-	};
+	const allCountries = $derived(
+		Object.entries(countries)
+			.map(([iso2, country]: [string, any]) => {
+				const value = getNestedValue(country, selectedAnalysis.key);
+				const name = country?.metadata?.name?.common ?? iso2;
+				return value != null ? { name, iso2, value } : null;
+			})
+			.filter(Boolean)
+			.sort((a: any, b: any) => b.value - a.value) as {
+			name: string;
+			iso2: string;
+			value: number;
+		}[]
+	);
 
-	// --- State ---
-	let { selectedView: view } = $props();
+	// Selected country from global store for line chart
+	const selectedCountryName = $derived(
+		selectedCountryStore.country?.metadata?.name?.common ?? null
+	);
+
+	const timeSeriesData = $derived(
+		(() => {
+			if (!selectedAnalysis.timeSeries) return null;
+
+			// Use global selected country, fall back to first checked country
+			const targetName = selectedCountryName ?? allCountries[0]?.name;
+
+			if (!targetName) return null;
+
+			const countryEntry = Object.values(countries).find(
+				(c: any) => c?.metadata?.name?.common === targetName
+			) as any;
+
+			if (!countryEntry) return null;
+
+			const parts = selectedAnalysis.key.split('.');
+			const parent = parts.slice(0, -1).reduce((acc: any, k: string) => acc?.[k], countryEntry);
+			const yoy = parent?.historicalData ?? parent?.yearOverYear ?? null;
+			if (!yoy?.length) return null;
+
+			return {
+				country: targetName,
+				yearOverYear: yoy as any[]
+			};
+		})()
+	);
 
 	let containerEl = $state<HTMLDivElement | null>(null);
 	let svgEl = $state<SVGSVGElement | null>(null);
+	let selectedCountries = $state<Set<string>>(new Set());
+	let hoveredYear = $state<number | null>(null);
 
-	let selectedCountries = $state<Set<string>>(new Set(['France', 'Germany', 'Spain', 'Italy']));
+	// Auto-select top 5 on first load
+	$effect(() => {
+		if (allCountries.length && selectedCountries.size === 0) {
+			selectedCountries = new Set(allCountries.slice(0, 5).map((c) => c.name));
+		}
+	});
 
-	// Get filtered data based on selection
 	const filteredData = $derived(allCountries.filter((c) => selectedCountries.has(c.name)));
 
-	// // Container dimensions
-	// let containerWidth = $derived(containerEl?.clientWidth);
-	// let containerHeight = $derived(containerEl?.clientHeight);
-
-	// --- Dimensions ---
-	let W = $state(1000);
-	let H = $state(550);
-	const margin = { top: 40, right: 40, bottom: 40, left: 100 };
+	let W = $state(600);
+	let H = $state(400);
+	const margin = { top: 40, right: 40, bottom: 40, left: 110 };
 	const innerW = $derived(Math.max(W - margin.left - margin.right, 1));
 	const innerH = $derived(Math.max(H - margin.top - margin.bottom, 1));
 
-	// --- Colors ---
 	const BAR_COLOR = '#4f8ef7';
 	const LINE_COLOR = '#f7694f';
 	const AXIS_COLOR = '#555';
 	const GRID_COLOR = '#e5e7eb';
 	const LABEL_COLOR = '#374151';
+	const DOT_HOVER_COLOR = '#c0392b';
 
-	// --- Reactive draw on view or data change ---
 	$effect(() => {
 		if (!svgEl) return;
 		if (view === 'bar') drawBar();
@@ -85,18 +101,15 @@
 
 	$effect(() => {
 		if (!containerEl) return;
-
 		const ro = new ResizeObserver((entries) => {
 			const { width, height } = entries[0].contentRect;
 			W = Math.max(width, 1);
 			H = Math.max(height, 1);
 		});
-
 		ro.observe(containerEl);
 		return () => ro.disconnect();
 	});
 
-	// --- Draw helpers ---
 	function clearSvg() {
 		if (!svgEl) return;
 		d3.select(svgEl).selectAll('*').remove();
@@ -111,10 +124,34 @@
 			.attr('transform', `translate(${margin.left},${margin.top})`);
 	}
 
-	function addGridLines(
-		g: d3.Selection<SVGGElement, unknown, null, undefined>,
-		xScale: d3.ScaleLinear<number, number>
-	) {
+	function drawBar() {
+		clearSvg();
+		const g = baseGroup();
+		const data = filteredData;
+
+		if (!data.length) {
+			g.append('text')
+				.attr('x', innerW / 2)
+				.attr('y', innerH / 2)
+				.attr('text-anchor', 'middle')
+				.attr('fill', '#9ca3af')
+				.attr('font-size', '14px')
+				.text('Select countries to display');
+			return;
+		}
+
+		const xScale = d3
+			.scaleLinear()
+			.domain([0, d3.max(data, (d) => d.value)! * 1.15])
+			.range([0, innerW]);
+
+		const yScale = d3
+			.scaleBand()
+			.domain(data.map((d) => d.name))
+			.range([0, innerH])
+			.padding(0.35);
+
+		// Grid
 		g.append('g')
 			.attr('class', 'grid')
 			.call(
@@ -127,40 +164,9 @@
 			.selectAll('line')
 			.attr('stroke', GRID_COLOR)
 			.attr('stroke-dasharray', '4,3');
-	}
 
-	// --- Horizontal Bar chart ---
-	function drawBar() {
-		clearSvg();
-		const g = baseGroup();
-		const data = filteredData;
-
-		if (data.length === 0) {
-			g.append('text')
-				.attr('x', innerW / 2)
-				.attr('y', innerH / 2)
-				.attr('text-anchor', 'middle')
-				.attr('fill', '#9ca3af')
-				.attr('font-size', '16px')
-				.text('Select countries to display');
-			return;
-		}
-
-		const xScale = d3
-			.scaleLinear()
-			.domain([0, d3.max(data, (d) => d.population)! * 1.15])
-			.range([0, innerW]);
-
-		const yScale = d3
-			.scaleBand()
-			.domain(data.map((d) => d.name))
-			.range([0, innerH])
-			.padding(0.35);
-
-		addGridLines(g, xScale);
-
-		// Bars with enter animation
-		g.selectAll<SVGRectElement, CountryData>('rect.bar')
+		// Bars
+		g.selectAll<SVGRectElement, (typeof data)[0]>('rect.bar')
 			.data(data, (d: any) => d.name)
 			.join(
 				(enter) =>
@@ -180,21 +186,10 @@
 			.transition()
 			.duration(600)
 			.ease(d3.easeCubicOut)
-			.attr('width', (d) => xScale(d.population));
+			.attr('width', (d) => xScale(d.value));
 
-		function getLabelPlacement(population: number) {
-			const barWidth = xScale(population);
-			const MIN_WIDTH = 80;
-			const isInside = barWidth > MIN_WIDTH;
-
-			return {
-				x: isInside ? 8 : barWidth + 8,
-				fill: isInside ? 'white' : LABEL_COLOR,
-				textAnchor: 'start'
-			};
-		}
-		// Value labels inside or outside bars based on bar width
-		g.selectAll<SVGTextElement, CountryData>('text.val')
+		// Value labels
+		g.selectAll<SVGTextElement, (typeof data)[0]>('text.val')
 			.data(data, (d: any) => d.name)
 			.join(
 				(enter) =>
@@ -211,14 +206,14 @@
 			.delay(400)
 			.duration(300)
 			.attr('opacity', 1)
-			.attr('x', (d) => getLabelPlacement(d.population).x)
-			.attr('fill', (d) => getLabelPlacement(d.population).fill)
-			.attr('text-anchor', (d) => getLabelPlacement(d.population).textAnchor)
-			.attr('font-size', '13px')
+			.attr('x', (d) => (xScale(d.value) > 80 ? 8 : xScale(d.value) + 8))
+			.attr('fill', (d) => (xScale(d.value) > 80 ? 'white' : LABEL_COLOR))
+			.attr('text-anchor', 'start')
+			.attr('font-size', '12px')
 			.attr('font-weight', '600')
-			.text((d) => formatLargeNumbers(Number(d.population)).toLocaleString());
+			.text((d) => formatLargeNumbers(d.value));
 
-		// Y Axis (country names on left)
+		// Y Axis
 		g.append('g')
 			.call(d3.axisLeft(yScale).tickSize(0))
 			.call((sel) => {
@@ -226,19 +221,19 @@
 				sel
 					.selectAll('text')
 					.attr('fill', LABEL_COLOR)
-					.attr('font-size', '13px')
+					.attr('font-size', '12px')
 					.attr('text-anchor', 'end')
 					.attr('dx', '-8px');
 			});
 
-		// X Axis (bottom)
+		// X Axis
 		g.append('g')
 			.attr('transform', `translate(0,${innerH})`)
 			.call(
 				d3
 					.axisBottom(xScale)
-					.ticks(6)
-					.tickFormat((d) => d.toLocaleString())
+					.ticks(5)
+					.tickFormat((d) => formatLargeNumbers(Number(d)))
 			)
 			.call((sel) => {
 				sel.select('.domain').attr('stroke', AXIS_COLOR);
@@ -246,35 +241,42 @@
 				sel
 					.selectAll('text')
 					.attr('fill', LABEL_COLOR)
-					.attr('font-size', '13px')
+					.attr('font-size', '12px')
 					.attr('dy', '1.4em');
 			});
 
-		// Chart title
+		// Title
 		g.append('text')
 			.attr('x', innerW / 2)
 			.attr('y', -16)
 			.attr('text-anchor', 'middle')
 			.attr('fill', LABEL_COLOR)
-			.attr('font-size', '16px')
+			.attr('font-size', '14px')
 			.attr('font-weight', '700')
-			.text('Population by Country — 2024');
-
-		// X-axis label
-		g.append('text')
-			.attr('x', innerW / 2)
-			.attr('y', innerH + 50)
-			.attr('text-anchor', 'middle')
-			.attr('fill', LABEL_COLOR)
-			.attr('font-size', '13px')
-			.text('Population');
+			.text(`${selectedAnalysis.name} by Country`);
 	}
 
-	// --- Line chart: one country over time ---
 	function drawLine() {
 		clearSvg();
 		const g = baseGroup();
-		const data = tempDataTimeSeries.yearOverYear;
+		const ts = timeSeriesData;
+
+		if (!ts) {
+			g.append('text')
+				.attr('x', innerW / 2)
+				.attr('y', innerH / 2)
+				.attr('text-anchor', 'middle')
+				.attr('fill', '#9ca3af')
+				.attr('font-size', '14px')
+				.text(
+					selectedCountryName
+						? `No time series data for ${selectedCountryName}`
+						: 'Click a country on the map to view trend'
+				);
+			return;
+		}
+
+		const data = ts.yearOverYear;
 
 		const xScale = d3
 			.scaleLinear()
@@ -283,10 +285,10 @@
 
 		const yScale = d3
 			.scaleLinear()
-			.domain([0, d3.max(data, (d) => d.value)! * 1.15])
+			.domain([0, d3.max(data, (d) => d.value ?? d.visitors ?? d.percentage)! * 1.15])
 			.range([innerH, 0]);
 
-		// Grid lines
+		// Grid
 		g.append('g')
 			.attr('class', 'grid')
 			.call(
@@ -300,23 +302,21 @@
 			.attr('stroke', GRID_COLOR)
 			.attr('stroke-dasharray', '4,3');
 
-		// Area fill under line
+		// Area
 		const area = d3
 			.area<{ year: number; value: number }>()
 			.x((d) => xScale(d.year))
 			.y0(innerH)
 			.y1((d) => yScale(d.value))
 			.curve(d3.curveMonotoneX);
+		g.append('path').datum(data).attr('fill', LINE_COLOR).attr('opacity', 0.1).attr('d', area);
 
-		g.append('path').datum(data).attr('fill', LINE_COLOR).attr('opacity', 0.12).attr('d', area);
-
-		// Line path with draw animation
+		// Line
 		const line = d3
 			.line<{ year: number; value: number }>()
 			.x((d) => xScale(d.year))
 			.y((d) => yScale(d.value))
 			.curve(d3.curveMonotoneX);
-
 		const path = g
 			.append('path')
 			.datum(data)
@@ -324,18 +324,18 @@
 			.attr('stroke', LINE_COLOR)
 			.attr('stroke-width', 2.5)
 			.attr('d', line);
-
-		const totalLength = (path.node() as SVGPathElement).getTotalLength();
+		const len = (path.node() as SVGPathElement).getTotalLength();
 		path
-			.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
-			.attr('stroke-dashoffset', totalLength)
+			.attr('stroke-dasharray', `${len} ${len}`)
+			.attr('stroke-dashoffset', len)
 			.transition()
 			.duration(800)
 			.ease(d3.easeCubicOut)
 			.attr('stroke-dashoffset', 0);
 
-		// Dots
-		g.selectAll<SVGCircleElement, { year: number; value: number }>('circle')
+		// Dots — label only on hover
+		const dots = g
+			.selectAll<SVGCircleElement, { year: number; value: number }>('circle')
 			.data(data)
 			.join('circle')
 			.attr('cx', (d) => xScale(d.year))
@@ -344,36 +344,67 @@
 			.attr('fill', LINE_COLOR)
 			.attr('stroke', 'white')
 			.attr('stroke-width', 2)
+			.style('cursor', 'pointer')
 			.transition()
 			.delay(700)
 			.duration(300)
 			.attr('r', 5);
 
-		// Value labels above dots
-		g.selectAll<SVGTextElement, { year: number; value: number }>('text.val')
-			.data(data)
-			.join('text')
-			.attr('class', 'val')
-			.attr('x', (d) => xScale(d.year))
-			.attr('y', (d) => yScale(d.value) - 12)
+		// Hover label (single element, repositioned on hover)
+		const hoverLabel = g
+			.append('text')
+			.attr('class', 'hover-label')
 			.attr('text-anchor', 'middle')
-			.attr('fill', LABEL_COLOR)
 			.attr('font-size', '12px')
-			.attr('font-weight', '600')
+			.attr('font-weight', '700')
+			.attr('fill', LABEL_COLOR)
 			.attr('opacity', 0)
-			.text((d) => d.value.toLocaleString())
-			.transition()
-			.delay(900)
-			.duration(300)
-			.attr('opacity', 1);
+			.attr('pointer-events', 'none');
 
-		// X Axis
+		// Invisible wider hit targets for easier hover
+		g.selectAll<SVGCircleElement, { year: number; value: number }>('circle.hit')
+			.data(data)
+			.join('circle')
+			.attr('class', 'hit')
+			.attr('cx', (d) => xScale(d.year))
+			.attr('cy', (d) => yScale(d.value))
+			.attr('r', 14)
+			.attr('fill', 'transparent')
+			.on('mouseenter', function (_, d) {
+				d3.select(this.parentNode as any)
+					.selectAll<SVGCircleElement, { year: number; value: number }>('circle:not(.hit)')
+					.filter((c) => c.year === d.year)
+					.attr('fill', DOT_HOVER_COLOR)
+					.attr('r', 7);
+
+				hoverLabel
+					.attr('x', xScale(d.year))
+					.attr('y', yScale(d.value) - 14)
+					.text(formatLargeNumbers(d.value))
+					.attr('opacity', 1);
+			})
+			.on('mouseleave', function (_, d) {
+				d3.select(this.parentNode as any)
+					.selectAll<SVGCircleElement, { year: number; value: number }>('circle:not(.hit)')
+					.filter((c) => c.year === d.year)
+					.attr('fill', LINE_COLOR)
+					.attr('r', 5);
+
+				hoverLabel.attr('opacity', 0);
+			});
+
+		// X Axis — every 2nd or 3rd year
+		const tickStep = data.length > 10 ? 3 : 2;
+		const tickYears = data
+			.map((d) => d.year)
+			.filter((_, i) => i % tickStep === 0 || i === data.length - 1);
+
 		g.append('g')
 			.attr('transform', `translate(0,${innerH})`)
 			.call(
 				d3
 					.axisBottom(xScale)
-					.ticks(data.length)
+					.tickValues(tickYears)
 					.tickFormat((d) => String(d))
 					.tickSize(0)
 			)
@@ -382,7 +413,7 @@
 				sel
 					.selectAll('text')
 					.attr('fill', LABEL_COLOR)
-					.attr('font-size', '13px')
+					.attr('font-size', '12px')
 					.attr('dy', '1.4em');
 			});
 
@@ -391,58 +422,55 @@
 			.call(
 				d3
 					.axisLeft(yScale)
-					.ticks(6)
-					.tickFormat((d) => d.toLocaleString())
+					.ticks(5)
+					.tickFormat((d) => formatLargeNumbers(Number(d)))
 			)
 			.call((sel) => {
 				sel.select('.domain').attr('stroke', AXIS_COLOR);
 				sel.selectAll('.tick line').attr('stroke', AXIS_COLOR);
-				sel.selectAll('text').attr('fill', LABEL_COLOR).attr('font-size', '13px');
+				sel.selectAll('text').attr('fill', LABEL_COLOR).attr('font-size', '12px');
 			});
 
-		// Chart title
+		// Title
 		g.append('text')
 			.attr('x', innerW / 2)
 			.attr('y', -16)
 			.attr('text-anchor', 'middle')
 			.attr('fill', LABEL_COLOR)
-			.attr('font-size', '16px')
+			.attr('font-size', '14px')
 			.attr('font-weight', '700')
-			.text(`${tempDataTimeSeries.country} — Year-over-Year`);
-
-		// Y-axis label
-		g.append('text')
-			.attr('transform', 'rotate(-90)')
-			.attr('x', -innerH / 2)
-			.attr('y', -60)
-			.attr('text-anchor', 'middle')
-			.attr('fill', LABEL_COLOR)
-			.attr('font-size', '13px')
-			.text('Value');
+			.text(`${ts.country} — ${selectedAnalysis.name}`);
 	}
 
-	// Toggle country selection
 	function toggleCountry(name: string) {
-		const newSet = new Set(selectedCountries);
-		if (newSet.has(name)) {
-			newSet.delete(name);
-		} else {
-			newSet.add(name);
-		}
-		selectedCountries = newSet;
+		const s = new Set(selectedCountries);
+		s.has(name) ? s.delete(name) : s.add(name);
+		selectedCountries = s;
+	}
+
+	function selectAll() {
+		selectedCountries = new Set(allCountries.map((c) => c.name));
+	}
+
+	function clearAll() {
+		selectedCountries = new Set();
 	}
 </script>
 
 <div class="graphWindow">
 	<div class="graphContainer" bind:this={containerEl}>
 		<div class="content">
-			<!-- Chart -->
 			<svg bind:this={svgEl}></svg>
 
-			<!-- Checkbox list (only show in bar view) -->
 			{#if view === 'bar'}
 				<div class="sidebar">
-					<h3>Countries</h3>
+					<div class="sidebar-header">
+						<h3>Countries</h3>
+						<div class="sidebar-actions">
+							<button onclick={selectAll}>All</button>
+							<button onclick={clearAll}>None</button>
+						</div>
+					</div>
 					<div class="checkboxList">
 						{#each allCountries as country (country.name)}
 							<label class="checkboxItem">
@@ -451,7 +479,8 @@
 									checked={selectedCountries.has(country.name)}
 									onchange={() => toggleCountry(country.name)}
 								/>
-								<span>{country.name}</span>
+								<span class="country-name">{country.name}</span>
+								<span class="country-val">{formatLargeNumbers(country.value)}</span>
 							</label>
 						{/each}
 					</div>
@@ -463,21 +492,18 @@
 
 <style>
 	.graphWindow {
-		/* position: absolute; */
 		width: 100%;
 		height: 100%;
-		/* z-index: 40; */
+		overflow: hidden;
 		display: flex;
-		justify-content: center;
-		align-items: center;
 	}
 
 	.graphContainer {
 		width: 100%;
 		height: 100%;
 		border-radius: 8px;
-		background-color: white;
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+		background: white;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
@@ -487,82 +513,115 @@
 		display: flex;
 		flex: 1;
 		overflow: hidden;
+		min-height: 0;
 	}
 
 	svg {
 		flex: 1;
-		width: 100%;
+		min-width: 0;
+		overflow: visible;
 	}
 
 	.sidebar {
-		width: 180px;
+		width: 200px;
 		border-left: 1px solid #e5e7eb;
-		padding: 16px;
-		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
 		background: #fafbfc;
+		overflow: hidden;
 	}
 
-	.sidebar h3 {
-		margin: 0 0 12px 0;
-		font-size: 13px;
+	.sidebar-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 12px 12px 8px;
+		flex-shrink: 0;
+	}
+
+	.sidebar-header h3 {
+		margin: 0;
+		font-size: 11px;
 		font-weight: 700;
 		color: #374151;
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
 	}
 
+	.sidebar-actions {
+		display: flex;
+		gap: 4px;
+	}
+	.sidebar-actions button {
+		font-size: 11px;
+		padding: 2px 7px;
+		border-radius: 4px;
+		border: 1px solid #e5e7eb;
+		background: white;
+		cursor: pointer;
+		color: #555;
+	}
+	.sidebar-actions button:hover {
+		background: #f0f0f0;
+	}
+
 	.checkboxList {
+		flex: 1;
+		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		padding: 0 6px 8px;
+		gap: 1px;
 	}
 
 	.checkboxItem {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 7px;
 		cursor: pointer;
-		padding: 6px 8px;
-		border-radius: 4px;
-		transition: background 0.15s ease;
+		padding: 5px 6px;
+		border-radius: 5px;
+		transition: background 0.1s;
 		user-select: none;
 	}
-
 	.checkboxItem:hover {
-		background: #e5e7eb;
+		background: #efefef;
 	}
-
 	.checkboxItem input {
 		cursor: pointer;
 		accent-color: #4f8ef7;
+		flex-shrink: 0;
 	}
 
-	.checkboxItem span {
-		font-size: 13px;
+	.country-name {
+		flex: 1;
+		font-size: 12px;
 		color: #374151;
 		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
-
-	.checkboxItem input:checked + span {
+	.checkboxItem input:checked + .country-name {
 		color: #4f8ef7;
 		font-weight: 600;
 	}
 
-	/* Scrollbar styling */
-	.sidebar::-webkit-scrollbar {
-		width: 6px;
+	.country-val {
+		font-size: 11px;
+		color: #9ca3af;
+		font-variant-numeric: tabular-nums;
+		flex-shrink: 0;
 	}
 
-	.sidebar::-webkit-scrollbar-track {
+	.checkboxList::-webkit-scrollbar {
+		width: 4px;
+	}
+	.checkboxList::-webkit-scrollbar-track {
 		background: transparent;
 	}
-
-	.sidebar::-webkit-scrollbar-thumb {
+	.checkboxList::-webkit-scrollbar-thumb {
 		background: #d1d5db;
-		border-radius: 3px;
-	}
-
-	.sidebar::-webkit-scrollbar-thumb:hover {
-		background: #9ca3af;
+		border-radius: 2px;
 	}
 </style>

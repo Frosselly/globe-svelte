@@ -1,0 +1,36 @@
+[
+	{ "name": "Population", "key": "metadata.population", "timeSeries": true },
+	{ "name": "GDP", "key": "economyInfo.gdp.current", "timeSeries": true },
+	{ "name": "Area", "key": "metadata.area", "timeSeries": false },
+
+	{ "name": "Annual Visitors", "key": "tourismInfo.annualVisitors.current", "timeSeries": true },
+	{ "name": "Tourism Revenue", "key": "tourismInfo.revenueFromVisitors", "timeSeries": false },
+	{ "name": "UNESCO Sites", "key": "tourismInfo.unescoHeritageSites", "timeSeries": false },
+	{ "name": "Safety Score", "key": "tourismInfo.safetyScore", "timeSeries": false },
+
+	{ "name": "Per Capita GDP", "key": "economyInfo.perCapitaGDP", "timeSeries": true },
+	{ "name": "Inflation", "key": "economyInfo.inflation.current", "timeSeries": false },
+
+	{ "name": "Exports", "key": "economyInfo.trade.exports", "timeSeries": true },
+	{ "name": "Imports", "key": "economyInfo.trade.imports", "timeSeries": true },
+	{ "name": "Trade Balance", "key": "economyInfo.trade.balance", "timeSeries": false },
+
+	{ "name": "Average Salary", "key": "economyInfo.labourMarket.averageSalary", "timeSeries": true },
+	{ "name": "Minimum Wage", "key": "economyInfo.labourMarket.minimumWage", "timeSeries": true },
+	{ "name": "Work Week Hours", "key": "economyInfo.labourMarket.avgWorkWeek", "timeSeries": true },
+
+	{
+		"name": "Renewable Energy Growth",
+		"key": "energyInfo.renewableGrowth.current",
+		"timeSeries": true
+	},
+
+	{ "name": "Total Energy Production", "key": "energyInfo.production.current", "timeSeries": true },
+	{
+		"name": "Total Energy Consumption",
+		"key": "energyInfo.consumption.current",
+		"timeSeries": true
+	},
+
+	{ "name": "CO2 Emissions Total", "key": "energyInfo.co2Emissions.current", "timeSeries": false }
+]

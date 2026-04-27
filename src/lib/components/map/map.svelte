@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './styles.css';
+	import analysisOptions from '$lib/assets/analysisOptions.json';
 	import {
 		mapState,
 		setColorScale,
@@ -10,7 +11,6 @@
 	} from './mapStore.svelte.ts';
 	import {
 		loadGeoData,
-		loadValueData,
 		mergeDataWithGeo,
 		calculateColorScale,
 		createColorExpression,
@@ -26,7 +26,7 @@
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import * as pmtiles from 'pmtiles';
-	import { mount, unmount, onDestroy, onMount } from 'svelte'; // FIX: added unmount
+	import { mount, unmount, onDestroy, onMount, untrack } from 'svelte'; // FIX: added unmount
 	import type { DataSource } from '$lib/types';
 	import { countriesStore, selectedCountryStore } from '../../../routes/store.svelte.ts';
 
@@ -47,10 +47,10 @@
 	let currentPopup: maplibregl.Popup | null = $state(null);
 	let currentComponent: any = null;
 
-	let deck: any = null;
-	let scale: any = null;
-	let geoData: any = null;
-	let valueData: any = null;
+	let deck: any = $state(null);
+	let scale: any = $state(null);
+	let geoData: any = $state(null);
+	let valueData: any = $state(null);
 
 	// FIX: guard so setupMapInteractions is only registered once
 	let interactionsSetup = false;
@@ -77,15 +77,19 @@
 		}
 	};
 
+	// Single effect — only tracks currentDataset, display mode handled inside
 	$effect(() => {
-		if (mapState.currentDataset) {
-			console.log('changes here', mapState.currentDataset);
-			setDisplayMode('flat');
-			loadDataset(mapState.currentDataset);
-		} else {
-			setDisplayMode('none');
-			loadDataset(mapState.currentDataset);
-		}
+		const dataset = mapState.currentDataset;
+		const mode = mapState.displayMode;
+		if (!map) return;
+
+		untrack(() => {
+			if (dataset) {
+				loadDataset(dataset, mode);
+			} else {
+				loadDataset(null, mode);
+			}
+		});
 	});
 
 	onMount(() => {
@@ -158,18 +162,15 @@
 			}, 200);
 		});
 	}
-
-	async function loadDataset(dataSourceKey: string) {
+	async function loadDataset(keyPath: string | null, mode: 'flat' | 'columns' | 'none') {
 		try {
-			const result = await prepareDataset(dataSourceKey, dataSources, {
+			const result = await prepareDataset(keyPath, countriesStore.countries, {
 				loadGeoData,
-				loadValueData,
-				mergeData: mergeDataWithGeo,
-				calculateScale: calculateColorScale,
 				updateMapSource: (data) => map.getSource('countries').setData(data),
-				updateStores: (dataset, scale) => {
-					setCurrentDataset(dataset);
-					setColorScale(scale);
+				updateStores: (dataset, newScale) => {
+					// plain assignment, no setCurrentDataset/setColorScale to avoid re-triggering
+					mapState.currentDataset = dataset;
+					mapState.colorScale = newScale ?? { min: 0, max: 0 };
 				}
 			});
 
@@ -177,7 +178,7 @@
 			valueData = result.valueData;
 			scale = result.scale;
 
-			await onDataDisplayChange(mapState.displayMode);
+			await onDataDisplayChange(mode);
 		} catch (error) {
 			console.error('Error loading dataset:', error);
 		}
@@ -185,43 +186,49 @@
 
 	async function onDataDisplayChange(mode: 'flat' | 'columns' | 'none') {
 		try {
-			if (mode !== 'columns' && deck) {
-				cleanupDeckGL(deck);
+			if (deck) {
+				try {
+					deck._map?.removeControl(deck);
+					deck.finalize?.();
+				} catch (e) {
+					console.warn('deck cleanup:', e);
+				}
 				deck = null;
-				setDeckInstance(null);
+				mapState.deckInstance = null; // direct write, no setter
 			}
 
 			if (mode === 'none') {
 				setupMapLayers(map, [0.5, 0]);
-				setupMapInteractionsOnce(); // FIX: guarded registration
+				setupMapInteractionsOnce();
 			} else if (mode === 'flat') {
+				if (!scale) {
+					setupMapLayers(map, [0.5, 0]);
+					setupMapInteractionsOnce();
+					return;
+				}
 				const colorExpression = createColorExpression(scale.min, scale.max);
-				console.log('flat: ' + mapState.currentDataset);
-				setupFlatDisplay(map, colorExpression, dataSources[mapState.currentDataset]?.value);
-				setupMapInteractionsOnce(); // FIX: guarded registration
+				const label =
+					analysisOptions.find((o) => o.key === mapState.currentDataset)?.name ??
+					mapState.currentDataset;
+				setupFlatDisplay(map, colorExpression, label);
+				setupMapInteractionsOnce();
 
 				const canvas = document.getElementById('deck-canvas');
-				if (canvas) {
-					canvas.style.display = 'none';
-				}
+				if (canvas) canvas.style.display = 'none';
 			} else if (mode === 'columns') {
-				if (!valueData || valueData.length === 0) {
-					console.warn('No data available for columns display');
+				if (!valueData?.length || !scale) {
+					console.warn('No data for columns display');
 					return;
 				}
 
-				if (map.getLayer('state-fills')) {
-					map.setLayoutProperty('state-fills', 'visibility', 'none');
-				}
-				if (map.getLayer('state-borders')) {
+				if (map.getLayer('state-fills')) map.setLayoutProperty('state-fills', 'visibility', 'none');
+				if (map.getLayer('state-borders'))
 					map.setLayoutProperty('state-borders', 'visibility', 'none');
-				}
 
-				deck = setupColumnsDisplay(map, geoData, valueData, scale);
-				setDeckInstance(deck);
+				const newDeck = setupColumnsDisplay(map, geoData, valueData, scale);
+				deck = newDeck;
+				mapState.deckInstance = newDeck; // direct write
 			}
-
-			// FIX: removed the erroneous setDeckInstance(mode) that was here
 		} catch (error) {
 			console.error('Error changing display mode:', error);
 		}

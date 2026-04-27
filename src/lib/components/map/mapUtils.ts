@@ -10,35 +10,6 @@ export async function loadGeoData(url: string) {
 	return response.json();
 }
 
-export async function loadValueData(dataSource: any) {
-	// Handle different data sources (API, local, etc.)
-	if (typeof dataSource === 'string') {
-		const response = await fetch(dataSource);
-		return response.json();
-	}
-	return dataSource;
-}
-
-export function mergeDataWithGeo(geoData: any, valueData: any) {
-	const valueMap = Object.fromEntries(valueData.map((item: any) => [item.iso3, item.value]));
-
-	geoData.features.forEach((feature: any) => {
-		const iso3 = feature.properties.adm0_a3;
-		feature.properties.value = valueMap[iso3] ?? null;
-	});
-
-	return geoData;
-}
-
-export function calculateColorScale(valueData: any) {
-	const values = valueData.map((d: any) => d.value).filter((v: any) => v !== null);
-
-	return {
-		min: Math.min(...values),
-		max: Math.max(...values)
-	};
-}
-
 export function createColorExpression(minValue: number, maxValue: number) {
 	return [
 		'case',
@@ -165,70 +136,85 @@ export function getColumnColor(value: number, maxValue: number) {
 }
 
 export function setupColumnsDisplay(map: any, geoData: any, valueData: any, scale: any) {
-	// Remove flat layers
-	if (map.getLayer('state-fills')) {
-		map.removeLayer('state-fills');
-	}
-	if (map.getLayer('state-borders')) {
-		map.removeLayer('state-borders');
-	}
+	if (map.getLayer('state-fills')) map.removeLayer('state-fills');
+	if (map.getLayer('state-borders')) map.removeLayer('state-borders');
 
-	// Create column data from GeoJSON using label coordinates
+	// Build lookup by both iso3 and iso2 for maximum match coverage
+	const byIso3 = Object.fromEntries(valueData.map((d: any) => [d.iso3, d]));
+	const byIso2 = Object.fromEntries(valueData.map((d: any) => [d.iso2, d]));
+
 	const columnData = geoData.features
 		.map((feature: any) => {
 			const iso3 = feature.properties.adm0_a3;
-			const valueItem = valueData.find((d: any) => d.iso3 === iso3);
+			const iso2 = feature.id ?? feature.properties.iso_a2_eh;
+			const item = byIso3[iso3] ?? byIso2[iso2];
 
-			if (!valueItem || !feature.properties.label_x || !feature.properties.label_y) {
-				return null;
-			}
+			if (!item) return null;
+
+			const labelX = feature.properties.label_x;
+			const labelY = feature.properties.label_y;
+			if (labelX == null || labelY == null) return null;
 
 			return {
-				position: [feature.properties.label_x, feature.properties.label_y],
-				height: valueItem.value / 100,
-				value: valueItem.value,
-				iso3: iso3,
+				position: [labelX, labelY] as [number, number],
+				height: Math.max(item.value / scale.max, 0.01) * 500000,
+				value: item.value,
+				iso3,
 				name: feature.properties.name || iso3
 			};
 		})
-		.filter((d: any) => d !== null);
+		.filter(Boolean);
 
-	// Create the layer
+	console.log(`[columns] ${columnData.length} columns from ${valueData.length} value entries`);
+
+	if (!columnData.length) {
+		console.warn('[columns] No column data — check iso3/iso2 matching');
+		return null;
+	}
+
 	const columnLayer = new ColumnLayer({
 		id: 'column-layer',
 		data: columnData,
 		diskResolution: 12,
-		radius: 50000,
+		radius: 40000,
+		extruded: true,
 		getPosition: (d: any) => d.position,
 		getElevation: (d: any) => d.height,
 		getFillColor: (d: any) => getColumnColor(d.value, scale.max),
 		pickable: true,
+		autoHighlight: true,
+		highlightColor: [255, 255, 255, 80],
 		onHover: (info: any) => {
 			if (info.object) {
-				console.log(`${info.object.name}: ${info.object.value}`);
+				map.getCanvas().style.cursor = 'pointer';
+			} else {
+				map.getCanvas().style.cursor = '';
 			}
 		},
 		onClick: (info: any) => {
 			if (info.object) {
-				console.log('Clicked:', info.object);
+				console.log('Clicked column:', info.object.name, info.object.value);
 			}
 		}
 	});
 
-	// Create MapboxOverlay instead of standalone Deck
 	const overlay = new MapboxOverlay({
+		interleaved: false,
 		layers: [columnLayer]
 	});
 
-	// Add overlay to map
 	map.addControl(overlay);
-
 	return overlay;
 }
 
 export function cleanupDeckGL(overlay: any) {
-	if (overlay) {
+	if (!overlay) return;
+	try {
+		// MapboxOverlay is removed from the map via removeControl
+		overlay._map?.removeControl(overlay);
 		overlay.finalize?.();
+	} catch (e) {
+		console.warn('cleanupDeckGL error:', e);
 	}
 }
 
@@ -269,44 +255,79 @@ export function setupMapInteractions(map: any, onCountryClick: Function, closePo
 	return { hoveredStateId };
 }
 
+// New: extract nested value from a dot-path key like "demographics.population.value"
+export function getNestedValue(obj: any, path: string): number | null {
+	const val = path.split('.').reduce((acc, key) => acc?.[key], obj);
+	return val != null && !isNaN(Number(val)) ? Number(val) : null;
+}
+
+// New: build valueData from countriesStore instead of fetching
+export function extractValueDataFromStore(
+	countries: Record<string, any>,
+	keyPath: string
+): { iso2: string; iso3: string; value: number }[] {
+	return Object.entries(countries)
+		.map(([iso2, country]) => {
+			const value = getNestedValue(country, keyPath);
+			return value != null ? { iso2, iso3: country?.metadata?.iso3 ?? iso2, value } : null;
+		})
+		.filter(Boolean) as { iso2: string; iso3: string; value: number }[];
+}
+
+export function mergeDataWithGeo(
+	geoData: any,
+	valueData: { iso2: string; iso3: string; value: number }[]
+) {
+	const byIso3 = Object.fromEntries(valueData.map((d) => [d.iso3, d.value]));
+	const byIso2 = Object.fromEntries(valueData.map((d) => [d.iso2, d.value]));
+
+	geoData.features.forEach((feature: any) => {
+		const iso3 = feature.properties.adm0_a3;
+		const iso2 = feature.id ?? feature.properties.iso_a2_eh;
+		feature.properties.value = byIso3[iso3] ?? byIso2[iso2] ?? null;
+	});
+
+	return geoData;
+}
+
+export function calculateColorScale(valueData: { value: number }[]) {
+	const values = valueData.map((d) => d.value).filter((v) => v != null);
+	return {
+		min: Math.min(...values),
+		max: Math.max(...values)
+	};
+}
+
+// Rewritten prepareDataset — no fetching, reads from store
 export async function prepareDataset(
-	dataSourceKey: string,
-	dataSources: Record<string, DataSource>,
+	keyPath: string | null,
+	countries: Record<string, any>,
 	callbacks: {
 		loadGeoData: (url: string) => Promise<any>;
-		loadValueData: (url: string) => Promise<any>;
-		mergeData: (geo: any, value: any) => any;
-		calculateScale: (value: any) => any;
 		updateMapSource: (data: any) => void;
 		updateStores: (dataset: string, scale: any) => void;
 	}
 ) {
 	const geoData = await callbacks.loadGeoData('http://localhost:5173/countries.geo.json');
 
-	if (!dataSourceKey || !dataSources[dataSourceKey]) {
+	if (!keyPath) {
 		callbacks.updateMapSource(geoData);
 		return { geoData, valueData: [], scale: null };
 	}
 
-	const { link, key, value } = dataSources[dataSourceKey];
-	const valueDataRaw = await callbacks.loadValueData(link);
+	const valueData = extractValueDataFromStore(countries, keyPath);
 
-	const valueData = valueDataRaw.map((d) => ({
-		iso3: d[key],
-		value: d[value]
-	}));
-
-	if (!valueData || valueData.length === 0) {
-		console.warn(`No data available for dataset: ${dataSourceKey}`);
+	if (!valueData.length) {
+		console.warn(`No data found for key path: ${keyPath}`);
 		callbacks.updateMapSource(geoData);
 		return { geoData, valueData: [], scale: null };
 	}
 
-	const mergedData = callbacks.mergeData(geoData, valueData);
-	const scale = callbacks.calculateScale(valueData);
+	const mergedData = mergeDataWithGeo(geoData, valueData);
+	const scale = calculateColorScale(valueData);
 
 	callbacks.updateMapSource(mergedData);
-	callbacks.updateStores(dataSourceKey, scale);
+	callbacks.updateStores(keyPath, scale);
 
 	return { geoData, valueData, scale };
 }

@@ -6,25 +6,9 @@ export let mapState = $state({
 	deckInstance: null as any,
 	displayMode: 'none' as 'none' | 'flat' | 'columns',
 	isLoading: false,
-	error: null as string | null
+	error: null as string | null,
+	isHidden: false
 });
-
-// Optional: Derived state if needed
-export function getIsLoading() {
-	return mapState.isLoading;
-}
-
-export function getCurrentDataset() {
-	return mapState.currentDataset;
-}
-
-export function getColorScale() {
-	return mapState.colorScale;
-}
-
-export function getDisplayMode() {
-	return mapState.displayMode;
-}
 
 // Mutators (optional, but useful for encapsulation)
 export function setMapInstance(value: any) {
@@ -53,4 +37,8 @@ export function setIsLoading(value: boolean) {
 
 export function setError(value: string | null) {
 	mapState.error = value;
+}
+
+export function setIsHidden(value: boolean) {
+	mapState.isHidden = value;
 }
