@@ -2,7 +2,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import globeIcon from '$lib/assets/globe-icon.svg';
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
-	import { modeState, setSelectedMode } from './store.svelte.js';
+	import { modeState, setSelectedMode, setSelectedSidebar, sidebarState } from './store.svelte.js';
 
 	let { data, children } = $props();
 	let selectedMode = $derived(modeState.selected);
@@ -35,6 +35,10 @@
 		<!-- <a href="/auth/login">Auth</a> -->
 	</nav>
 	<nav>
+		<a href={'/userManagement'} class="btn btn-sm btn-default">Manage users</a>
+		<a href={'/'} class="btn btn-sm btn-default">Map</a>
+	</nav>
+	<nav>
 		<div>
 			<button
 				class="btn btn-sm btn-default"
@@ -48,7 +52,12 @@
 				disabled={selectedMode === 'analysis'}
 				onclick={() => setSelectedMode('analysis')}>Analysis</button
 			>
-			<button class="btn btn-sm btn-default">Saved</button>
+			<button
+				class="btn btn-sm btn-default"
+				onclick={() =>
+					setSelectedSidebar(sidebarState.selected === 'saved' ? 'countryInfo' : 'saved')}
+				>Saved</button
+			>
 		</div>
 		<a href={link} class="btn btn-sm btn-primary">{loginState}</a>
 	</nav>
