@@ -19,9 +19,9 @@
 	import { getContext } from 'svelte';
 	import { countriesStore, modeState, selectedCountryStore } from '../../../routes/store.svelte';
 	import { formatLargeNumbers } from '$lib/utils/utils';
+	import Chat from '../chat.svelte';
 
-	let selectedTopic = $state('overview');
-	let { visible } = $props();
+	let { visible, selectedSidebar = 'countryInfo' } = $props();
 	// let countryData = $state(loadCountryData('FRA'));
 	// let countryData = $state({
 	// 	metadata: {
@@ -44,13 +44,31 @@
 		{ id: 'health', label: 'Health' }
 	];
 
-	function scrollToSection(id: string) {
-		selectedTopic = id;
-		const element = document.getElementById(id);
-		if (element) {
-			element.scrollIntoView({ behavior: 'smooth' });
+	// function scrollToSection(id: string) {
+	// 	selectedTopic = id;
+	// 	const element = document.getElementById(id);
+	// 	if (element) {
+	// 		element.scrollIntoView({ behavior: 'smooth' });
+	// 	}
+	// }
+
+	const userQueries = [
+		{
+			indicator: 'Population of Germany',
+			createdAt: '2024-12-02',
+			link: 'trend.population.DE?year=2024-2025'
+		},
+		{
+			indicator: 'Population of different countries in 2023',
+			createdAt: '2024-12-01',
+			link: 'compare.population.DE,FR,CH,US?year=2000-2025'
+		},
+		{
+			indicator: 'Population map in 2023',
+			createdAt: '2024-12-01',
+			link: 'map.population?year=2023'
 		}
-	}
+	];
 
 	$effect(() => {
 		if (selectedCountryStore.country)
@@ -60,102 +78,132 @@
 
 {#if visible}
 	<div class="content" in:fly={{ x: 300, duration: 300 }} out:fly={{ x: 300, duration: 300 }}>
-		<div class="drag-point">
-			<hr />
-		</div>
-		<br />
-		<section class="topicSection">
-			<div class="row">
-				{#if countryData}
-					<div class="row">
-						<figure class="country-flag">
-							<picture>
-								<img src="" alt="" />
-							</picture>
-						</figure>
-						<div>
-							<h2>{countryData?.metadata?.name.common}</h2>
-							<h3>{countryData?.metadata?.capital[0]}</h3>
-						</div>
-					</div>
-				{/if}
+		{#if selectedSidebar === 'countryInfo'}
+			<div class="drag-point">
+				<hr />
 			</div>
-			<hr />
-			<div class="carousel">
-				<div
-					class="card card-selectable flex"
-					onclick={() => {
-						// switchDataset('population');
-						console.log('sidebar', mapState.currentDataset);
+			<br />
+			<section class="topicSection">
+				<div class="row">
+					{#if countryData}
+						<div class="row">
+							<figure class="country-flag">
+								<picture>
+									<img src="" alt="" />
+								</picture>
+							</figure>
+							<div>
+								<h2>{countryData?.metadata?.name.common}</h2>
+								<h3>{countryData?.metadata?.capital[0]}</h3>
+							</div>
+						</div>
+					{/if}
+				</div>
+				<hr />
+				<div class="carousel">
+					<div
+						class="card card-selectable flex"
+						onclick={() => {
+							// switchDataset('population');
+							console.log('sidebar', mapState.currentDataset);
 
-						if (mapState.currentDataset) {
-							setCurrentDataset('');
-						} else {
-							setCurrentDataset('economyInfo.gdp.current');
-						}
-					}}
-				>
-					<div>
-						<span><UserIcon size={16} /></span>
-						<span><b> Population</b></span>
-					</div>
-					<div><b>{formatLargeNumbers(Number(countryData?.metadata?.population))}</b></div>
-					<!-- <div class="between">
+							if (mapState.currentDataset) {
+								setCurrentDataset('');
+							} else {
+								setCurrentDataset('economyInfo.gdp.current');
+							}
+						}}
+					>
+						<div>
+							<span><UserIcon size={16} /></span>
+							<span><b> Population</b></span>
+						</div>
+						<div><b>{formatLargeNumbers(Number(countryData?.metadata?.population))}</b></div>
+						<!-- <div class="between">
 						<span>Rank #11</span>
 						<SmallGraphIcon sign="+" trend={1.2} />
 					</div> -->
-				</div>
-				<div class="card card-selectable flex">
-					<div class="flex-row">
-						<span><CurrencyDollarIcon size={16} /></span>
-						<span><b> GDP</b></span>
 					</div>
-					<div><b>{formatLargeNumbers(Number(countryData?.economyInfo?.gdp?.current))}</b></div>
-					<!-- <div class="between">
+					<div class="card card-selectable flex">
+						<div class="flex-row">
+							<span><CurrencyDollarIcon size={16} /></span>
+							<span><b> GDP</b></span>
+						</div>
+						<div><b>{formatLargeNumbers(Number(countryData?.economyInfo?.gdp?.current))}</b></div>
+						<!-- <div class="between">
 						<span>Rank #11</span>
 						<SmallGraphIcon sign="+" trend={0.3} />
 					</div> -->
-				</div>
-				<div class="card card-selectable flex">
-					<div class="flex-row">
-						<span><MapPinIcon size={16} /></span>
-						<span><b> Area</b></span>
 					</div>
-					<div><b>{formatLargeNumbers(Number(countryData?.metadata?.area))}</b></div>
-					<!-- <div class="between">
+					<div class="card card-selectable flex">
+						<div class="flex-row">
+							<span><MapPinIcon size={16} /></span>
+							<span><b> Area</b></span>
+						</div>
+						<div><b>{formatLargeNumbers(Number(countryData?.metadata?.area))}</b></div>
+						<!-- <div class="between">
 						<span>Rank #11</span>
 						<span>~Germany</span>
 					</div> -->
+					</div>
 				</div>
-			</div>
-			<!-- {#await getMetadata}
+				<!-- {#await getMetadata}
 						<p>loading...</p>
 					{:then meta}
 						<p>Population: {meta.population}</p>
 						<p>GDP: {meta.gdp}</p>
 						<p>Area: {meta.area}</p>
 					{/await} -->
-		</section>
-		<!-- TODO: add later then data is wrangled -->
-		<!-- <Overview />
+			</section>
+			<!-- TODO: add later then data is wrangled -->
+			<!-- <Overview />
 		<Demographics /> -->
-		{#if countryData?.tourismInfo}
-			<Economy {...countryData?.economyInfo} />
+			{#if countryData?.tourismInfo}
+				<Economy {...countryData?.economyInfo} />
+			{/if}
+			{#if countryData?.energyInfo}
+				<Energy {...countryData?.energyInfo} />
+			{/if}
+			{#if countryData?.tourismInfo}
+				<Tourism {...countryData?.tourismInfo} />
+			{/if}
+			<!-- <Environment /> -->
+			<!-- <Military /> -->
+		{:else}
+			<section class="topicSection">
+				<h2>Saved Mode</h2>
+				<h3>Saved queries</h3>
+				<div class="savedQueries flex-col">
+					{#each userQueries as userQuery}
+						<div class="queryItem card">
+							<div class="flex between">
+								<div class="flex-col">
+									<div>{userQuery.indicator}</div>
+									<div class="text-gray">Created at: {userQuery.createdAt}</div>
+								</div>
+								<div>
+									<button>Show</button>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+				<br />
+				<h3>AI Chat</h3>
+				<div class="chatbox card">
+					<Chat />
+				</div>
+			</section>
 		{/if}
-		{#if countryData?.energyInfo}
-			<Energy {...countryData?.energyInfo} />
-		{/if}
-		{#if countryData?.tourismInfo}
-			<Tourism {...countryData?.tourismInfo} />
-		{/if}
-		<!-- <Environment /> -->
-		<!-- <Military /> -->
 	</div>
 {:else}
 	<div>Click on a country</div>
 {/if}
 
 <style>
+	.chatbox {
+		min-height: 400px;
+	}
 	.drag-point {
 		display: none;
 	}

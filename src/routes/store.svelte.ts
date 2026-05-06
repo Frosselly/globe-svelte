@@ -11,8 +11,13 @@ export type Mode = 'map' | 'analysis';
 // }
 
 export const modeState = $state({ selected: 'map' as 'map' | 'analysis' });
+export const sidebarState = $state({ selected: 'countryInfo' as 'countryInfo' | 'saved' });
 export const countryData = $state<any>({ countries: undefined });
 export const isLoading = $state();
+
+export function setSelectedSidebar(mode: 'countryInfo' | 'saved') {
+	sidebarState.selected = mode;
+}
 
 export function setSelectedMode(mode: 'map' | 'analysis') {
 	modeState.selected = mode;

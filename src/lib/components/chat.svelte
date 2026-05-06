@@ -12,7 +12,7 @@
 	let indicatorName = $state('');
 	let seriesData: SeriesRow[] = [];
 	let loading = $state(false);
-	let expanded = $state(true);
+	let expanded = $state(false);
 
 	function toggleExpand() {
 		expanded = !expanded;
@@ -359,16 +359,16 @@
 
 <style>
 	.chat-overlay {
-		position: absolute;
+		/* position: absolute; */
 		inset: 0;
 		pointer-events: none;
 	}
 	.chat-card {
 		pointer-events: auto;
-		position: fixed;
+		/* position: fixed; */
 		right: 1.5rem;
 		bottom: 1.5rem;
-		width: min(640px, 96%);
+		/* width: min(640px, 96%); */
 		max-width: 640px;
 		max-height: calc(100vh - 3rem);
 		display: flex;

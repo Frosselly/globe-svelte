@@ -7,7 +7,8 @@
 		countriesStore,
 		modeState,
 		selectedCountryStore,
-		setSelectedMode
+		setSelectedMode,
+		sidebarState
 	} from './store.svelte.js';
 	import { mapState } from '$lib/components/map/mapStore.svelte.js';
 
@@ -73,7 +74,7 @@
 	{/if}
 
 	<div class="sidebar">
-		<TopicsSidebar visible={true} />
+		<TopicsSidebar visible={true} selectedSidebar={sidebarState.selected} />
 	</div>
 </div>
 
