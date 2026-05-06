@@ -107,7 +107,8 @@
 		right: 40rem; /* same width as sidebar, so it doesn't overlap it */
 		bottom: 0;
 		z-index: 10;
-		background: white;
+		pointer-events: none;
+		/* background: white; */
 	}
 
 	.sidebar {

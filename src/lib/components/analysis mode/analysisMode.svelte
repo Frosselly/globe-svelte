@@ -6,7 +6,7 @@
 	import { Combobox } from 'melt/builders';
 	import { derived } from 'svelte/store';
 	import analysisOptions from '$lib/assets/analysisOptions.json';
-	import { countriesStore } from '../../../routes/store.svelte';
+	import { countriesStore, modeState } from '../../../routes/store.svelte';
 	import { mapState, setCurrentDataset, setDisplayMode, setIsHidden } from '../map/mapStore.svelte';
 
 	const { onClose } = $props();
@@ -30,7 +30,7 @@
 	);
 	// --- View mode ---
 	let selectedOption = $state(0);
-	const options = [
+	const options: { icon: any; text: string; value: 'line' | 'bar' | 'map' }[] = [
 		{ icon: TrendUpIcon, text: 'Trend', value: 'line' },
 		{ icon: ChartBarHorizontalIcon, text: 'Compare', value: 'bar' },
 		{ icon: MapTrifoldIcon, text: 'Map', value: 'map' }
@@ -109,7 +109,7 @@
 
 	<hr />
 
-	<div class="display">
+	<div class="display" class:transparent={selectedView === 'map'}>
 		{#if selectedView === 'map'}
 			<div class="map-controls">
 				<div class="map-controls-label">Display Mode</div>
@@ -185,6 +185,14 @@
 </div>
 
 <style>
+	.container > div {
+		background: white;
+		pointer-events: auto;
+	}
+	div.transparent {
+		background: none;
+		pointer-events: none;
+	}
 	.mapWindow {
 		height: 100%;
 		flex: 1;
@@ -196,6 +204,7 @@
 		min-width: 0;
 		height: 100%;
 		flex: 1;
+		pointer-events: none;
 	}
 
 	.header {
@@ -398,6 +407,10 @@
 		gap: 16px;
 		padding: 24px;
 		/* height: 100%; */
+		background-color: white;
+		pointer-events: auto;
+		width: min-content;
+		border-bottom-right-radius: 12px;
 	}
 
 	.map-controls-label {
