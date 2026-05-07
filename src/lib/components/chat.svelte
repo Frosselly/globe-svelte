@@ -1,535 +1,654 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import * as d3 from 'd3';
-	import * as Plot from '@observablehq/plot';
+	/**
+	 * chat.svelte
+	 *
+	 * Message kinds:
+	 *   text          – plain user or bot message
+	 *   error         – red error card
+	 *   chart         – a rendered ChartCard (persists; never replaced)
+	 *   disambig      – indicator picker shown when the API returns multiple candidates
+	 */
 
-	type Message = { from: 'user' | 'bot'; text: string };
-	type TV = { date: string; value: number | null };
-	type SeriesRow = { country: string; code?: string; series: TV[] };
+	import { onMount, tick } from 'svelte';
+	import ChartCard from './ChartCard.svelte';
+	import type { DataResult, Message } from '$lib/types';
+
+	// ── Props ──────────────────────────────────────────────────────────────────
+
+	let {
+		user = null as { id: string; email: string; displayName: string | null } | null,
+		onSaveView = (_v: any) => {}
+	} = $props();
+
+	// ── State ──────────────────────────────────────────────────────────────────
 
 	let messages: Message[] = $state([]);
 	let input = $state('');
-	let indicatorName = $state('');
-	let seriesData: SeriesRow[] = [];
 	let loading = $state(false);
+	let saving = $state<string | null>(null);
 	let expanded = $state(false);
+	let cardIdx = 0;
 
-	function toggleExpand() {
-		expanded = !expanded;
-		// after expanding, redraw chart to fit new size
-		console.log('Toggling expand, now expanded:', expanded);
-		setTimeout(() => drawChart(), 120);
-	}
+	let listEl: HTMLElement | null = null;
 
 	onMount(() => {
 		messages = [
 			{
+				kind: 'text',
 				from: 'bot',
-				text: 'Hi — ask something like "Germany population" or "compare Germany and France population".'
+				text: 'Ask me anything — e.g. "CO₂ emissions France vs Germany 2000–2020" or "GDP per capita EU 2010–2023".'
 			}
 		];
 	});
 
-	function addMessage(from: Message['from'], text: string) {
-		messages = [...messages, { from, text }];
-		// keep scroll at bottom after DOM updates
-		setTimeout(() => {
-			const el = document.querySelector('.messages');
-			if (el) el.scrollTop = el.scrollHeight;
-		}, 50);
+	async function scrollBottom() {
+		await tick();
+		if (listEl) listEl.scrollTop = listEl.scrollHeight;
 	}
 
-	function testChart() {
-		seriesData = [
-			{
-				country: 'Germany',
-				series: [
-					{ date: '2000', value: 82211508 },
-					{ date: '2001', value: 82349925 },
-					{ date: '2002', value: 82488495 },
-					{ date: '2003', value: 82534176 },
-					{ date: '2004', value: 82516260 },
-					{ date: '2005', value: 82469422 },
-					{ date: '2006', value: 82376451 },
-					{ date: '2007', value: 82266372 },
-					{ date: '2008', value: 82110097 },
-					{ date: '2009', value: 81902307 },
-					{ date: '2010', value: 81776930 },
-					{ date: '2011', value: 80274983 },
-					{ date: '2012', value: 80425823 },
-					{ date: '2013', value: 80645605 },
-					{ date: '2014', value: 80982500 },
-					{ date: '2015', value: 81686611 },
-					{ date: '2016', value: 82348669 },
-					{ date: '2017', value: 82657002 },
-					{ date: '2018', value: 82905782 },
-					{ date: '2019', value: 83092962 },
-					{ date: '2020', value: 83160871 },
-					{ date: '2021', value: 83196078 },
-					{ date: '2022', value: 83177813 },
-					{ date: '2023', value: 83287273 }
-				]
-			},
-			{
-				country: 'France',
-				series: [
-					{ date: '2000', value: 59225709 },
-					{ date: '2001', value: 59375709 },
-					{ date: '2002', value: 59525709 },
-					{ date: '2003', value: 59675709 },
-
-					{ date: '2004', value: 59825709 },
-					{ date: '2005', value: 59975709 },
-					{ date: '2006', value: 60125709 },
-					{ date: '2007', value: 60275709 },
-					{ date: '2008', value: 60425709 },
-					{ date: '2009', value: 60575709 },
-					{ date: '2010', value: 60725709 },
-					{ date: '2011', value: 60875709 },
-					{ date: '2012', value: 61025709 },
-					{ date: '2013', value: 61175709 },
-					{ date: '2014', value: 61325709 },
-					{ date: '2015', value: 61475709 },
-					{ date: '2016', value: 61625709 },
-					{ date: '2017', value: 61775709 },
-					{ date: '2018', value: 61925709 },
-					{ date: '2019', value: 62075709 },
-					{ date: '2020', value: 62225709 },
-					{ date: '2021', value: 62375709 },
-					{ date: '2022', value: 62525709 },
-					{ date: '2023', value: 62675709 }
-				]
-			}
-		];
-		// drawChart();
-		drawChartOld();
+	function push(...msgs: Message[]) {
+		messages = [...messages, ...msgs];
+		scrollBottom();
 	}
-	$effect(() => {
-		expanded;
-		testChart();
-	});
 
-	// removed autoGrow: using single-line input now
+	// ── Send ───────────────────────────────────────────────────────────────────
 
 	async function handleSend() {
 		const prompt = input.trim();
-		if (!prompt) return;
-		addMessage('user', prompt);
+		if (!prompt || loading) return;
+		push({ kind: 'text', from: 'user', text: prompt });
 		input = '';
 		loading = true;
+
 		try {
 			const res = await fetch('/api/query', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ prompt })
 			});
-			let data: any = null;
-			try {
-				data = await res.json();
-			} catch (e) {
-				addMessage(
-					'bot',
-					`Server returned an unexpected response (${res.status} ${res.statusText})`
-				);
+			const data = await res.json().catch(() => null);
+
+			if (!data) {
+				push({ kind: 'error', text: 'Empty response from server.' });
 				loading = false;
 				return;
 			}
 
-			if (!res.ok) {
-				addMessage('bot', 'Server error: ' + (data?.error || res.statusText));
+			// ── Disambiguation response ────────────────────────────────────────
+			if (data.disambiguation) {
+				push({
+					kind: 'disambig',
+					idx: cardIdx++,
+					data: {
+						concept: data.concept,
+						candidates: data.candidates,
+						countries: data.countries,
+						start: data.start,
+						end: data.end,
+						chart: data.chart,
+						messageId: data.messageId
+					}
+				});
 				loading = false;
 				return;
 			}
 
-			if (data.error) {
-				addMessage('bot', 'Server error: ' + data.error);
+			// ── Error response ────────────────────────────────────────────────
+			if (!res.ok || data.error) {
+				push({ kind: 'error', text: data.error ?? `Server error ${res.status}` });
 				loading = false;
 				return;
 			}
 
-			indicatorName = data.indicator || '';
-			seriesData = data.series || [];
-			addMessage(
-				'bot',
-				`Showing ${indicatorName} — ${seriesData.map((s) => s.country).join(', ')}`
-			);
-			drawChart();
+			// ── Success ───────────────────────────────────────────────────────
+			pushChartResult(data);
 		} catch (err) {
 			console.error(err);
-			addMessage('bot', 'Failed to fetch data from the server.');
+			push({ kind: 'error', text: 'Network error — please try again.' });
 		}
 		loading = false;
 	}
-	function drawChart() {
-		drawChartOld();
-		// drawChartNew();
-	}
 
-	function drawChartOld() {
-		const container = document.getElementById('chart');
-		if (!container) return;
-		container.innerHTML = '';
+	// ── Pick a candidate from the disambig card ─────────────────────────────
 
-		const margin = { top: 18, right: 80, bottom: 40, left: 60 };
-		const width = Math.max(320, container.clientWidth) - margin.left - margin.right;
-		const height = 320 - margin.top - margin.bottom;
-
-		const svg = d3
-			.select(container)
-			.append('svg')
-			.attr('width', width + margin.left + margin.right)
-			.attr('height', height + margin.top + margin.bottom)
-			.style('font-family', 'system-ui, Roboto, Arial')
-			.style('background', 'transparent');
-
-		const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-		const all = seriesData.flatMap((d) =>
-			d.series
-				.filter((s) => s.value !== null)
-				.map((s) => ({ date: +s.date, value: s.value as number }))
+	async function pickCandidate(msgIdx: number, candidate: Candidate) {
+		// Find the disambig message and mark it as loading
+		messages = messages.map((m, i) =>
+			i === msgIdx && m.kind === 'disambig'
+				? { ...m, data: { ...m.data, pickedId: candidate.id, loading: true } }
+				: m
 		);
-		if (all.length === 0) {
-			g.append('text').attr('x', 10).attr('y', 20).text('No data available for selection');
-			return;
-		}
 
-		const xDomain = d3.extent(all, (d) => d.date) as [number, number];
-		const x = d3.scaleLinear().domain([xDomain[0], xDomain[1]]).range([0, width]);
+		const d = (messages[msgIdx] as Extract<Message, { kind: 'disambig' }>).data;
 
-		const yMin = d3.min(all, (d) => d.value) as number;
-		const yMax = d3.max(all, (d) => d.value) as number;
-		const y = d3
-			.scaleLinear()
-			.domain([yMin * 0.9, yMax * 1.1])
-			.nice()
-			.range([height, 0]);
+		try {
+			const res = await fetch('/api/query/fetch', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					indicator: candidate.id,
+					indicatorName: candidate.name,
+					countriesIso3: d.countries,
+					start: d.start,
+					end: d.end,
+					chart: d.chart,
+					messageId: d.messageId
+				})
+			});
+			const data = await res.json().catch(() => null);
 
-		const xAxis = d3
-			.axisBottom(x)
-			.tickFormat(d3.format('d'))
-			.ticks(Math.min(8, Math.max(3, xDomain[1] - xDomain[0])));
-		const yAxis = d3.axisLeft(y).ticks(6);
+			// Unmark loading on the disambig card
+			messages = messages.map((m, i) =>
+				i === msgIdx && m.kind === 'disambig' ? { ...m, data: { ...m.data, loading: false } } : m
+			);
 
-		g.append('g').attr('transform', `translate(0,${height})`).call(xAxis);
-		g.append('g').call(yAxis);
-
-		const color = d3.scaleOrdinal(d3.schemeTableau10).domain(seriesData.map((s) => s.country));
-
-		const line = d3
-			.line<any>()
-			.defined((d: any) => d.value !== null)
-			.x((d: any) => x(+d.date))
-			.y((d: any) => y(d.value));
-
-		seriesData.forEach((s, i) => {
-			const clean = s.series.map((d) => ({ date: +d.date, value: d.value }));
-			g.append('path')
-				.datum(clean)
-				.attr('fill', 'none')
-				.attr('stroke', color(s.country) as string)
-				.attr('stroke-width', 2.5)
-				.attr('d', line as any);
-
-			g.selectAll(`.pt-${i}`)
-				.data(clean.filter((d) => d.value !== null))
-				.join('circle')
-				.attr('class', `pt-${i}`)
-				.attr('cx', (d: any) => x(d.date))
-				.attr('cy', (d: any) => y(d.value))
-				.attr('r', 3)
-				.attr('fill', color(s.country) as string);
-
-			// label at end
-			const last = clean
-				.slice()
-				.reverse()
-				.find((d) => d.value !== null);
-			if (last) {
-				g.append('text')
-					.attr('x', x(last.date) + 6)
-					.attr('y', y(last.value))
-					.attr('fill', color(s.country) as string)
-					.attr('font-size', 12)
-					.text(s.country);
+			if (!res.ok || data?.error) {
+				push({ kind: 'error', text: data?.error ?? 'Failed to load indicator.' });
+				return;
 			}
-		});
+			pushChartResult(data);
+		} catch {
+			push({ kind: 'error', text: 'Network error fetching indicator.' });
+		}
 	}
 
-	function drawChartNew() {
-		const container = document.getElementById('chart');
-		if (!container) return;
-		container.innerHTML = '';
+	function pushChartResult(data: any) {
+		const result: DataResult = {
+			indicatorCode: data.indicatorCode,
+			indicator: data.indicator,
+			chart: data.chart === 'bar' ? 'bar' : 'line',
+			countries: data.countries ?? [],
+			start: data.start,
+			end: data.end,
+			series: data.series ?? [],
+			messageId: data.messageId
+		};
+		push(
+			{
+				kind: 'text',
+				from: 'bot',
+				text: `Showing ${result.indicator} — ${result.series.map((s) => s.country).join(', ')}`
+			},
+			{ kind: 'chart', result, idx: cardIdx++ }
+		);
+	}
 
-		const plot = Plot.plot({
-			marginRight: 100, // make room for longer country names
-			marginBottom: 44,
-			marginLeft: 80,
-			grid: true,
-			x: { ticks: 5 },
-			y: { ticks: 7, nice: true, label: null },
-			color: { scheme: 'tableau10' },
-			marks: [
-				// Flatten once → tidy form on the fly
-				Plot.line(
-					seriesData.flatMap((s) =>
-						s.series.map((pt) => ({
-							country: s.country,
-							date: new Date(pt.date), // or +pt.date if numeric year
-							value: pt.value
-						}))
-					),
-					{
-						x: 'date',
-						y: 'value',
-						z: 'country',
-						stroke: 'country',
-						curve: 'natural',
-						marker: true
-					}
-				),
+	// ── Replay saved view (called from topicsSidebar) ─────────────────────────
 
-				// End labels
-				Plot.text(
-					seriesData.flatMap((s) => {
-						const last = s.series[s.series.length - 1];
-						if (!last || last.value == null) return [];
-						return [
-							{
-								country: s.country,
-								date: new Date(last.date),
-								value: last.value
-							}
-						];
-					}),
-					{
-						x: 'date',
-						y: 'value',
-						text: 'country',
-						textAnchor: 'start',
-						dx: 9,
-						dy: 0,
-						fontSize: 11.5
-					}
-				)
-			]
+	export async function replayView(view: {
+		indicator: string;
+		indicatorName?: string | null;
+		countries: string[];
+		startYear: number;
+		endYear: number;
+		mode: string;
+		selectedYear?: number | null;
+	}) {
+		loading = true;
+		push({ kind: 'text', from: 'bot', text: `Loading ${view.indicatorName ?? view.indicator}…` });
+
+		try {
+			const res = await fetch('/api/query/replay', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					indicator: view.indicator,
+					countriesIso3: view.countries,
+					start: view.startYear,
+					end: view.endYear
+				})
+			});
+			const data = await res.json().catch(() => null);
+
+			// Replace "Loading…" placeholder
+			messages = messages.slice(0, -1);
+
+			if (!res.ok || !data?.series) {
+				push({ kind: 'error', text: data?.error ?? 'Could not load saved view.' });
+				loading = false;
+				return;
+			}
+
+			pushChartResult({
+				...data,
+				indicatorCode: view.indicator,
+				indicator: view.indicatorName ?? view.indicator,
+				chart: view.mode,
+				countries: view.countries,
+				start: view.startYear,
+				end: view.endYear
+			});
+		} catch {
+			push({ kind: 'error', text: 'Network error replaying saved view.' });
+		}
+		loading = false;
+	}
+
+	// ── Save a chart result ───────────────────────────────────────────────────
+
+	async function saveResult(result: DataResult, idx: number) {
+		if (!user || saving) return;
+		saving = result.messageId ?? `local-${idx}`;
+
+		const res = await fetch('/api/save', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				label: `${result.indicator} (${result.chart}) ${result.start}–${result.end}`,
+				mode: result.chart,
+				indicator: result.indicatorCode,
+				indicatorName: result.indicator,
+				countries: result.countries,
+				startYear: result.start,
+				endYear: result.end,
+				selectedYear: null,
+				messageId: result.messageId
+			})
 		});
-		container.appendChild(plot);
+		const data = await res.json().catch(() => null);
+
+		if (res.ok && data?.view) {
+			messages = messages.map((m) =>
+				m.kind === 'chart' && m.idx === idx
+					? { ...m, result: { ...m.result, savedViewId: data.view.id } }
+					: m
+			);
+			onSaveView(data.view);
+		}
+		saving = null;
 	}
 </script>
 
-<div class="chat-overlay">
-	<div class="chat-card" class:expanded>
-		<header class="chat-header">
-			<div class="title">Data Chat</div>
-			<div class="subtitle">Example UI — posts prompt to /api/query and renders a chart</div>
-			<button class="expand" aria-pressed={expanded} onclick={toggleExpand}
-				>{expanded ? '⤫' : '⤢'}</button
-			>
-		</header>
+<!-- ── Template ──────────────────────────────────────────────────────────── -->
 
-		<main class="chat-body">
-			<div class="messages" aria-live="polite">
-				{#each messages as m, i}
-					<div class="msg {m.from}">{m.text}</div>
-				{/each}
-			</div>
+<div class="chat-root" class:expanded>
+	<!-- Header -->
+	<header class="chat-header">
+		<div>
+			<span class="chat-title">Data Chat</span>
+			<span class="chat-sub"> · World Bank · AI</span>
+		</div>
+		<button class="btn-icon" aria-label="toggle expand" onclick={() => (expanded = !expanded)}>
+			{expanded ? '⤫' : '⤢'}
+		</button>
+	</header>
 
-			<div class="controls">
-				<input
-					id="chat-input"
-					placeholder="Type a request (e.g. Germany population)"
-					bind:value={input}
-					onkeydown={(e) => e.key === 'Enter' && handleSend()}
-				/>
-				<div class="actions">
-					<button onclick={handleSend} disabled={loading}>{loading ? 'Loading…' : 'Send'}</button>
+	<!-- Message list -->
+	<div class="chat-list" bind:this={listEl}>
+		{#each messages as m, i}
+			{#if m.kind === 'text'}
+				<div class="msg {m.from}">
+					<span class="msg-text">{m.text}</span>
 				</div>
-				<div class="row indicator-row">
-					<label>Indicator</label>
-					<input id="ind-display" readonly value={indicatorName || 'None selected'} />
+			{:else if m.kind === 'error'}
+				<div class="msg-error">
+					<span class="err-icon">⚠</span>
+					{m.text}
 				</div>
-			</div>
+			{:else if m.kind === 'chart'}
+				<div class="chart-card">
+					<ChartCard result={m.result} />
+					<div class="chart-footer">
+						{#if user && !m.result.savedViewId}
+							<button
+								class="btn-save"
+								disabled={!!saving}
+								onclick={() => saveResult(m.result, m.idx)}
+							>
+								{saving ? '…' : '⭐ Save view'}
+							</button>
+						{:else if m.result.savedViewId}
+							<span class="saved-badge">✓ Saved</span>
+						{:else if !user}
+							<span class="auth-hint"><a href="/login">Sign in</a> to save</span>
+						{/if}
+						<span class="chart-src">World Bank · {m.result.start}–{m.result.end}</span>
+					</div>
+				</div>
+			{:else if m.kind === 'disambig'}
+				<!-- Indicator picker card -->
+				<div class="disambig-card">
+					<div class="disambig-header">
+						<span class="disambig-icon">🔍</span>
+						<div>
+							<div class="disambig-title">Multiple indicators found for "{m.data.concept}"</div>
+							<div class="disambig-sub">Pick the one you want:</div>
+						</div>
+					</div>
 
-			<div id="chart" class="chart" />
-			<div class="source">Source: mock data (dev)</div>
-		</main>
+					<div class="candidate-list">
+						{#each m.data.candidates as c}
+							<button
+								class="candidate"
+								class:candidate-picked={m.data.pickedId === c.id}
+								class:candidate-dimmed={m.data.pickedId && m.data.pickedId !== c.id}
+								disabled={!!m.data.pickedId}
+								onclick={() => pickCandidate(i, c)}
+							>
+								<div class="candidate-name">{c.name}</div>
+								{#if c.source}
+									<div class="candidate-src">{c.source}</div>
+								{/if}
+								{#if m.data.pickedId === c.id && m.data.loading}
+									<div class="candidate-loading">Loading…</div>
+								{/if}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
+		{/each}
+
+		{#if loading}
+			<div class="msg bot"><span class="msg-text typing">Thinking</span></div>
+		{/if}
+	</div>
+
+	<!-- Input -->
+	<div class="input-row">
+		<input
+			class="chat-input"
+			placeholder={'e.g. "CO₂ emissions France vs Germany 2000–2020"'}
+			bind:value={input}
+			disabled={loading}
+			onkeydown={(e) => e.key === 'Enter' && handleSend()}
+		/>
+		<button class="btn-send" disabled={loading} onclick={handleSend}>
+			{loading ? '…' : '→'}
+		</button>
 	</div>
 </div>
 
 <style>
-	.chat-overlay {
-		/* position: absolute; */
-		inset: 0;
-		pointer-events: none;
-	}
-	.chat-card {
-		pointer-events: auto;
-		/* position: fixed; */
-		right: 1.5rem;
-		bottom: 1.5rem;
-		/* width: min(640px, 96%); */
-		max-width: 640px;
-		max-height: calc(100vh - 3rem);
+	.chat-root {
 		display: flex;
 		flex-direction: column;
 		background: #0f1724;
 		color: #e6eef8;
 		border-radius: 12px;
-		box-shadow: 0 12px 30px rgba(2, 6, 23, 0.6);
 		overflow: hidden;
+		height: 100%;
+		min-height: 420px;
+		font-family: system-ui, sans-serif;
 	}
-	/* prevent children from growing past container bounds */
-	.chat-card *,
-	.chat-card *::before,
-	.chat-card *::after {
-		box-sizing: border-box;
+	.chat-root.expanded {
+		position: fixed;
+		inset: 4vh 4vw;
+		z-index: 1000;
+		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
 	}
 
-	/* allow flex children to shrink inside narrow containers */
-	.chat-body,
-	.controls,
-	.messages,
-	.indicator-row {
-		min-width: 0;
-	}
-	.chat-card.expanded {
-		width: 90vw;
-		max-width: 1200px;
-		left: 5vw;
-		right: 5vw;
-		top: 5vh;
-		bottom: 5vh;
-		max-height: 90vh;
-		border-radius: 10px;
-		transform: none;
-	}
 	.chat-header {
-		padding: 14px 16px;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 14px;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		flex-shrink: 0;
 	}
-	.title {
+	.chat-title {
 		font-weight: 700;
-		font-size: 1.05rem;
+		font-size: 0.98rem;
 	}
-	.subtitle {
-		font-size: 0.85rem;
-		margin-top: 6px;
-		color: #bcd3ee;
+	.chat-sub {
+		font-size: 0.8rem;
+		color: #7ba3c8;
 	}
-	.chat-body {
-		padding: 12px;
+	.btn-icon {
+		background: transparent;
+		border: none;
+		color: #7ba3c8;
+		font-size: 1rem;
+		cursor: pointer;
+	}
+
+	/* Message list */
+	.chat-list {
+		flex: 1 1 0;
+		overflow-y: auto;
+		padding: 10px 12px;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		flex: 1 1 auto;
-		overflow: hidden;
+		gap: 10px;
 	}
-	.messages {
-		max-height: 180px;
-		overflow: auto;
-		background: rgba(255, 255, 255, 0.02);
-		padding: 12px;
-		border-radius: 8px;
-		flex: 0 0 auto;
-	}
-	.chat-card.expanded .messages {
-		max-height: 38vh;
-	}
+
+	/* Text bubbles */
 	.msg {
-		padding: 8px 10px;
-		margin-bottom: 6px;
-		border-radius: 8px;
-		max-width: 80%;
+		display: flex;
+		max-width: 92%;
+	}
+	.msg.user {
+		align-self: flex-end;
+		flex-direction: row-reverse;
+	}
+	.msg.bot {
+		align-self: flex-start;
+	}
+	.msg-text {
+		padding: 8px 11px;
+		border-radius: 10px;
+		font-size: 0.87rem;
+		line-height: 1.45;
 		word-break: break-word;
 		white-space: pre-wrap;
 	}
-	.msg.user {
-		background: linear-gradient(90deg, #0369a1, #0ea5e9);
-		color: white;
+	.msg.user .msg-text {
+		background: linear-gradient(120deg, #0369a1, #0ea5e9);
+		color: #fff;
+	}
+	.msg.bot .msg-text {
+		background: rgba(255, 255, 255, 0.04);
+		color: #dce9f6;
+	}
+
+	/* Error */
+	.msg-error {
+		display: flex;
+		gap: 8px;
+		align-items: flex-start;
+		background: rgba(220, 38, 38, 0.12);
+		border: 1px solid rgba(220, 38, 38, 0.28);
+		border-radius: 10px;
+		padding: 10px 12px;
+		color: #fca5a5;
+		font-size: 0.87rem;
+		line-height: 1.45;
+		align-self: flex-start;
+		max-width: 92%;
+	}
+	.err-icon {
+		flex-shrink: 0;
+	}
+
+	/* Chart card */
+	.chart-card {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.07);
+		border-radius: 10px;
+		overflow: hidden;
+		flex-shrink: 0;
+	}
+	.chart-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 6px 12px 8px;
+		border-top: 1px solid rgba(255, 255, 255, 0.04);
+		gap: 8px;
+	}
+	.btn-save {
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: #93c5fd;
+		padding: 4px 10px;
+		border-radius: 6px;
+		font-size: 0.75rem;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.btn-save:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.12);
+	}
+	.btn-save:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+	.saved-badge {
+		font-size: 0.75rem;
+		color: #6ee7b7;
+	}
+	.auth-hint {
+		font-size: 0.74rem;
+		color: #7ba3c8;
+	}
+	.auth-hint a {
+		color: #38bdf8;
+	}
+	.chart-src {
+		font-size: 0.72rem;
+		color: rgba(255, 255, 255, 0.26);
 		margin-left: auto;
 	}
-	.msg.bot {
-		background: rgba(255, 255, 255, 0.03);
-		color: #e6eef8;
-	}
-	.controls {
+
+	/* Disambiguation card */
+	.disambig-card {
+		background: rgba(14, 165, 233, 0.06);
+		border: 1px solid rgba(14, 165, 233, 0.2);
+		border-radius: 10px;
+		padding: 12px;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		align-items: stretch;
-		flex: 0 0 auto;
+		gap: 10px;
+		align-self: flex-start;
+		max-width: 100%;
 	}
-	input#chat-input {
-		flex: 1;
-		padding: 10px 12px;
+	.disambig-header {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+	}
+	.disambig-icon {
+		font-size: 1.2rem;
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+	.disambig-title {
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #e6eef8;
+	}
+	.disambig-sub {
+		font-size: 0.78rem;
+		color: #7ba3c8;
+		margin-top: 2px;
+	}
+
+	.candidate-list {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.candidate {
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.06);
-		background: rgba(255, 255, 255, 0.02);
-		color: inherit;
-		width: 100%;
-	}
-	.row {
-		display: flex;
-		gap: 8px;
-		align-items: center;
-	}
-	input#ind-display {
-		padding: 8px;
-		border-radius: 6px;
-		border: 1px solid rgba(255, 255, 255, 0.04);
-		background: rgba(255, 255, 255, 0.02);
-		color: inherit;
-		width: 220px;
-	}
-
-	.indicator-row {
-		display: flex;
-		gap: 8px;
-		align-items: center;
-	}
-	.indicator-row input#ind-display {
-		width: 100%;
-		max-width: 420px;
-	}
-
-	.chat-header {
-		position: relative;
-	}
-	.chat-header .expand {
-		position: absolute;
-		right: 10px;
-		top: 12px;
-		background: transparent;
-		border: none;
-		color: #bcd3ee;
+		padding: 9px 12px;
 		cursor: pointer;
-		font-size: 14px;
+		text-align: left;
+		transition:
+			background 0.15s,
+			border-color 0.15s;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
 	}
-	.actions {
+	.candidate:hover:not(:disabled):not(.candidate-dimmed) {
+		background: rgba(14, 165, 233, 0.12);
+		border-color: rgba(14, 165, 233, 0.35);
+	}
+	.candidate-picked {
+		background: rgba(14, 165, 233, 0.16) !important;
+		border-color: #0ea5e9 !important;
+	}
+	.candidate-dimmed {
+		opacity: 0.35;
+		cursor: default;
+	}
+	.candidate:disabled {
+		cursor: default;
+	}
+
+	.candidate-name {
+		font-size: 0.86rem;
+		color: #dce9f6;
+		font-weight: 500;
+	}
+	.candidate-src {
+		font-size: 0.73rem;
+		color: #5a7fa0;
+	}
+	.candidate-loading {
+		font-size: 0.73rem;
+		color: #38bdf8;
+		font-style: italic;
+		margin-top: 2px;
+	}
+
+	/* Loading dots */
+	.typing::after {
+		content: '';
+		animation: dots 1.2s steps(3, end) infinite;
+	}
+	@keyframes dots {
+		0% {
+			content: '';
+		}
+		33% {
+			content: '.';
+		}
+		66% {
+			content: '..';
+		}
+		100% {
+			content: '...';
+		}
+	}
+
+	/* Input */
+	.input-row {
 		display: flex;
 		gap: 8px;
+		padding: 10px 12px;
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		flex-shrink: 0;
 	}
-	button {
+	.chat-input {
+		flex: 1;
+		padding: 9px 12px;
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.03);
+		color: inherit;
+		font-size: 0.88rem;
+	}
+	.chat-input:focus {
+		outline: none;
+		border-color: #0ea5e9;
+	}
+	.btn-send {
 		background: #0ea5e9;
 		border: none;
-		color: white;
-		padding: 8px 12px;
+		color: #fff;
+		padding: 9px 16px;
 		border-radius: 8px;
+		font-size: 1.1rem;
 		cursor: pointer;
 	}
-	.chart {
-		margin-top: 4px;
-		padding: 8px;
-		background: rgba(255, 255, 255, 0.01);
-		border-radius: 8px;
-		flex: 1 1 auto;
-		min-height: 180px;
-		overflow: auto;
+	.btn-send:hover:not(:disabled) {
+		background: #0284c7;
 	}
-	.source {
-		margin-top: 6px;
-		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.6);
+	.btn-send:disabled {
+		opacity: 0.5;
+		cursor: default;
 	}
 </style>

@@ -1,97 +1,206 @@
 <script lang="ts">
 	import './style.css';
-	import Overview from './overview.svelte';
-	import Tourism from './tourism.svelte';
 	import Economy from './economy.svelte';
 	import Energy from './energy.svelte';
-	import Environment from './environment.svelte';
-	import Demographics from './demographics.svelte';
-	import Military from './military.svelte';
+	import Tourism from './tourism.svelte';
+	import Chat from '../chat.svelte';
 	import { fly } from 'svelte/transition';
-	// import { getCountryMetadataClean } from '$lib/components/countryData/country-metadata';
-	// import { getCountryGeneralInfo } from '$lib/components/countryData/country-general';
+	import { onMount } from 'svelte';
+
 	import CurrencyDollarIcon from 'phosphor-svelte/lib/CurrencyDollarIcon';
 	import MapPinIcon from 'phosphor-svelte/lib/MapPinIcon';
 	import UserIcon from 'phosphor-svelte/lib/UserIcon';
 
-	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import { mapState, setCurrentDataset } from '$lib/components/map/mapStore.svelte';
-	import { getContext } from 'svelte';
-	import { countriesStore, modeState, selectedCountryStore } from '../../../routes/store.svelte';
+	import { selectedCountryStore } from '../../../routes/store.svelte';
 	import { formatLargeNumbers } from '$lib/utils/utils';
-	import Chat from '../chat.svelte';
 
+	// ── Props ──────────────────────────────────────────────────────────────────
 	let { visible, selectedSidebar = 'countryInfo' } = $props();
-	// let countryData = $state(loadCountryData('FRA'));
-	// let countryData = $state({
-	// 	metadata: {
-	// 		name: 'France',
-	// 		population: 67000000,
-	// 		gdp: 3000000000000,
-	// 		area: 640679
-	// 	}
-	// });
+
 	const countryData = $derived(selectedCountryStore.country);
 
-	const topics = [
-		{ id: 'overview', label: 'Overview' },
-		{ id: 'tourism', label: 'Tourism' },
-		{ id: 'economy', label: 'Economy' },
-		{ id: 'energy', label: 'Energy' },
-		{ id: 'environment', label: 'Environment' },
-		{ id: 'military', label: 'Military' },
-		{ id: 'demographics', label: 'Demographics' },
-		{ id: 'health', label: 'Health' }
-	];
+	// ── Auth ───────────────────────────────────────────────────────────────────
+	type AuthUser = { id: string; email: string; displayName: string | null; isAdmin: boolean };
+	let user = $state<AuthUser | null>(null);
+	let authLoaded = $state(false);
+	let authMode = $state<'login' | 'register'>('login');
+	let authEmail = $state('');
+	let authPass = $state('');
+	let authName = $state('');
+	let authError = $state('');
+	let authBusy = $state(false);
 
-	// function scrollToSection(id: string) {
-	// 	selectedTopic = id;
-	// 	const element = document.getElementById(id);
-	// 	if (element) {
-	// 		element.scrollIntoView({ behavior: 'smooth' });
-	// 	}
-	// }
-
-	const userQueries = [
-		{
-			indicator: 'Population of Germany',
-			createdAt: '2024-12-02',
-			link: 'trend.population.DE?year=2024-2025'
-		},
-		{
-			indicator: 'Population of different countries in 2023',
-			createdAt: '2024-12-01',
-			link: 'compare.population.DE,FR,CH,US?year=2000-2025'
-		},
-		{
-			indicator: 'Population map in 2023',
-			createdAt: '2024-12-01',
-			link: 'map.population?year=2023'
+	async function fetchMe() {
+		try {
+			const r = await fetch('/api/auth', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'me' })
+			});
+			const d = await r.json();
+			user = d.user ?? null;
+		} catch {
+			user = null;
 		}
-	];
+		authLoaded = true;
+	}
 
-	$effect(() => {
-		if (selectedCountryStore.country)
-			console.log('cahnges', selectedCountryStore.country?.metadata);
-	});
+	async function handleAuth() {
+		authError = '';
+		authBusy = true;
+		try {
+			const body: any = { action: authMode, email: authEmail, password: authPass };
+			if (authMode === 'register') body.displayName = authName;
+			const r = await fetch('/api/auth', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body)
+			});
+			const d = await r.json();
+			if (!r.ok) authError = d.error ?? 'Failed';
+			else {
+				user = d.user;
+				authEmail = authPass = authName = '';
+				fetchSaved();
+			}
+		} catch (e: any) {
+			authError = e.message;
+		}
+		authBusy = false;
+	}
+
+	async function handleLogout() {
+		await fetch('/api/auth', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ action: 'logout' })
+		});
+		user = null;
+		views = [];
+		chats = [];
+	}
+
+	// ── Saved data ─────────────────────────────────────────────────────────────
+	type SavedView = {
+		id: string;
+		label: string;
+		mode: 'line' | 'bar' | 'map';
+		indicator: string;
+		indicatorName: string | null;
+		countries: string[];
+		startYear: number;
+		endYear: number;
+		selectedYear: number | null;
+		mapDisplayMode: string | null;
+		createdAt: string;
+	};
+	type ChatMsg = {
+		id: string;
+		userMessage: string;
+		botReply: string | null;
+		parsedQuery: {
+			indicator: string;
+			indicatorName?: string;
+			countriesIso3: string[];
+			start: number;
+			end: number;
+			chart: string;
+		} | null;
+		savedViewId: string | null;
+		createdAt: string;
+	};
+
+	let views = $state<SavedView[]>([]);
+	let chats = $state<ChatMsg[]>([]);
+	let savedReady = $state(false);
+	let savedTab = $state<'views' | 'history'>('views');
+	let deletingId = $state<string | null>(null);
+
+	async function fetchSaved() {
+		if (!user) return;
+		try {
+			const r = await fetch('/api/save');
+			if (r.ok) {
+				const d = await r.json();
+				views = d.views ?? [];
+				chats = d.messages ?? [];
+			}
+		} catch {}
+		savedReady = true;
+	}
+
+	function onSaveView(v: SavedView) {
+		views = [v, ...views];
+	}
+
+	async function deleteView(id: string) {
+		deletingId = id;
+		try {
+			await fetch(`/api/save?id=${id}`, { method: 'DELETE' });
+			views = views.filter((v) => v.id !== id);
+		} catch {}
+		deletingId = null;
+	}
+
+	// ── Chat ref ───────────────────────────────────────────────────────────────
+	let chatRef: { replayView: (v: any) => void } | null = $state(null);
+
+	function replaySaved(v: SavedView) {
+		chatRef?.replayView({
+			indicator: v.indicator,
+			indicatorName: v.indicatorName,
+			countries: v.countries,
+			startYear: v.startYear,
+			endYear: v.endYear,
+			mode: v.mode,
+			selectedYear: v.selectedYear
+		});
+		// switch to saved tab so the chart (inside Chat) is visible
+		selectedSidebar = 'saved';
+	}
+
+	function replayChat(msg: ChatMsg) {
+		if (!msg.parsedQuery) return;
+		const q = msg.parsedQuery;
+		chatRef?.replayView({
+			indicator: q.indicator,
+			indicatorName: q.indicatorName,
+			countries: q.countriesIso3,
+			startYear: q.start,
+			endYear: q.end,
+			mode: q.chart
+		});
+	}
+
+	// ── Init ───────────────────────────────────────────────────────────────────
+	onMount(() =>
+		fetchMe().then(() => {
+			if (user) fetchSaved();
+		})
+	);
+
+	function fmtDate(iso: string) {
+		return new Date(iso).toLocaleDateString(undefined, {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
+	}
+	const MODE_ICON: Record<string, string> = { line: '📈', bar: '📊', map: '🗺️' };
 </script>
 
 {#if visible}
 	<div class="content" in:fly={{ x: 300, duration: 300 }} out:fly={{ x: 300, duration: 300 }}>
+		<!-- ── Country Info ──────────────────────────────────────────────────────── -->
 		{#if selectedSidebar === 'countryInfo'}
-			<div class="drag-point">
-				<hr />
-			</div>
+			<div class="drag-point"><hr /></div>
 			<br />
 			<section class="topicSection">
 				<div class="row">
 					{#if countryData}
 						<div class="row">
-							<figure class="country-flag">
-								<picture>
-									<img src="" alt="" />
-								</picture>
-							</figure>
+							<figure class="country-flag"><picture><img src="" alt="" /></picture></figure>
 							<div>
 								<h2>{countryData?.metadata?.name.common}</h2>
 								<h3>{countryData?.metadata?.capital[0]}</h3>
@@ -104,94 +213,152 @@
 					<div
 						class="card card-selectable flex"
 						onclick={() => {
-							// switchDataset('population');
-							console.log('sidebar', mapState.currentDataset);
-
-							if (mapState.currentDataset) {
-								setCurrentDataset('');
-							} else {
-								setCurrentDataset('economyInfo.gdp.current');
-							}
+							mapState.currentDataset
+								? setCurrentDataset('')
+								: setCurrentDataset('economyInfo.gdp.current');
 						}}
 					>
-						<div>
-							<span><UserIcon size={16} /></span>
-							<span><b> Population</b></span>
-						</div>
+						<div><span><UserIcon size={16} /></span><span><b> Population</b></span></div>
 						<div><b>{formatLargeNumbers(Number(countryData?.metadata?.population))}</b></div>
-						<!-- <div class="between">
-						<span>Rank #11</span>
-						<SmallGraphIcon sign="+" trend={1.2} />
-					</div> -->
 					</div>
 					<div class="card card-selectable flex">
 						<div class="flex-row">
-							<span><CurrencyDollarIcon size={16} /></span>
-							<span><b> GDP</b></span>
+							<span><CurrencyDollarIcon size={16} /></span><span><b> GDP</b></span>
 						</div>
 						<div><b>{formatLargeNumbers(Number(countryData?.economyInfo?.gdp?.current))}</b></div>
-						<!-- <div class="between">
-						<span>Rank #11</span>
-						<SmallGraphIcon sign="+" trend={0.3} />
-					</div> -->
 					</div>
 					<div class="card card-selectable flex">
 						<div class="flex-row">
-							<span><MapPinIcon size={16} /></span>
-							<span><b> Area</b></span>
+							<span><MapPinIcon size={16} /></span><span><b> Area</b></span>
 						</div>
 						<div><b>{formatLargeNumbers(Number(countryData?.metadata?.area))}</b></div>
-						<!-- <div class="between">
-						<span>Rank #11</span>
-						<span>~Germany</span>
-					</div> -->
 					</div>
 				</div>
-				<!-- {#await getMetadata}
-						<p>loading...</p>
-					{:then meta}
-						<p>Population: {meta.population}</p>
-						<p>GDP: {meta.gdp}</p>
-						<p>Area: {meta.area}</p>
-					{/await} -->
 			</section>
-			<!-- TODO: add later then data is wrangled -->
-			<!-- <Overview />
-		<Demographics /> -->
-			{#if countryData?.tourismInfo}
-				<Economy {...countryData?.economyInfo} />
-			{/if}
+			{#if countryData?.tourismInfo}<Economy {...countryData?.economyInfo} />{/if}
 			{#if countryData?.energyInfo}
-				<Energy {...countryData?.energyInfo} />
-			{/if}
-			{#if countryData?.tourismInfo}
-				<Tourism {...countryData?.tourismInfo} />
-			{/if}
-			<!-- <Environment /> -->
-			<!-- <Military /> -->
+				<Energy {...countryData?.energyInfo} />{/if}
+			{#if countryData?.tourismInfo}<Tourism {...countryData?.tourismInfo} />{/if}
+
+			<!-- ── Saved / Chat tab ──────────────────────────────────────────────────── -->
 		{:else}
 			<section class="topicSection">
-				<h2>Saved Mode</h2>
-				<h3>Saved queries</h3>
-				<div class="savedQueries flex-col">
-					{#each userQueries as userQuery}
-						<div class="queryItem card">
-							<div class="flex between">
-								<div class="flex-col">
-									<div>{userQuery.indicator}</div>
-									<div class="text-gray">Created at: {userQuery.createdAt}</div>
-								</div>
-								<div>
-									<button>Show</button>
-								</div>
-							</div>
+				<!-- Auth -->
+				{#if !authLoaded}
+					<p class="muted">Loading…</p>
+				{:else if !user}
+					<div class="auth-card">
+						<div class="auth-tabs">
+							<button class:atab-active={authMode === 'login'} onclick={() => (authMode = 'login')}
+								>Sign in</button
+							>
+							<button
+								class:atab-active={authMode === 'register'}
+								onclick={() => (authMode = 'register')}>Register</button
+							>
 						</div>
-					{/each}
-				</div>
-				<br />
-				<h3>AI Chat</h3>
-				<div class="chatbox card">
-					<Chat />
+						{#if authMode === 'register'}
+							<input class="auth-input" placeholder="Name (optional)" bind:value={authName} />
+						{/if}
+						<input class="auth-input" type="email" placeholder="Email" bind:value={authEmail} />
+						<input
+							class="auth-input"
+							type="password"
+							placeholder="Password"
+							bind:value={authPass}
+							onkeydown={(e) => e.key === 'Enter' && handleAuth()}
+						/>
+						{#if authError}<p class="auth-err">{authError}</p>{/if}
+						<button class="btn-primary" disabled={authBusy} onclick={handleAuth}>
+							{authBusy ? '…' : authMode === 'login' ? 'Sign in' : 'Create account'}
+						</button>
+					</div>
+				{:else}
+					<!-- User bar -->
+					<div class="user-bar">
+						<span class="user-name">{user.displayName ?? user.email}</span>
+						<button class="btn-ghost btn-sm" onclick={handleLogout}>Sign out</button>
+					</div>
+
+					<!-- Sub-tabs -->
+					<div class="sub-tabs">
+						<button class:stab-active={savedTab === 'views'} onclick={() => (savedTab = 'views')}>
+							⭐ Saved views
+						</button>
+						<button
+							class:stab-active={savedTab === 'history'}
+							onclick={() => (savedTab = 'history')}
+						>
+							🕐 Chat history
+						</button>
+					</div>
+
+					<!-- Saved views -->
+					{#if savedTab === 'views'}
+						{#if !savedReady}
+							<p class="muted">Loading…</p>
+						{:else if views.length === 0}
+							<p class="muted">No saved views yet. Use the chat and click ⭐ Save on a result.</p>
+						{:else}
+							<div class="item-list">
+								{#each views as v (v.id)}
+									<div class="item-card">
+										<div class="item-top">
+											<span class="mode-ico">{MODE_ICON[v.mode] ?? '📊'}</span>
+											<span class="item-label">{v.label}</span>
+											<button
+												class="btn-del"
+												title="Delete"
+												disabled={deletingId === v.id}
+												onclick={() => deleteView(v.id)}>🗑</button
+											>
+										</div>
+										<div class="item-meta">
+											{v.countries?.join(', ')} · {v.startYear}–{v.endYear}
+											{v.selectedYear ? `· yr ${v.selectedYear}` : ''}
+										</div>
+										<div class="item-foot">
+											<span class="muted-sm">{fmtDate(v.createdAt)}</span>
+											<button class="btn-show" onclick={() => replaySaved(v)}>Show ↓</button>
+										</div>
+									</div>
+								{/each}
+							</div>
+						{/if}
+
+						<!-- Chat history -->
+					{:else if chats.length === 0}
+						<p class="muted">No chat history yet.</p>
+					{:else}
+						<div class="item-list">
+							{#each chats as msg (msg.id)}
+								<div class="item-card" class:item-has-q={!!msg.parsedQuery}>
+									<div class="item-label">{msg.userMessage}</div>
+									{#if msg.parsedQuery}
+										<div class="item-meta">
+											{msg.parsedQuery.indicatorName ?? msg.parsedQuery.indicator}
+											· {msg.parsedQuery.start}–{msg.parsedQuery.end}
+										</div>
+									{/if}
+									<div class="item-foot">
+										<span class="muted-sm">{fmtDate(msg.createdAt)}</span>
+										<div class="item-foot-actions">
+											{#if msg.savedViewId}<span class="badge-saved">⭐ saved</span>{/if}
+											{#if msg.parsedQuery}
+												<button class="btn-show" onclick={() => replayChat(msg)}>Replay ↓</button>
+											{/if}
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				{/if}
+
+				<!-- Chat always visible in this tab -->
+				<h3 class="section-h">AI Data Chat</h3>
+				<div class="chatbox">
+					<Chat bind:this={chatRef} {user} {onSaveView} />
 				</div>
 			</section>
 		{/if}
@@ -201,9 +368,13 @@
 {/if}
 
 <style>
-	.chatbox {
-		min-height: 400px;
+	.content {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		overflow-y: auto;
 	}
+
 	.drag-point {
 		display: none;
 	}
@@ -212,30 +383,12 @@
 			display: block;
 			position: fixed;
 			width: 100%;
-			background-color: hsl(0, 0%, 97%);
-			border: hsl(0, 0%, 95%) solid 1px;
+			background: hsl(0, 0%, 97%);
+			border: 1px solid hsl(0, 0%, 95%);
 			height: 20px;
 		}
 	}
-	.between {
-		display: flex;
-		justify-content: space-between;
-	}
-	.country-flag picture {
-		width: 80px;
-		height: 50px;
-		background-color: gray;
-	}
-	.main-card {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 8px;
-		padding: 1.5rem;
-		padding-block: 4rem;
-		background-color: rgb(247, 247, 247);
-		flex: 1;
-	}
+
 	.carousel {
 		display: flex;
 		gap: 16px;
@@ -245,52 +398,240 @@
 		display: flex;
 		gap: 16px;
 	}
-	nav {
-		position: absolute;
-		left: -8rem;
+	.country-flag picture {
+		width: 80px;
+		height: 50px;
+		background: gray;
+		display: block;
+	}
 
+	:global(.topicSection) {
 		display: flex;
 		flex-direction: column;
+		gap: 16px;
+		padding-inline: 2rem;
+		padding-block: 1rem;
 	}
-	button {
-		padding: 0.8rem;
+	:global(.strong-hr) {
 		border: none;
-		background-color: white;
-		cursor: pointer;
-		font-size: 1rem;
-	}
-	button:hover {
-		background-color: #f0f0f0;
+		border-top: 2px solid #000;
 	}
 
-	/* .container {
-		position: absolute;
-		right: 0;
-		top: 0;
-		bottom: 0;
-
-		background-color: white;
-		/* width: 40rem; */
-	/* } */
-
-	.content {
+	/* Auth */
+	.auth-card {
+		background: #f9fafb;
+		border: 1px solid #e5e7eb;
+		border-radius: 10px;
+		padding: 14px;
 		display: flex;
 		flex-direction: column;
-		height: 100%;
-		overflow-y: auto;
+		gap: 9px;
+	}
+	.auth-tabs {
+		display: flex;
+		border-radius: 7px;
+		overflow: hidden;
+		border: 1px solid #d1d5db;
+	}
+	.auth-tabs button {
+		flex: 1;
+		padding: 7px;
+		border: none;
+		background: #f3f4f6;
+		font-size: 0.86rem;
+		cursor: pointer;
+	}
+	.atab-active {
+		background: #fff !important;
+		font-weight: 600;
+	}
+	.auth-input {
+		padding: 8px 11px;
+		border-radius: 7px;
+		border: 1px solid #d1d5db;
+		font-size: 0.87rem;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.auth-err {
+		color: #dc2626;
+		font-size: 0.8rem;
+		margin: 0;
+	}
+	.btn-primary {
+		background: #0ea5e9;
+		color: #fff;
+		border: none;
+		padding: 9px;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 0.9rem;
+	}
+	.btn-primary:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+	.btn-primary:hover:not(:disabled) {
+		background: #0284c7;
 	}
 
-	:global {
-		.strong-hr {
-			border: none;
-			border-top: 2px solid black;
-		}
-		.topicSection {
-			display: flex;
-			flex-direction: column;
-			gap: 16px;
-			padding-inline: 2rem;
-			padding-block: 1rem;
-		}
+	/* User bar */
+	.user-bar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: #f3f4f6;
+		border-radius: 8px;
+		padding: 8px 12px;
+	}
+	.user-name {
+		font-weight: 600;
+		font-size: 0.88rem;
+	}
+
+	/* Sub-tabs */
+	.sub-tabs {
+		display: flex;
+		gap: 4px;
+		border-bottom: 1px solid #e5e7eb;
+		padding-bottom: 4px;
+	}
+	.sub-tabs button {
+		padding: 6px 12px;
+		border: none;
+		background: transparent;
+		border-radius: 6px 6px 0 0;
+		font-size: 0.83rem;
+		cursor: pointer;
+		color: #6b7280;
+	}
+	.stab-active {
+		background: #eff6ff !important;
+		color: #0369a1 !important;
+		font-weight: 600;
+		border-bottom: 2px solid #0ea5e9;
+	}
+	.sub-tabs button:hover:not(.stab-active) {
+		background: #f9fafb;
+	}
+
+	/* Item list */
+	.item-list {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	.item-card {
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: 9px;
+		padding: 10px 12px;
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+	}
+	.item-has-q {
+		border-left: 3px solid #0ea5e9;
+	}
+	.item-top {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.mode-ico {
+		font-size: 0.95rem;
+		flex-shrink: 0;
+	}
+	.item-label {
+		font-size: 0.86rem;
+		font-weight: 500;
+		flex: 1;
+		line-height: 1.35;
+	}
+	.item-meta {
+		font-size: 0.77rem;
+		color: #6b7280;
+	}
+	.item-foot {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.item-foot-actions {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+	.muted-sm {
+		font-size: 0.73rem;
+		color: #9ca3af;
+	}
+	.badge-saved {
+		font-size: 0.73rem;
+		color: #059669;
+	}
+
+	/* Buttons */
+	button {
+		cursor: pointer;
+	}
+	.btn-show {
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		color: #1d4ed8;
+		padding: 4px 10px;
+		border-radius: 6px;
+		font-size: 0.77rem;
+	}
+	.btn-show:hover {
+		background: #dbeafe;
+	}
+	.btn-del {
+		background: transparent;
+		border: none;
+		font-size: 0.85rem;
+		color: #9ca3af;
+		padding: 2px 4px;
+		border-radius: 4px;
+	}
+	.btn-del:hover:not(:disabled) {
+		color: #dc2626;
+		background: #fee2e2;
+	}
+	.btn-del:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+	.btn-ghost {
+		background: transparent;
+		border: 1px solid #d1d5db;
+		color: #374151;
+		border-radius: 6px;
+		padding: 5px 10px;
+		font-size: 0.82rem;
+	}
+	.btn-ghost:hover {
+		background: #f3f4f6;
+	}
+	.btn-sm {
+		padding: 4px 9px !important;
+		font-size: 0.78rem !important;
+	}
+
+	/* Misc */
+	.muted {
+		color: #9ca3af;
+		font-size: 0.84rem;
+	}
+	.section-h {
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #374151;
+		margin: 4px 0 0;
+	}
+	.chatbox {
+		min-height: 480px;
+		border-radius: 10px;
+		overflow: hidden;
 	}
 </style>

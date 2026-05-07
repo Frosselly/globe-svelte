@@ -1,38 +1,53 @@
-import { redirect } from '@sveltejs/kit';
+/**
+ * src/hooks.server.ts
+ *
+ * Runs on every request. Resolves the session cookie into a user object and
+ * attaches it to event.locals so any load function or server route can read
+ * it without hitting the DB again.
+ *
+ * Also adds permissive CORS headers for API routes (useful during dev when
+ * the front end and API may run on different ports).
+ */
 
-//TODO remove later
-export const ssr = false;
+import type { Handle } from '@sveltejs/kit';
+import { getUserFromToken } from '$lib/server/user';
 
-const unprotectedRoutes = ['/', '/auth/login', '/auth/signup'];
-const authRoutes = ['/auth/login', '/auth/signup'];
+export const handle: Handle = async ({ event, resolve }) => {
+	// ── 1. Resolve session ────────────────────────────────────────────────────
+	const token = event.cookies.get('sid');
 
-export const handle = async ({ event, resolve }) => {
-	const userId = event.cookies.get('user_id');
-
-	if (userId) {
-		const dbResponse = await fetch('http://localhost:5173/tempAuthDB.json');
-		const db = await dbResponse.json();
-
-		const user = db.users.find((u: any) => u.id.toString() === userId);
-
-		if (user) {
-			event.locals.user = user;
-		} else {
-			event.cookies.delete('user_id', { path: '/' });
-			event.locals.user = null;
-		}
+	if (token) {
+		const user = await getUserFromToken(token);
+		// Attach to locals — type-declared in app.d.ts (see bottom of file)
+		event.locals.user = user ?? null;
 	} else {
 		event.locals.user = null;
 	}
 
-	if (event.locals.user && authRoutes.includes(event.url.pathname)) {
-		redirect(303, '/');
+	// ── 2. Resolve the request ────────────────────────────────────────────────
+	const response = await resolve(event, {
+		// Let SvelteKit serialize <script> tags properly
+		filterSerializedResponseHeaders: (name) => name === 'content-type' || name === 'x-request-id'
+	});
+
+	// ── 3. Add security + CORS headers on API routes ─────────────────────────
+	if (event.url.pathname.startsWith('/api/')) {
+		response.headers.set('X-Content-Type-Options', 'nosniff');
+
+		// In production replace '*' with your actual origin
+		const origin = event.request.headers.get('origin') ?? '*';
+		response.headers.set('Access-Control-Allow-Origin', origin);
+		response.headers.set('Access-Control-Allow-Credentials', 'true');
+		response.headers.set('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+		response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 	}
 
-	const isProtected = !unprotectedRoutes.includes(event.url.pathname);
-	if (!event.locals.user && isProtected) {
-		redirect(303, '/sign-in');
-	}
-
-	return resolve(event);
+	return response;
 };
+
+/**
+ * Handle pre-flight OPTIONS requests for API routes.
+ * (SvelteKit doesn't do this automatically.)
+ */
+export const handleFetch: import('@sveltejs/kit').HandleFetch = ({ request, fetch }) =>
+	fetch(request);
