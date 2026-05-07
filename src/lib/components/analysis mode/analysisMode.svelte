@@ -186,7 +186,7 @@
 
 <style>
 	.container > div {
-		background: white;
+		background-color: var(--color-background);
 		pointer-events: auto;
 	}
 	div.transparent {
@@ -407,7 +407,7 @@
 		gap: 16px;
 		padding: 24px;
 		/* height: 100%; */
-		background-color: white;
+		background-color: var(--color-background);
 		pointer-events: auto;
 		width: min-content;
 		border-bottom-right-radius: 12px;
@@ -433,7 +433,7 @@
 		padding: 10px 18px;
 		border-radius: 10px;
 		border: 1.5px solid #e5e7eb;
-		background: white;
+		background-color: var(--color-background);
 		font-size: 13px;
 		font-weight: 500;
 		color: #444;

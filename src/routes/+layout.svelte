@@ -1,4 +1,6 @@
 <script lang="ts">
+	import './globals.css';
+
 	import favicon from '$lib/assets/favicon.svg';
 	import globeIcon from '$lib/assets/globe-icon.svg';
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
@@ -137,7 +139,7 @@
 		}
 		/* variants */
 		.btn-primary {
-			background: #b9cefc;
+			background: var(--color-primary);
 			color: #fff;
 			border: 0.5px solid transparent;
 		}
@@ -145,8 +147,8 @@
 			opacity: 0.88;
 		}
 		.btn-default {
-			background: #fff;
-			color: #0f0f0f;
+			background: var(--color-background);
+			color: var(--color-text);
 			border: 0.5px solid rgba(0, 0, 0, 0.18);
 		}
 		.btn-default:hover {

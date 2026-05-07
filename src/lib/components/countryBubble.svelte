@@ -145,7 +145,7 @@
 		z-index: 20;
 		width: 360px;
 		max-width: 360px;
-		background: #ffffff;
+		background: var(--color-background);
 		border: 0.5px solid rgba(0, 0, 0, 0.12);
 		border-radius: 28px;
 		font-family: 'Sora', sans-serif;

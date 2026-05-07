@@ -2,14 +2,6 @@ import { writable, derived } from 'svelte/store';
 
 export type Mode = 'map' | 'analysis';
 
-// export interface CountryData {
-// 	code: string;
-// 	name: string;
-// 	population: number;
-// 	gdp: number;
-// 	// ... your full shape here
-// }
-
 export const modeState = $state({ selected: 'map' as 'map' | 'analysis' });
 export const sidebarState = $state({ selected: 'countryInfo' as 'countryInfo' | 'saved' });
 export const countryData = $state<any>({ countries: undefined });

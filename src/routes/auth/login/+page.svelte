@@ -10,7 +10,7 @@
 	</nav>
 </div>
 <div class="card">
-	<h2 class="">Prisijungimas</h2>
+	<h2 class="">Log in</h2>
 
 	<form method="POST" action="?/login" name="initLogin">
 		<span>Email</span>
@@ -23,11 +23,11 @@
 			<input id="password" type="password" required name="password" autocomplete="off" />
 		</label>
 
-		<button type="submit" class="btn"> Prisijungti </button>
+		<button type="submit" class="btn"> Log in </button>
 	</form>
 	<p class="center flex-row">
 		Neturite paskyros?
-		<a class="btn" href="/auth/signup"> Užsiregistruokite </a>
+		<a class="btn" href="/auth/signup"> Register </a>
 	</p>
 	{#if form?.error}<p class="text-center text-error-500">{form.error}</p>{/if}
 </div>
@@ -51,7 +51,7 @@
 		max-width: 420px;
 		margin: 2rem auto;
 		padding: 2.5rem;
-		background-color: #ffffff;
+		background-color: var(--color-background);
 		border-radius: 12px;
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 	}
@@ -92,7 +92,7 @@
 		padding: 0.75rem 1rem;
 		font-size: 0.95rem;
 		color: #111827;
-		background-color: #ffffff;
+		background-color: var(--color-background);
 		border: 1.5px solid #d1d5db;
 		border-radius: 8px;
 		outline: none;
@@ -105,7 +105,7 @@
 	input:focus {
 		border-color: #3b82f6;
 		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-		background-color: #ffffff;
+		background-color: var(--color-background);
 	}
 
 	input::placeholder {

@@ -3,37 +3,55 @@
 </script>
 
 <div class="card flex-col">
-	<h2 class="">Registracija</h2>
+	<h2 class="">Sign Up</h2>
 
 	<form action="?/signup" method="POST">
-		<span>First Name</span>
-		<label class="label mt-2">
-			<input id="firstName" type="text" required name="firstName" autocomplete="off" />
-		</label>
-		<span>Last Name</span>
-		<label class="label mt-2">
-			<input id="lastName" type="text" required name="lastName" autocomplete="off" />
-		</label>
-		<span>Username</span>
-		<label class="label mt-2">
-			<input id="username" type="text" required name="username" autocomplete="off" />
-		</label>
+		<div class="flex-row">
+			<div>
+				<span>First Name</span>
+				<label class="label mt-2">
+					<input id="firstName" type="text" required name="firstName" autocomplete="off" />
+				</label>
+			</div>
+			<div>
+				<span>Last Name</span>
+				<label class="label mt-2">
+					<input id="lastName" type="text" required name="lastName" autocomplete="off" />
+				</label>
+			</div>
+		</div>
+		<div>
+			<span>Username</span>
+			<label class="label mt-2">
+				<input id="username" type="text" required name="username" autocomplete="off" />
+			</label>
+		</div>
 
-		<span>Email</span>
-		<label class="label mt-2">
-			<input id="email" type="email" required name="email" autocomplete="off" />
-		</label>
+		<div>
+			<span>Email</span>
+			<label class="label mt-2">
+				<input id="email" type="email" required name="email" autocomplete="off" />
+			</label>
+		</div>
 
-		<span>Password</span>
-		<label class="label mt-2">
-			<input id="password" type="password" required name="password" autocomplete="off" />
-		</label>
+		<div>
+			<span>Password</span>
+			<label class="label mt-2">
+				<input id="password" type="password" required name="password" autocomplete="off" />
+			</label>
+		</div>
+		<div>
+			<span>Confirm Password</span>
+			<label class="label mt-2">
+				<input id="password" type="password" required name="password" autocomplete="off" />
+			</label>
+		</div>
 
 		<button
 			type="submit"
 			class="btn preset-filled-primary-500 mt-2 w-full rounded-3xl p-2 text-lg font-semibold"
 		>
-			Užsiregistruoti
+			Sign Up
 		</button>
 		{#if form?.error}<p class="text-center text-error-500">{form.error}</p>{/if}
 	</form>
@@ -55,10 +73,10 @@
 
 	.card {
 		width: 100%;
-		max-width: 420px;
+		max-width: 560px;
 		margin: 2rem auto;
 		padding: 2.5rem;
-		background-color: #ffffff;
+		background-color: var(--color-background);
 		border-radius: 12px;
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 	}
@@ -79,12 +97,12 @@
 		margin-bottom: 2rem;
 	}
 
-	form > span {
+	form span {
 		display: block;
 		font-size: 0.875rem;
 		font-weight: 600;
 		color: #374151;
-		margin-bottom: -1rem;
+		margin-bottom: 0.5rem;
 		letter-spacing: 0.01em;
 	}
 
@@ -99,7 +117,7 @@
 		padding: 0.75rem 1rem;
 		font-size: 0.95rem;
 		color: #111827;
-		background-color: #ffffff;
+		background-color: var(--color-background);
 		border: 1.5px solid #d1d5db;
 		border-radius: 8px;
 		outline: none;
@@ -112,7 +130,7 @@
 	input:focus {
 		border-color: #3b82f6;
 		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-		background-color: #ffffff;
+		background-color: var(--color-background);
 	}
 
 	input::placeholder {

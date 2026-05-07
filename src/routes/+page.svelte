@@ -109,7 +109,7 @@
 		bottom: 0;
 		z-index: 10;
 		pointer-events: none;
-		/* background: white; */
+		/* background-color: var(--color-background); */
 	}
 
 	.sidebar {
@@ -117,7 +117,7 @@
 		min-width: 35rem;
 		height: 100%;
 		flex-shrink: 0;
-		background-color: white;
+		background-color: var(--color-background);
 	}
 
 	.mapInfo {

@@ -113,19 +113,42 @@
 
 		map = new maplibregl.Map({
 			container: mapContainer,
-			style: {
-				version: 8,
-				glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
-				sources: {
-					protomaps: {
-						type: 'vector',
-						url: TILE_URL,
-						attribution:
-							'<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
-					}
-				},
-				layers: layers('protomaps', namedFlavor('light'), { lang: 'en' })
-			},
+
+			// style: {
+			// 	version: 8,
+			// 	glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+			// 	sources: {
+			// 		protomaps: {
+			// 			type: 'vector',
+			// 			url: TILE_URL,
+			// 			attribution:
+			// 				'<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
+			// 		}
+			// 	},
+			// 	layers: layers('protomaps', namedFlavor('light'), { lang: 'en' })
+			// },
+			// style: {
+			// 	version: 8,
+			// 	sources: {
+			// 		'raster-tiles': {
+			// 			type: 'raster',
+			// 			tiles: ['https://tiles.openfreemap.org/styles/bright'],
+			// 			tileSize: 256,
+			// 			minzoom: 0,
+			// 			maxzoom: 19,
+			// 			attribution: '© OpenStreetMap contributors'
+			// 		}
+			// 	},
+			// 	layers: [
+			// 		{
+			// 			id: 'simple-tiles',
+			// 			type: 'raster',
+			// 			source: 'raster-tiles'
+			// 		}
+			// 	],
+			// 	id: 'blank'
+			// },
+			style: 'https://tiles.openfreemap.org/styles/positron',
 			center: [lng, lat],
 			zoom: zoom
 		});
@@ -142,14 +165,15 @@
 
 			map.addSource('countries', {
 				type: 'geojson',
-				data: 'http://localhost:5173/countries.geo.json',
+				data: 'countries.geo.json',
 				promoteId: 'iso_a2_eh'
 			});
 
-			loadDataset('');
+			loadDataset('', 'none');
 			progress = 85;
 			loadingText = 'Finalizing...';
 		});
+
 		map.on('idle', () => {
 			progress = 100;
 			loadingText = 'Ready';

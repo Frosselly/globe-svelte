@@ -40,7 +40,8 @@ export function setupMapLayers(map: any, opacity: [number, number]) {
 		paint: {
 			'fill-color': 'white',
 			'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], ...opacity]
-		}
+		},
+		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
 	});
 
 	map.addLayer({
@@ -51,7 +52,8 @@ export function setupMapLayers(map: any, opacity: [number, number]) {
 		paint: {
 			'line-color': '#627BC1',
 			'line-width': 2
-		}
+		},
+		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
 	});
 }
 

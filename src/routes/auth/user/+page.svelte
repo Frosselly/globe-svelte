@@ -122,7 +122,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		background-color: #ffffff;
+		background-color: var(--color-background);
 		border-radius: 1.5rem;
 		padding: 1.5rem;
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
