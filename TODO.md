@@ -49,8 +49,25 @@ Add fake data for now in:
 
 # Back
 
-Get real data to test for these topics:
+## Get real data to test for these topics:
 
+- [ ] Demograthics
+  - population (now, trend, over teh years) - WB
+  - density - Population density (people per sq. km of land area) WB
+  - urbanization - WB
+  - medianAge -
+  - ageDistribution
+  - ethnicGroups - CIA FACTBOOK
+  - literacy - WB
+  - lifeExpectancy - WHO or idk
+  - health
+    - healthcareSpending
+    - hospitalBeds
+    - physicians - very small set
+    - infantMortality
+    - healthcareRank
+    - majorCauses
+    - vaccination
 - [x] _Tourism_
   - Annual visitors (now, trend, over teh years)
   - Revenue from visitors
@@ -95,8 +112,41 @@ Get real data to test for these topics:
   - Capabilities (some facts) _Add later_
   - Defense spending trend (some comparison)
 
-Data left to fill or discard:
+## Data left to fill or discard:
+
 Tourism:
 
 - [ ] calculate percentage of GDP using country metadata gdp
 - [ ] add daily budget or use current (only containes travel and services)
+
+Economy
+
+- [ ] fix economical sectors to equal a 100
+- [ ] handle businessEnvironment to be same values current from Arubia:
+      "businessEnvironment": {
+      "globalInnovationIndex": null,
+      "easeOfDoingBusiness": "undefined",
+      "globalCompetitivenessIndex": 0,
+      "corruptionPerceptionsIndex": 0
+      }
+- [ ] if budget or main thing for some topic is missing say "Missing data" or "No data" for whole topic
+- [ ] fix protected areas current:
+      "protectedAreas": [
+      {},
+      {},
+      {},
+      {},
+      {}
+      ]
+- [ ] remove null data in historical:
+      {
+      "year": 2018,
+      "value": [
+      {
+      "name": "Other renewables",
+      "percentage": null
+      },
+      {
+      "name": "Biofuels",
+      "percentage": null
+      },}
