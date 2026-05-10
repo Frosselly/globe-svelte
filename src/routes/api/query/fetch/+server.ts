@@ -1,6 +1,4 @@
 /**
- * src/routes/api/query/fetch/+server.ts
- *
  * POST /api/query/fetch
  * { indicator, indicatorName, countriesIso3, start, end, chart, messageId? }
  *
@@ -53,15 +51,7 @@ async function fetchCountry(
 
 export const POST: RequestHandler = async (event) => {
 	const body = await event.request.json().catch(() => null);
-	const {
-		indicator,
-		indicatorName,
-		countriesIso3,
-		start,
-		end,
-		chart,
-		messageId // optional — links back to the pending chat_messages row
-	} = body ?? {};
+	const { indicator, indicatorName, countriesIso3, start, end, chart, messageId } = body ?? {};
 
 	if (!indicator || !Array.isArray(countriesIso3) || !countriesIso3.length) {
 		return json({ error: 'indicator and countriesIso3 required' }, { status: 400 });

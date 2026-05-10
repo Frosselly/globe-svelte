@@ -13,7 +13,6 @@
 	let deleting = $state(false);
 	let renameErr = $state<string | null>(null);
 
-	// For line mode: the first saved country is shown by default
 	const firstIso2 = $derived(
 		view.mode === 'line' && lineResults.length ? lineResults[0].iso2 : null
 	);
@@ -84,7 +83,6 @@
 						class="map-mode-btn"
 						class:active={mapState.displayMode === 'flat'}
 						onclick={() => {
-							// Ensure the dataset is synced and mode updated
 							setCurrentDataset(option);
 							setDisplayMode('flat');
 						}}>Heatmap</button

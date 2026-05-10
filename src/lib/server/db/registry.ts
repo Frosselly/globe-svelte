@@ -1,8 +1,8 @@
 import { economy, energy, military, environment, tourism, demographics } from './schema';
 
+//a file to change the queries indicators UNFINISHED
 
-
-export const CONFIG  = {
+export const CONFIG = {
 	// ── Economy ────────────────────────────────────────────────────────────────
 	gdp: {
 		table: economy,
@@ -308,5 +308,5 @@ export type IndicatorId = keyof typeof CONFIG;
 
 // Helper to get configuration safely
 export function getIndicatorConfig(id: IndicatorId) {
-  return CONFIG[id];
+	return CONFIG[id];
 }

@@ -1,6 +1,4 @@
 /**
- * src/routes/(app)/analysis/[analysisId]/+page.server.ts
- *
  * Loads the saved_view row AND pre-fetches the data so the page renders
  * without a client-side fetch waterfall.
  */

@@ -5,16 +5,13 @@
 	import globeIcon from '$lib/assets/globe-icon.svg';
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
 	import {
-		countriesStore,
 		modeState,
 		selectedCountryStore,
-		setSelectedMode,
 		setSelectedSidebar,
 		sidebarState
 	} from '$lib/core/stores/store.svelte.js';
 	import TopicsSidebar from '$lib/components/sidebar/topicsSidebar.svelte';
 	import Map from '$lib/components/map/map.svelte';
-	import AnalysisMode from '$lib/components/analysis-mode/analysisMode.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
@@ -23,7 +20,6 @@
 
 	let current_url = $state($page.url.pathname.split('/').filter(Boolean).pop() || '/');
 
-	// Set it as soon as pages update
 	$effect(() => {
 		current_url = $page.url.pathname.split('/').filter(Boolean).pop() || '/';
 		console.log('curr URL', current_url);
@@ -59,16 +55,13 @@
 <header>
 	<nav>
 		<a href="/"> <img class="icon" src={globeIcon} alt="" /></a>
-		<!-- <input type="text" name="countrySearch" id="countrySearch" placeholder="Search country..." /> -->
 		<div class="countrySearch">
 			<CountrySearch
 				onSelect={(country) => {
 					console.log(country.cca2, country.name.common);
-					// feed into your existing handleCountryClickLogic or store
 				}}
 			/>
 		</div>
-		<!-- <a href="/auth/login">Auth</a> -->
 	</nav>
 	<nav>
 		<a href={'/userManagement'} class="btn btn-sm btn-default">Manage users</a>
@@ -123,9 +116,6 @@
 
 		<!-- Route overlay area -->
 		<div class="main-content analysis-layer">
-			<!-- {#if countryData}
-				<AnalysisMode onClose={() => setSelectedMode('map')} />
-			{/if} -->
 			{@render children()}
 		</div>
 

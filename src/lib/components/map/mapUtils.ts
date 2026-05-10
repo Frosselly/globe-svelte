@@ -1,15 +1,3 @@
-/**
- * src/lib/components/map/mapUtils.ts
- *
- * Key change: prepareDataset now receives pre-fetched IndicatorRow[]
- * (from mapState.indicatorRows) instead of countriesStore + dot-path keys.
- *
- * Call site in map.svelte changes from:
- *   prepareDataset(keyPath, countriesStore.countries, { ... })
- * to:
- *   prepareDataset(keyPath, mapState.indicatorRows, countriesStore.countries, { ... })
- */
-
 import { formatLargeNumbers } from '$lib/core/utils/utils';
 import { ColumnLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
@@ -52,20 +40,6 @@ export function mergeDataWithGeo(
 	return clone;
 }
 
-// ── prepareDataset ────────────────────────────────────────────────────────────
-//
-// map.svelte calls this as:
-//
-//   import { mapState } from './mapStore.svelte';
-//   import { countriesStore } from '$lib/core/stores/store.svelte';
-//
-//   prepareDataset(
-//     dataset,
-//     mapState.indicatorRows,      // ← pre-fetched from analysis page
-//     countriesStore.countries,    // ← only needed for iso3 lookup
-//     { loadGeoData, updateMapSource, updateStores }
-//   )
-
 export async function prepareDataset(
 	indicatorKey: string | null,
 	rows: IndicatorRow[],
@@ -97,7 +71,7 @@ export async function prepareDataset(
 	return { geoData, valueData, scale };
 }
 
-// ── Layer helpers (unchanged logic) ──────────────────────────────────────────
+// ── Layer helpers  ──────────────────────────────────────────
 
 export function calculateColorScale(valueData: { value: number }[]) {
 	const vals = valueData
@@ -124,25 +98,15 @@ export function calculateColorScale(valueData: { value: number }[]) {
 }
 
 export function createColorExpression(stops: number[]) {
-	// Define the full color ramp
 	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
-
-	// Create the interpolation array
 	const interpolation: any[] = ['interpolate', ['linear'], ['get', 'value']];
 
-	// Map each unique stop to a color from the ramp
 	stops.forEach((stop, index) => {
-		// Pick a color from the ramp based on progress (0 to 1)
 		const colorIndex = Math.floor((index / (stops.length - 1)) * (colorRamp.length - 1));
 		interpolation.push(stop, colorRamp[colorIndex]);
 	});
 
-	return [
-		'case',
-		['!=', ['get', 'value'], null],
-		interpolation,
-		'#cccccc' // Null color
-	];
+	return ['case', ['!=', ['get', 'value'], null], interpolation, '#cccccc'];
 }
 
 function cleanFlat(map: any) {
@@ -200,7 +164,6 @@ export function setupFlatDisplay(map: any, colorExpression: any, labelName: stri
 	});
 	activePopup = new maplibregl.Popup({ closeButton: false, className: 'custom-popup', offset: 25 });
 	map.on('mousemove', 'state-fills', (e: any) => {
-		// if (e.features.length) console.log('state', labelName);
 		const value = e.features[0].properties.value;
 		activePopup
 			.setText(`${labelName}: ${value ? formatLargeNumbers(Number(value)) : 'No data'}`)

@@ -1,6 +1,3 @@
-/**
- * src/routes/(app)/analysis/+page.server.ts
- */
 import type { PageServerLoad } from './$types';
 import {
 	getLatestIndicatorAllCountries,
@@ -9,8 +6,6 @@ import {
 	type IndicatorKey
 } from '$lib/server/db/queries';
 import { OPTION_BY_KEY, ANALYSIS_OPTIONS } from '$lib/assets/analysisOptions';
-import { countriesStore } from '$lib/core/stores/store.svelte';
-import { setIndicatorRows } from '$lib/components/map/mapStore.svelte';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const indicatorKey = (url.searchParams.get('indicator') ?? 'gdp') as ScalarIndicator;

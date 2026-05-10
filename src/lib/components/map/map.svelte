@@ -41,7 +41,6 @@
 	let geoData: any = $state(null);
 	let valueData: any = $state(null);
 	let countryOutlinesJson: any = $state(null);
-	// FIX: guard so setupMapInteractions is only registered once
 	let interactionsSetup = false;
 
 	let countryGeneralInfo = $state({
@@ -53,7 +52,6 @@
 		currency: '¥ Yen (JPY)'
 	});
 
-	// Single effect — only tracks currentDataset, display mode handled inside
 	$effect(() => {
 		const dataset = mapState.currentDataset;
 		const mode = mapState.displayMode;
@@ -75,7 +73,6 @@
 
 	onDestroy(() => {
 		cleanupDeckGL(deck);
-		// FIX: clean up popup and mounted component on destroy
 		if (currentComponent) unmount(currentComponent);
 		if (currentPopup) currentPopup.remove();
 	});
@@ -190,7 +187,6 @@
 						}
 					},
 					updateStores: (dataset, newScale) => {
-						// plain assignment, no setCurrentDataset/setColorScale to avoid re-triggering
 						mapState.currentDataset = dataset;
 						mapState.colorScale = newScale ?? { min: 0, max: 0 };
 					}
@@ -217,7 +213,7 @@
 					console.warn('deck cleanup:', e);
 				}
 				deck = null;
-				mapState.deckInstance = null; // direct write, no setter
+				mapState.deckInstance = null;
 			}
 
 			if (mode === 'none') {
@@ -250,14 +246,13 @@
 
 				const newDeck = setupColumnsDisplay(map, geoData, valueData, scale);
 				deck = newDeck;
-				mapState.deckInstance = newDeck; // direct write
+				mapState.deckInstance = newDeck;
 			}
 		} catch (error) {
 			console.error('Error changing display mode:', error);
 		}
 	}
 
-	// FIX: only register click/hover handlers once across dataset changes
 	function setupMapInteractionsOnce() {
 		if (interactionsSetup) return;
 		interactionsSetup = true;
@@ -276,13 +271,11 @@
 	async function handleCountryClick(e: any) {
 		if (!e.features?.length) return;
 
-		// FIX: unmount previous Svelte component before creating a new one
 		if (currentComponent) {
 			unmount(currentComponent);
 			currentComponent = null;
 		}
 
-		// FIX: remove previous popup cleanly before making a new one
 		if (currentPopup) {
 			currentPopup.remove();
 			currentPopup = null;

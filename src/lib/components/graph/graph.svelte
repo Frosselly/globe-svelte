@@ -1,7 +1,5 @@
 <script lang="ts">
 	/**
-	 * graph.svelte
-	 *
 	 * Props:
 	 *   view              'bar' | 'line'
 	 *   option            AnalysisOption
@@ -448,7 +446,7 @@
 		<div class="content">
 			<svg bind:this={svgEl}></svg>
 
-			<!-- Country list (bar mode) + click-to-trend button (both modes) -->
+			<!-- Country list (bar mode)  -->
 			<div class="sidebar">
 				<div class="sidebar-header">
 					<h3>Countries</h3>

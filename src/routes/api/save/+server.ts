@@ -1,6 +1,4 @@
 /**
- * src/routes/api/save/+server.ts
- *
  * GET    /api/save          → list all saved views + chat messages for the user
  * POST   /api/save          → create a saved view (from analysis mode or chat)
  * DELETE /api/save?id=<id>  → delete a saved view
@@ -64,7 +62,6 @@ export const POST: RequestHandler = async (event) => {
 		endYear,
 		selectedYear,
 		mapDisplayMode,
-		// Optional: link a saved view back to the chat message that produced it
 		messageId
 	} = body;
 
@@ -122,12 +119,7 @@ export const DELETE: RequestHandler = async (event) => {
 
 	const deleted = await db
 		.delete(savedViews)
-		.where(
-			and(
-				eq(savedViews.id, id),
-				eq(savedViews.userId, user.id) // users can only delete their own views
-			)
-		)
+		.where(and(eq(savedViews.id, id), eq(savedViews.userId, user.id)))
 		.returning({ id: savedViews.id });
 
 	if (!deleted.length) return json({ error: 'Not found' }, { status: 404 });

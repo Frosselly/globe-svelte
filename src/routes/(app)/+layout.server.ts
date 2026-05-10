@@ -3,13 +3,8 @@ import { db } from '$lib/server/db/client';
 import { countries } from '$lib/server/db/schema';
 import { asc } from 'drizzle-orm';
 import type { LayoutServerLoad } from '../$types';
-import { mapState, setCountryOutlines } from '$lib/components/map/mapStore.svelte';
 
-// The hook already verified auth and set locals.user — just pass it to the page
 export const load: LayoutServerLoad = async ({ locals }) => {
-	// const res = await fetch('/temp/partialCountries.json');
-	// const countries: Record<string, any> = await res.json();
-
 	const rows = await db
 		.select({
 			iso2: countries.iso2,
@@ -32,8 +27,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	const countriesIndex = Object.fromEntries(rows.map((r) => [r.iso2, r]));
 	if (countriesIndex && !countriesStore.loaded) {
 		countriesStore.setCountries(countriesIndex);
-		// selectedCountryStore.setCountry(countries['FR']);
-		// console.log('data', data.countries);
 	}
 
 	return {

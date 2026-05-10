@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Combobox } from 'melt/builders';
-	import { countriesStore, selectedCountryStore } from '../../core/stores/store.svelte';
+	import { selectedCountryStore } from '../../core/stores/store.svelte';
 
 	interface CountrySearch {
 		common: string;

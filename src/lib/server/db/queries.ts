@@ -406,8 +406,6 @@ export type ScalarIndicator =
 
 export async function getLatestIndicatorAllCountries(
 	indicator: ScalarIndicator,
-	/** Optional: extract value for a specific year from the jsonb history
-	 *  instead of the pre-computed current scalar. */
 	year?: number
 ): Promise<{ iso2: string; name: string; value: number | null }[]> {
 	// When a specific year is requested we need to dig into jsonb history.

@@ -1,20 +1,4 @@
 <script lang="ts">
-	/**
-	 * src/routes/(app)/analysis/+page.svelte
-	 *
-	 * Fixes:
-	 * 1. Country in URL (?country=FR):
-	 *    - When user clicks a country name in graph list → navigate({ country, view: 'line' })
-	 *    - On mount: if ?country absent but selectedCountryStore has a country →
-	 *      navigate({ country: store.iso2 }) so the server can load history
-	 *    - Map click → selectedCountryStore updates → $effect picks it up → navigate
-	 *
-	 * 2. Save only selected countries (not all 250)
-	 *    - graph exposes onSelectionChange(iso2s[]) → stored in selectedIso2s
-	 *    - save uses selectedIso2s, falling back to top-10
-	 *
-	 * 3. Map uses ScalarIndicator key (flat DB column), not dot-path
-	 */
 	import { Combobox } from 'melt/builders';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -30,7 +14,7 @@
 	import ChartBarHorizontalIcon from 'phosphor-svelte/lib/ChartBarHorizontalIcon';
 	import MapTrifoldIcon from 'phosphor-svelte/lib/MapTrifoldIcon';
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
-	import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDisk';
+	import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
 	import TableIcon from 'phosphor-svelte/lib/TableIcon';
 	import type { PageData } from '../../../routes/(app)/$types';
 	import AGTable from '$lib/components/table/AGTable.svelte';
@@ -66,12 +50,6 @@
 		navigate({ year: String(y) });
 	}
 
-	// ── Sync selectedCountryStore → URL ───────────────────────────────────────
-	// This is the missing link: when the user clicks a country on the map,
-	// selectedCountryStore.country updates. We pick that up and set ?country= in
-	// the URL, which causes the server to load that country's history.
-	// replaceState:true avoids polluting browser history on every map hover/click.
-
 	$effect(() => {
 		if (currentView === 'map' && mapState.displayMode === 'none') {
 			setDisplayMode('flat');
@@ -83,8 +61,6 @@
 		if (storeIso2 && storeIso2 !== currentCountry) {
 			const params = new URLSearchParams($page.url.searchParams);
 			params.set('country', storeIso2);
-			// Only switch to line view automatically if we're already in line mode
-			// (don't hijack bar/map mode just because user clicked a country on the map)
 			goto(`/analysis?${params}`, { replaceState: true, invalidateAll: true });
 		}
 	});
@@ -120,11 +96,11 @@
 	$effect(() => {
 		const picked = data.options.find((o) => o.label === combobox.value);
 		if (picked && picked.key !== currentIndicator) {
-			navigate({ indicator: picked.key }); // clear country when switching indicator
+			navigate({ indicator: picked.key });
 		}
 	});
 
-	// Keep combobox label in sync when URL changes externally (e.g. back button)
+	// Keep combobox label in sync when URL changes externally
 	$effect(() => {
 		if (data.option.label !== combobox.value) {
 			combobox.value = data.option.label;

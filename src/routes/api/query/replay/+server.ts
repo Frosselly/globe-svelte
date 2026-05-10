@@ -1,6 +1,4 @@
 /**
- * src/routes/api/query/replay/+server.ts
- *
  * POST /api/query/replay  { indicator, countriesIso3, start, end }
  *
  * Used when the user clicks "Show ↓" on a saved view or "Replay ↓" on a

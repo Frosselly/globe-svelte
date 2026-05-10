@@ -1,7 +1,5 @@
 <script lang="ts">
 	/**
-	 * chat.svelte
-	 *
 	 * Message kinds:
 	 *   text          – plain user or bot message
 	 *   error         – red error card
@@ -11,7 +9,7 @@
 
 	import { onMount, tick } from 'svelte';
 	import ChartCard from './ChartCard.svelte';
-	import type { DataResult, Message } from '$lib/core/types';
+	import type { Candidate, DataResult, Message } from '$lib/core/types';
 
 	// ── Props ──────────────────────────────────────────────────────────────────
 

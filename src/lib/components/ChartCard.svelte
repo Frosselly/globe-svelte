@@ -1,12 +1,4 @@
 <script lang="ts">
-	/**
-	 * ChartCard.svelte
-	 *
-	 * A self-contained chart component mounted once per data result.
-	 * It holds its own mode (line/bar) and selectedYear state so switching
-	 * mode on one card never affects another.
-	 */
-
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
 	import type { ChartMode, DataResult } from '$lib/core/types';
@@ -17,7 +9,6 @@
 	let selectedYear = $state(result.end);
 	let canvasEl: HTMLElement | null = null;
 
-	// Draw after mount and whenever mode / selectedYear change
 	onMount(() => {
 		draw();
 	});

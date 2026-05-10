@@ -30,7 +30,6 @@ export type DisambigData = {
 	end: number;
 	chart: string;
 	messageId?: string;
-	// Once the user picks, we mark the picked id so the card dims the others
 	pickedId?: string;
 	loading?: boolean;
 };

@@ -1,6 +1,4 @@
 /**
- * src/routes/api/query/+server.ts
- *
  * POST /api/query  { prompt: string }
  *
  * Response shapes:

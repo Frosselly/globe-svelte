@@ -1,9 +1,3 @@
-/**
- * src/routes/api/auth/+server.ts
- *
- * POST /api/auth          { action: 'register' | 'login' | 'logout' | 'me', ...fields }
- */
-
 import { json, type RequestHandler } from '@sveltejs/kit';
 import {
 	registerUser,
