@@ -6,8 +6,8 @@
 	import { Combobox } from 'melt/builders';
 	import { derived } from 'svelte/store';
 	import analysisOptions from '$lib/assets/analysisOptions.json';
-	import { countriesStore, modeState } from '../../../routes/store.svelte';
-	import { mapState, setCurrentDataset, setDisplayMode, setIsHidden } from '../map/mapStore.svelte';
+	import { countriesStore, modeState } from '../../core/stores/store.svelte';
+	import { mapState, setCurrentDataset, setDisplayMode } from '../map/mapStore.svelte';
 
 	const { onClose } = $props();
 
@@ -24,7 +24,6 @@
 		);
 	});
 
-	// Look up the full option by name — always gives you the clean object
 	const selectedAnalysis = $derived(
 		analysisOptions.find((o) => o.name === combobox.value) ?? analysisOptions[0]
 	);
@@ -36,13 +35,6 @@
 		{ icon: MapTrifoldIcon, text: 'Map', value: 'map' }
 	];
 	let selectedView = $derived(options[selectedOption].value);
-	// $effect(() => {
-	// 	if (selectedView === 'map') {
-	// 		setIsHidden(false);
-	// 	} else {
-	// 		setIsHidden(true);
-	// 	}
-	// });
 
 	const availableRange = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 	let selectedYear = $state(availableRange[availableRange.length - 1]);

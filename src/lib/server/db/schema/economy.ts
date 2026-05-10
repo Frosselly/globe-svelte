@@ -1,12 +1,12 @@
 import { pgTable, varchar, real, integer, jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { countries } from './countries';
-import type { HistoricalData } from '$lib/types/c_shared';
+import type { HistoricalData } from '$lib/core/types/c_shared';
 import type {
 	BusinessEnvironment,
 	EconomicalSector,
 	LabourMarket,
 	Trade
-} from '$lib/types/c_economy';
+} from '$lib/core/types/c_economy';
 
 export const economy = pgTable('economy', {
 	iso2: varchar('iso2', { length: 2 })

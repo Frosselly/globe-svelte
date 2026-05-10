@@ -1,6 +1,6 @@
 import { pgTable, varchar, real, integer, jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { countries } from './countries';
-import type { HistoricalData } from '$lib/types/c_shared';
+import type { HistoricalData } from '$lib/core/types/c_shared';
 
 export const environment = pgTable('environment', {
 	iso2: varchar('iso2', { length: 2 })

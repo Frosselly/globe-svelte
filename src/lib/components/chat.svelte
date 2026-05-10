@@ -11,7 +11,7 @@
 
 	import { onMount, tick } from 'svelte';
 	import ChartCard from './ChartCard.svelte';
-	import type { DataResult, Message } from '$lib/types';
+	import type { DataResult, Message } from '$lib/core/types';
 
 	// ── Props ──────────────────────────────────────────────────────────────────
 

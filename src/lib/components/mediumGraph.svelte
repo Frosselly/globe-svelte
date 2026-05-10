@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import * as d3 from 'd3';
-	import { formatLargeNumbers } from '$lib/utils/utils';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
 
 	let {
 		data,

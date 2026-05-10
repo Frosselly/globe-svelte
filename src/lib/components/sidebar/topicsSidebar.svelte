@@ -12,13 +12,19 @@
 	import UserIcon from 'phosphor-svelte/lib/UserIcon';
 
 	import { mapState, setCurrentDataset } from '$lib/components/map/mapStore.svelte';
-	import { selectedCountryStore } from '../../../routes/store.svelte';
-	import { formatLargeNumbers } from '$lib/utils/utils';
+	import {
+		selectedCountryStore,
+		type CountrySnapshot,
+		type FullCountry
+	} from '../../core/stores/store.svelte';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
 
 	// ── Props ──────────────────────────────────────────────────────────────────
-	let { visible, selectedSidebar = 'countryInfo' } = $props();
-
-	const countryData = $derived(selectedCountryStore.country);
+	let {
+		visible,
+		selectedSidebar = 'countryInfo',
+		countryData
+	}: { visible: boolean; selectedSidebar?: string; countryData: FullCountry | null } = $props();
 
 	// ── Auth ───────────────────────────────────────────────────────────────────
 	type AuthUser = { id: string; email: string; displayName: string | null; isAdmin: boolean };
@@ -200,10 +206,12 @@
 				<div class="row">
 					{#if countryData}
 						<div class="row">
-							<figure class="country-flag"><picture><img src="" alt="" /></picture></figure>
+							<figure class="country-flag">
+								<picture><img src={countryData.flagSvg} alt="" /></picture>
+							</figure>
 							<div>
-								<h2>{countryData?.metadata?.name.common}</h2>
-								<h3>{countryData?.metadata?.capital[0]}</h3>
+								<h2>{countryData?.name}</h2>
+								<h3>{countryData?.capital}</h3>
 							</div>
 						</div>
 					{/if}
@@ -219,26 +227,26 @@
 						}}
 					>
 						<div><span><UserIcon size={16} /></span><span><b> Population</b></span></div>
-						<div><b>{formatLargeNumbers(Number(countryData?.metadata?.population))}</b></div>
+						<div><b>{formatLargeNumbers(Number(countryData?.population))}</b></div>
 					</div>
 					<div class="card card-selectable flex">
 						<div class="flex-row">
 							<span><CurrencyDollarIcon size={16} /></span><span><b> GDP</b></span>
 						</div>
-						<div><b>{formatLargeNumbers(Number(countryData?.economyInfo?.gdp?.current))}</b></div>
+						<div><b>{formatLargeNumbers(Number(countryData?.gdpCurrent))}</b></div>
 					</div>
 					<div class="card card-selectable flex">
 						<div class="flex-row">
 							<span><MapPinIcon size={16} /></span><span><b> Area</b></span>
 						</div>
-						<div><b>{formatLargeNumbers(Number(countryData?.metadata?.area))}</b></div>
+						<div><b>{formatLargeNumbers(Number(countryData?.area))}</b></div>
 					</div>
 				</div>
 			</section>
-			{#if countryData?.tourismInfo}<Economy {...countryData?.economyInfo} />{/if}
-			{#if countryData?.energyInfo}
-				<Energy {...countryData?.energyInfo} />{/if}
-			{#if countryData?.tourismInfo}<Tourism {...countryData?.tourismInfo} />{/if}
+			{#if countryData}<Economy e={countryData} />{/if}
+			<!-- {#if countryData?.renewableCurrent}
+				<Energy {...countryData} />{/if}
+			{#if countryData?.visitorsCurrent}<Tourism {...countryData} />{/if} -->
 
 			<!-- ── Saved / Chat tab ──────────────────────────────────────────────────── -->
 		{:else}

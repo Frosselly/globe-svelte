@@ -216,13 +216,3 @@ const countryData = {
 		}
 	}
 };
-
-export const load = async ({ fetch }) => {
-	const res = await fetch('/temp/partialCountries.json');
-	const countries: Record<string, any> = await res.json();
-	// console.log(countries['FR'].tourismInfo);
-
-	return {
-		countries
-	};
-};

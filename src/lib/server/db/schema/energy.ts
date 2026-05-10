@@ -1,7 +1,7 @@
 import { pgTable, varchar, real, jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { countries } from './countries';
-import type { HistoricalData } from '$lib/types/c_shared';
-import type { EnergyMixSource, EnergyTarget } from '$lib/types/c_energy';
+import type { HistoricalData } from '$lib/core/types/c_shared';
+import type { EnergyMixSource, EnergyTarget } from '$lib/core/types/c_energy';
 
 export const energy = pgTable('energy', {
 	iso2: varchar('iso2', { length: 2 })

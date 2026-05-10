@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Combobox } from 'melt/builders';
-	import { countriesStore, selectedCountryStore } from '../../../routes/store.svelte';
+	import { countriesStore, selectedCountryStore } from '../../core/stores/store.svelte';
 
 	interface CountrySearch {
 		common: string;
@@ -27,8 +27,7 @@
 			.then((data) => (countries = data));
 		if (selectedOption) {
 			console.log('selected:', selectedOption);
-			const selected = countriesStore.countries[selectedOption.cca2];
-			selectedCountryStore.setCountry(selected);
+			selectedCountryStore.selectCountry(selectedOption.cca2);
 		}
 	});
 </script>

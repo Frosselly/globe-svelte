@@ -1,18 +1,8 @@
 <script lang="ts">
 	import './styles.css';
 	import analysisOptions from '$lib/assets/analysisOptions.json';
+	import { mapState, setMapInstance } from './mapStore.svelte.ts';
 	import {
-		mapState,
-		setColorScale,
-		setCurrentDataset,
-		setDeckInstance,
-		setDisplayMode,
-		setMapInstance
-	} from './mapStore.svelte.ts';
-	import {
-		loadGeoData,
-		mergeDataWithGeo,
-		calculateColorScale,
 		createColorExpression,
 		setupMapLayers,
 		setupMapInteractions,
@@ -26,9 +16,8 @@
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import * as pmtiles from 'pmtiles';
-	import { mount, unmount, onDestroy, onMount, untrack } from 'svelte'; // FIX: added unmount
-	import type { DataSource } from '$lib/types';
-	import { countriesStore, selectedCountryStore } from '../../../routes/store.svelte.ts';
+	import { mount, unmount, onDestroy, onMount, untrack } from 'svelte';
+	import { countriesStore, selectedCountryStore } from '../../core/stores/store.svelte.ts';
 
 	const { toggleTopics, onPosChange } = $props();
 
@@ -48,10 +37,10 @@
 	let currentComponent: any = null;
 
 	let deck: any = $state(null);
-	let scale: any = $state(null);
+	let scale: number[] | null = $state(null);
 	let geoData: any = $state(null);
 	let valueData: any = $state(null);
-
+	let countryOutlinesJson: any = $state(null);
 	// FIX: guard so setupMapInteractions is only registered once
 	let interactionsSetup = false;
 
@@ -63,19 +52,6 @@
 		region: 'East Asia',
 		currency: '¥ Yen (JPY)'
 	});
-
-	const dataSources: Record<string, DataSource> = {
-		population: {
-			link: 'http://localhost:5173/country-pop-list.json',
-			key: 'cca3',
-			value: 'population'
-		},
-		gdp: {
-			link: 'http://localhost:5173/country-pop-list.json',
-			key: 'cca3',
-			value: 'population'
-		}
-	};
 
 	// Single effect — only tracks currentDataset, display mode handled inside
 	$effect(() => {
@@ -92,7 +68,8 @@
 		});
 	});
 
-	onMount(() => {
+	onMount(async () => {
+		await fetchCountryOutlines();
 		initializeMap(mapContainer);
 	});
 
@@ -102,6 +79,14 @@
 		if (currentComponent) unmount(currentComponent);
 		if (currentPopup) currentPopup.remove();
 	});
+
+	async function fetchCountryOutlines() {
+		if (!countryOutlinesJson) {
+			console.log('fetcj?????');
+			const geoRes = await fetch('http://localhost:5173/countries.geo.json');
+			countryOutlinesJson = await geoRes.json();
+		}
+	}
 
 	async function initializeMap(mapContainer: string | HTMLElement) {
 		const protocol = new (pmtiles as any).Protocol();
@@ -165,11 +150,11 @@
 
 			map.addSource('countries', {
 				type: 'geojson',
-				data: 'countries.geo.json',
+				data: countryOutlinesJson,
 				promoteId: 'iso_a2_eh'
 			});
 
-			loadDataset('', 'none');
+			loadDataset(mapState.currentDataset, mapState.displayMode);
 			progress = 85;
 			loadingText = 'Finalizing...';
 		});
@@ -188,15 +173,29 @@
 	}
 	async function loadDataset(keyPath: string | null, mode: 'flat' | 'columns' | 'none') {
 		try {
-			const result = await prepareDataset(keyPath, countriesStore.countries, {
-				loadGeoData,
-				updateMapSource: (data) => map.getSource('countries').setData(data),
-				updateStores: (dataset, newScale) => {
-					// plain assignment, no setCurrentDataset/setColorScale to avoid re-triggering
-					mapState.currentDataset = dataset;
-					mapState.colorScale = newScale ?? { min: 0, max: 0 };
+			const result = await prepareDataset(
+				keyPath,
+				mapState.indicatorRows,
+				countriesStore.countries,
+				{
+					loadGeoData: async () => {
+						return countryOutlinesJson;
+					},
+					updateMapSource: (data) => {
+						const source = map?.getSource('countries');
+						if (source) {
+							source.setData(data);
+						} else {
+							console.warn("Map source 'countries' not ready yet.");
+						}
+					},
+					updateStores: (dataset, newScale) => {
+						// plain assignment, no setCurrentDataset/setColorScale to avoid re-triggering
+						mapState.currentDataset = dataset;
+						mapState.colorScale = newScale ?? { min: 0, max: 0 };
+					}
 				}
-			});
+			);
 
 			geoData = result.geoData;
 			valueData = result.valueData;
@@ -225,12 +224,12 @@
 				setupMapLayers(map, [0.5, 0]);
 				setupMapInteractionsOnce();
 			} else if (mode === 'flat') {
-				if (!scale) {
+				if (!scale || scale?.length < 0) {
 					setupMapLayers(map, [0.5, 0]);
 					setupMapInteractionsOnce();
 					return;
 				}
-				const colorExpression = createColorExpression(scale.min, scale.max);
+				const colorExpression = createColorExpression(scale);
 				const label =
 					analysisOptions.find((o) => o.key === mapState.currentDataset)?.name ??
 					mapState.currentDataset;
@@ -337,7 +336,7 @@
 				if (res.ok) {
 					const data = await res.json();
 					console.log('restcountries data', data);
-					selectedCountryStore.setCountry(countriesStore.countries[iso2]);
+					selectedCountryStore.selectCountry(iso2);
 					if (Array.isArray(data) && data.length > 0) {
 						const c = data[0];
 						countryGeneralInfo = {

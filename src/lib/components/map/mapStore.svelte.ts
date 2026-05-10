@@ -1,44 +1,39 @@
-// mapStore.svelte.ts
-export let mapState = $state({
+export type IndicatorRow = { iso2: string; name: string; value: number | null };
+
+export const mapState = $state({
+	currentDataset: '' as string,
+	displayMode: 'none' as 'flat' | 'columns' | 'none',
+	colorScale: { min: 0, max: 0 } as { min: number; max: number },
 	mapInstance: null as any,
-	currentDataset: '',
-	colorScale: { min: 0, max: 0 },
 	deckInstance: null as any,
-	displayMode: 'none' as 'none' | 'flat' | 'columns',
-	isLoading: false,
-	error: null as string | null,
-	isHidden: false
+	indicatorRows: [] as IndicatorRow[],
+	countryOutlinesJson: null as any
 });
 
-// Mutators (optional, but useful for encapsulation)
-export function setMapInstance(value: any) {
-	mapState.mapInstance = value;
+export function setCountryOutlines(dataset: any) {
+	mapState.countryOutlinesJson = dataset;
 }
 
-export function setCurrentDataset(value: string) {
-	mapState.currentDataset = value;
+export function setCurrentDataset(dataset: string) {
+	mapState.currentDataset = dataset;
 }
 
-export function setColorScale(value: { min: number; max: number }) {
-	mapState.colorScale = value;
+export function setDisplayMode(mode: 'flat' | 'columns' | 'none') {
+	mapState.displayMode = mode;
 }
 
-export function setDeckInstance(value: any) {
-	mapState.deckInstance = value;
+export function setColorScale(scale: { min: number; max: number }) {
+	mapState.colorScale = scale;
 }
 
-export function setDisplayMode(value: 'flat' | 'columns' | 'none') {
-	mapState.displayMode = value;
+export function setMapInstance(map: any) {
+	mapState.mapInstance = map;
 }
 
-export function setIsLoading(value: boolean) {
-	mapState.isLoading = value;
+export function setDeckInstance(deck: any) {
+	mapState.deckInstance = deck;
 }
 
-export function setError(value: string | null) {
-	mapState.error = value;
-}
-
-export function setIsHidden(value: boolean) {
-	mapState.isHidden = value;
+export function setIndicatorRows(rows: IndicatorRow[]) {
+	mapState.indicatorRows = rows;
 }

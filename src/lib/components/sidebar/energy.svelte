@@ -5,7 +5,7 @@
 	import LeafIcon from 'phosphor-svelte/lib/LeafIcon';
 	import TargetIcon from 'phosphor-svelte/lib/TargetIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
-	import { formatLargeNumbers } from '$lib/utils/utils';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import MediumGraph from '../mediumGraph.svelte';
 
 	const props = $props();

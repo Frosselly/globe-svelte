@@ -9,7 +9,7 @@
 
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
-	import type { ChartMode, DataResult } from '$lib/types';
+	import type { ChartMode, DataResult } from '$lib/core/types';
 
 	let { result }: { result: DataResult } = $props();
 

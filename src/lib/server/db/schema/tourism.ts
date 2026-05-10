@@ -1,7 +1,7 @@
 import { pgTable, varchar, real, integer, jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { countries } from './countries';
-import type { HistoricalData } from '$lib/types/c_shared';
-import type { PracticalInfo } from '$lib/types/c_tourism';
+import type { HistoricalData } from '$lib/core/types/c_shared';
+import type { PracticalInfo } from '$lib/core/types/c_tourism';
 
 export const tourism = pgTable('tourism', {
 	iso2: varchar('iso2', { length: 2 })

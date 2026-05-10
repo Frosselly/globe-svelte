@@ -1,20 +1,54 @@
 <script lang="ts">
-	import './globals.css';
+	import '../globals.css';
 
 	import favicon from '$lib/assets/favicon.svg';
 	import globeIcon from '$lib/assets/globe-icon.svg';
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
-	import { modeState, setSelectedMode, setSelectedSidebar, sidebarState } from './store.svelte.js';
+	import {
+		countriesStore,
+		modeState,
+		selectedCountryStore,
+		setSelectedMode,
+		setSelectedSidebar,
+		sidebarState
+	} from '$lib/core/stores/store.svelte.js';
+	import TopicsSidebar from '$lib/components/sidebar/topicsSidebar.svelte';
+	import Map from '$lib/components/map/map.svelte';
+	import AnalysisMode from '$lib/components/analysis-mode/analysisMode.svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	let { data, children } = $props();
 	let selectedMode = $derived(modeState.selected);
+
+	let current_url = $state($page.url.pathname.split('/').filter(Boolean).pop() || '/');
+
+	// Set it as soon as pages update
+	$effect(() => {
+		current_url = $page.url.pathname.split('/').filter(Boolean).pop() || '/';
+		console.log('curr URL', current_url);
+	});
+
+	let topicsVisible = $state(false);
+
+	const countryData = $derived(selectedCountryStore.country);
+
+	let lng = $state(-5.0684);
+	let lat = $state(26.5199);
+	let zoom = $state(2.67);
+	let initialState = { lng, lat, zoom };
 
 	let loginState = $derived(data.user ? data.user.username : 'Sign in');
 	let link = $derived(data.user ? '/auth/user' : '/auth/login');
 	$effect(() => {
 		$inspect('mode', modeState.selected);
 		$inspect('selectedMode', selectedMode);
-		if (modeState.selected) return;
+		if (modeState.selected) console.log(modeState.selected);
+		$inspect('selectedCountryStore.country', selectedCountryStore.country);
+		$inspect('gdpHistory', selectedCountryStore.country?.gdpHistory);
+
+		if (selectedCountryStore.country && !selectedCountryStore.historyLoaded)
+			selectedCountryStore.loadHistory();
 	});
 </script>
 
@@ -44,15 +78,15 @@
 		<div>
 			<button
 				class="btn btn-sm btn-default"
-				disabled={selectedMode === 'map'}
-				onclick={() => setSelectedMode('map')}
+				disabled={current_url === '/'}
+				onclick={() => goto('/')}
 			>
 				Explore
 			</button>
 			<button
 				class="btn btn-sm btn-default"
-				disabled={selectedMode === 'analysis'}
-				onclick={() => setSelectedMode('analysis')}>Analysis</button
+				disabled={current_url === 'analysis'}
+				onclick={() => goto('/analysis')}>Analysis</button
 			>
 			<button
 				class="btn btn-sm btn-default"
@@ -65,9 +99,42 @@
 	</nav>
 </header>
 
-<article>
-	{@render children()}
-</article>
+<main>
+	<article class="window">
+		<!-- Persistent map -->
+		<div class="main-content map-layer">
+			<Map
+				toggleTopics={() => {
+					topicsVisible = !topicsVisible;
+				}}
+				onPosChange={(nlng, nlat, nzoom) => {
+					lng = nlng;
+					lat = nlat;
+					zoom = nzoom;
+				}}
+			/>
+
+			<div class="mapInfo">
+				Longitude: {lng.toFixed(4)}
+				| Latitude: {lat.toFixed(4)}
+				| Zoom: {zoom.toFixed(2)}
+			</div>
+		</div>
+
+		<!-- Route overlay area -->
+		<div class="main-content analysis-layer">
+			<!-- {#if countryData}
+				<AnalysisMode onClose={() => setSelectedMode('map')} />
+			{/if} -->
+			{@render children()}
+		</div>
+
+		<!-- Persistent sidebar -->
+		<div class="sidebar">
+			<TopicsSidebar visible={true} {countryData} selectedSidebar={sidebarState.selected} />
+		</div>
+	</article>
+</main>
 
 <style>
 	:global {
@@ -192,7 +259,7 @@
 		}
 	}
 
-	article {
+	main {
 		max-height: 95%;
 		height: 100%;
 
@@ -203,5 +270,83 @@
 	}
 	.profile {
 		box-sizing: border-box;
+	}
+
+	.window {
+		position: relative;
+		flex: 1;
+		height: 100%;
+		width: 100%;
+		display: flex;
+	}
+
+	.main-content {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		min-width: 0;
+	}
+
+	/* Map always fills available space next to sidebar */
+	.map-layer {
+		flex: 1 1 0;
+		position: relative; /* for mapInfo positioning */
+	}
+
+	/* Analysis sits on top of the map absolutely */
+	.analysis-layer {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 40rem; /* same width as sidebar, so it doesn't overlap it */
+		bottom: 0;
+		z-index: 10;
+		pointer-events: none;
+		/* background-color: var(--color-background); */
+	}
+
+	.sidebar {
+		width: 40rem;
+		min-width: 35rem;
+		height: 100%;
+		flex-shrink: 0;
+		background-color: var(--color-background);
+	}
+
+	.mapInfo {
+		background-color: rgba(255, 255, 255, 0.9);
+		color: #0e0e0e;
+		padding: 6px 12px;
+		font-family: monospace;
+		z-index: 1;
+		position: absolute;
+		top: 0;
+		left: 0;
+		margin: 12px;
+		border-radius: 4px;
+	}
+
+	@media (max-width: 1200px) {
+		.window {
+			flex-direction: column;
+		}
+
+		.sidebar {
+			width: 100%;
+			min-width: 100%;
+			max-width: 100%;
+			height: 40rem;
+		}
+
+		.map-layer {
+			width: 100%;
+			height: auto;
+			min-height: 30vh;
+		}
+
+		.analysis-layer {
+			right: 0;
+			bottom: 40rem; /* leave room for sidebar on mobile */
+		}
 	}
 </style>

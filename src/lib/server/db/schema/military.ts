@@ -1,6 +1,6 @@
 import { pgTable, varchar, real, integer, jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { countries } from './countries';
-import type { HistoricalData } from '$lib/types/c_shared';
+import type { HistoricalData } from '$lib/core/types/c_shared';
 import type {
 	MilitaryBranch,
 	MilitaryEquipment,
@@ -8,7 +8,7 @@ import type {
 	MilitaryCapability,
 	GDPAllocation,
 	MilitaryPersonnel
-} from '$lib/types/c_miliatry';
+} from '$lib/core/types/c_miliatry';
 
 export const military = pgTable('military', {
 	iso2: varchar('iso2', { length: 2 })

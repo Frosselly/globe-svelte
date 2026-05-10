@@ -22,7 +22,7 @@
 import { db } from './client';
 import { eq, desc, asc, and, sql, isNotNull } from 'drizzle-orm';
 import { countries, economy, energy, environment, military, tourism, demographics } from './schema';
-import type { HistoricalData } from '$lib/types/c_shared';
+import type { HistoricalData } from '$lib/core/types/c_shared';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. One country — every topic, only current/scalar values
@@ -351,7 +351,8 @@ export async function getIndicatorHistory(
 			return row?.data ?? null;
 		}
 		default:
-			throw new Error(`Unknown indicator: ${indicator satisfies never}`);
+			console.warn(`Unknown indicator: ${indicator}`);
+			return [];
 	}
 }
 

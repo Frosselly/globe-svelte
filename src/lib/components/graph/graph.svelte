@@ -1,121 +1,134 @@
 <script lang="ts">
-	import { formatLargeNumbers } from '$lib/utils/utils';
+	/**
+	 * graph.svelte
+	 *
+	 * Props:
+	 *   view              'bar' | 'line'
+	 *   option            AnalysisOption
+	 *   rows              { iso2, name, value }[]  — all countries, server-fetched
+	 *   history           { year, value }[] | null — selected country time series
+	 *   selectedIso2      currently selected country (from URL ?country=)
+	 *   onSelectCountry   called when user clicks a country name → parent sets ?country=&view=line
+	 *   onSelectionChange called whenever the checkbox set changes → parent tracks for save
+	 */
+
 	import * as d3 from 'd3';
-	import { selectedCountryStore } from '../../../routes/store.svelte';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
+	import type { AnalysisOption } from '$lib/assets/analysisOptions';
+
+	type Row = { iso2: string; name: string; value: number | null };
+	type HistPt = { year: number; value: number };
 
 	const {
-		selectedView: view,
-		selectedAnalysis,
-		countries
+		view,
+		option,
+		rows,
+		history,
+		selectedIso2 = null as string | null,
+		onSelectCountry = (_iso2: string) => {},
+		onSelectionChange = (_iso2s: string[]) => {}
 	} = $props<{
-		selectedView: string;
-		selectedAnalysis: { name: string; key: string; timeSeries: boolean };
-		countries: Record<string, any>;
+		view: 'bar' | 'line';
+		option: AnalysisOption;
+		rows: Row[];
+		history: HistPt[] | null;
+		selectedIso2?: string | null;
+		onSelectCountry?: (iso2: string) => void;
+		onSelectionChange?: (iso2s: string[]) => void;
 	}>();
 
-	function getNestedValue(obj: any, path: string): number | null {
-		if (!path) return null;
-		const val = path.split('.').reduce((acc: any, k: string) => acc?.[k], obj);
-		return val != null && !isNaN(Number(val)) ? Number(val) : null;
-	}
+	// ── Data prep ─────────────────────────────────────────────────────────────
 
-	const allCountries = $derived(
-		Object.entries(countries)
-			.map(([iso2, country]: [string, any]) => {
-				const value = getNestedValue(country, selectedAnalysis.key);
-				const name = country?.metadata?.name?.common ?? iso2;
-				return value != null ? { name, iso2, value } : null;
-			})
-			.filter(Boolean)
-			.sort((a: any, b: any) => b.value - a.value) as {
-			name: string;
-			iso2: string;
-			value: number;
-		}[]
+	const validRows = $derived(
+		(rows ?? [])
+			.filter((r): r is Row & { value: number } => r.value !== null)
+			.sort((a, b) => b.value - a.value)
 	);
 
-	// Selected country from global store for line chart
 	const selectedCountryName = $derived(
-		selectedCountryStore.country?.metadata?.name?.common ?? null
+		validRows.find((r) => r.iso2 === selectedIso2)?.name ?? null
 	);
 
-	const timeSeriesData = $derived(
-		(() => {
-			if (!selectedAnalysis.timeSeries) return null;
-
-			// Use global selected country, fall back to first checked country
-			const targetName = selectedCountryName ?? allCountries[0]?.name;
-
-			if (!targetName) return null;
-
-			const countryEntry = Object.values(countries).find(
-				(c: any) => c?.metadata?.name?.common === targetName
-			) as any;
-
-			if (!countryEntry) return null;
-
-			const parts = selectedAnalysis.key.split('.');
-			const parent = parts.slice(0, -1).reduce((acc: any, k: string) => acc?.[k], countryEntry);
-			const yoy = parent?.historicalData ?? parent?.yearOverYear ?? null;
-			if (!yoy?.length) return null;
-
-			return {
-				country: targetName,
-				yearOverYear: yoy as any[]
-			};
-		})()
-	);
-
-	let containerEl = $state<HTMLDivElement | null>(null);
-	let svgEl = $state<SVGSVGElement | null>(null);
-	let selectedCountries = $state<Set<string>>(new Set());
-	let hoveredYear = $state<number | null>(null);
-
-	// Auto-select top 5 on first load
+	// Checkbox state — auto-select top 5 on first load
+	let selectedNames = $state<Set<string>>(new Set());
 	$effect(() => {
-		if (allCountries.length && selectedCountries.size === 0) {
-			selectedCountries = new Set(allCountries.slice(0, 5).map((c) => c.name));
+		console.log('selectedCountryName', selectedCountryName);
+		if (validRows.length) {
+			const initialRows = validRows.slice(0, 5).map((r) => r.name);
+			if (selectedCountryName) initialRows.push(selectedCountryName);
+			selectedNames = new Set(initialRows);
+			onSelectionChange(initialRows);
 		}
 	});
 
-	const filteredData = $derived(allCountries.filter((c) => selectedCountries.has(c.name)));
+	const filteredRows = $derived(validRows.filter((r) => selectedNames.has(r.name)));
 
+	function toggleCountry(row: Row & { value: number }) {
+		const s = new Set(selectedNames);
+		s.has(row.name) ? s.delete(row.name) : s.add(row.name);
+		selectedNames = s;
+		// Emit current selection iso2s
+		onSelectionChange(validRows.filter((r) => s.has(r.name)).map((r) => r.iso2));
+	}
+
+	function selectAll() {
+		selectedNames = new Set(validRows.map((r) => r.name));
+		onSelectionChange(validRows.map((r) => r.iso2));
+	}
+
+	function clearAll() {
+		selectedNames = new Set([selectedCountryName]);
+		onSelectionChange([selectedCountryName]);
+	}
+
+	// ── SVG dimensions ────────────────────────────────────────────────────────
+
+	let containerEl = $state<HTMLDivElement | null>(null);
+	let svgEl = $state<SVGSVGElement | null>(null);
 	let W = $state(600);
 	let H = $state(400);
-	const margin = { top: 40, right: 40, bottom: 40, left: 110 };
-	const innerW = $derived(Math.max(W - margin.left - margin.right, 1));
-	const innerH = $derived(Math.max(H - margin.top - margin.bottom, 1));
+	const margin = { top: 40, right: 220, bottom: 60, left: 110 };
+	const iW = $derived(Math.max(W - margin.left - margin.right, 1));
+	const iH = $derived(Math.max(H - margin.top - margin.bottom, 1));
+
+	$effect(() => {
+		if (!containerEl) return;
+		const ro = new ResizeObserver((entries) => {
+			W = Math.max(entries[0].contentRect.width, 1);
+			H = Math.max(entries[0].contentRect.height, 1);
+		});
+		ro.observe(containerEl);
+		return () => ro.disconnect();
+	});
+
+	// ── Colours ───────────────────────────────────────────────────────────────
 
 	const BAR_COLOR = '#4f8ef7';
+	const SELECTED_BAR_COLOR = '#f7694f';
 	const LINE_COLOR = '#f7694f';
 	const AXIS_COLOR = '#555';
 	const GRID_COLOR = '#e5e7eb';
 	const LABEL_COLOR = '#374151';
 	const DOT_HOVER_COLOR = '#c0392b';
 
-	$effect(() => {
-		if (!svgEl) return;
-		if (view === 'bar') drawBar();
-		else drawLine();
-	});
+	// ── Draw ──────────────────────────────────────────────────────────────────
 
 	$effect(() => {
-		if (!containerEl) return;
-		const ro = new ResizeObserver((entries) => {
-			const { width, height } = entries[0].contentRect;
-			W = Math.max(width, 1);
-			H = Math.max(height, 1);
-		});
-		ro.observe(containerEl);
-		return () => ro.disconnect();
+		if (!svgEl) return;
+		view;
+		option;
+		filteredRows;
+		history;
+		W;
+		H;
+		view === 'bar' ? drawBar() : drawLine();
 	});
 
-	function clearSvg() {
-		if (!svgEl) return;
-		d3.select(svgEl).selectAll('*').remove();
+	function clear() {
+		if (svgEl) d3.select(svgEl).selectAll('*').remove();
 	}
 
-	function baseGroup() {
+	function makeG() {
 		return d3
 			.select(svgEl)
 			.attr('width', W)
@@ -124,198 +137,197 @@
 			.attr('transform', `translate(${margin.left},${margin.top})`);
 	}
 
+	function fmtVal(v: number) {
+		if (option.format === 'percent') return `${v.toFixed(1)}%`;
+		if (option.format === 'rank') return `#${Math.round(v)}`;
+		return formatLargeNumbers(v);
+	}
+
+	// ── Bar chart ─────────────────────────────────────────────────────────────
+
 	function drawBar() {
-		clearSvg();
-		const g = baseGroup();
-		const data = filteredData;
+		clear();
+		const g = makeG();
+		const data = filteredRows;
 
 		if (!data.length) {
 			g.append('text')
-				.attr('x', innerW / 2)
-				.attr('y', innerH / 2)
+				.attr('x', iW / 2)
+				.attr('y', iH / 2)
 				.attr('text-anchor', 'middle')
 				.attr('fill', '#9ca3af')
-				.attr('font-size', '14px')
-				.text('Select countries to display');
+				.attr('font-size', 14)
+				.text('Select countries in the list →');
 			return;
 		}
 
-		const xScale = d3
+		const x = d3
 			.scaleLinear()
 			.domain([0, d3.max(data, (d) => d.value)! * 1.15])
-			.range([0, innerW]);
-
-		const yScale = d3
+			.range([0, iW]);
+		const y = d3
 			.scaleBand()
 			.domain(data.map((d) => d.name))
-			.range([0, innerH])
+			.range([0, iH])
 			.padding(0.35);
 
 		// Grid
 		g.append('g')
-			.attr('class', 'grid')
 			.call(
 				d3
-					.axisBottom(xScale)
-					.tickSize(innerH)
+					.axisBottom(x)
+					.tickSize(iH)
 					.tickFormat(() => '')
 			)
-			.call((sel) => sel.select('.domain').remove())
+			.call((s) => s.select('.domain').remove())
 			.selectAll('line')
 			.attr('stroke', GRID_COLOR)
 			.attr('stroke-dasharray', '4,3');
 
 		// Bars
 		g.selectAll<SVGRectElement, (typeof data)[0]>('rect.bar')
-			.data(data, (d: any) => d.name)
+			.data(data, (d) => d.name)
 			.join(
-				(enter) =>
-					enter
+				(e) =>
+					e
 						.append('rect')
 						.attr('class', 'bar')
-						.attr('y', (d) => yScale(d.name)!)
-						.attr('height', yScale.bandwidth())
+						.attr('y', (d) => y(d.name)!)
+						.attr('height', y.bandwidth())
 						.attr('x', 0)
 						.attr('width', 0)
 						.attr('rx', 4)
-						.attr('fill', BAR_COLOR)
-						.attr('opacity', 0.88),
-				(update) => update,
-				(exit) => exit.remove()
+						.attr('fill', (d) => (d.name === selectedCountryName ? SELECTED_BAR_COLOR : BAR_COLOR))
+						.attr('opacity', (d) => (d.name === selectedCountryName ? 1 : 0.88)),
+				(u) =>
+					u
+						.attr('fill', (d) => (d.name === selectedCountryName ? SELECTED_BAR_COLOR : BAR_COLOR))
+						.attr('opacity', (d) => (d.name === selectedCountryName ? 1 : 0.88)),
+				(x) => x.remove()
 			)
 			.transition()
 			.duration(600)
 			.ease(d3.easeCubicOut)
-			.attr('width', (d) => xScale(d.value));
+			.attr('width', (d) => x(d.value));
 
 		// Value labels
 		g.selectAll<SVGTextElement, (typeof data)[0]>('text.val')
-			.data(data, (d: any) => d.name)
+			.data(data, (d) => d.name)
 			.join(
-				(enter) =>
-					enter
+				(e) =>
+					e
 						.append('text')
 						.attr('class', 'val')
-						.attr('y', (d) => yScale(d.name)! + yScale.bandwidth() / 2)
+						.attr('y', (d) => y(d.name)! + y.bandwidth() / 2)
 						.attr('dy', '0.35em')
 						.attr('opacity', 0),
-				(update) => update,
-				(exit) => exit.remove()
+				(u) => u,
+				(x) => x.remove()
 			)
 			.transition()
 			.delay(400)
 			.duration(300)
 			.attr('opacity', 1)
-			.attr('x', (d) => (xScale(d.value) > 80 ? 8 : xScale(d.value) + 8))
-			.attr('fill', (d) => (xScale(d.value) > 80 ? 'white' : LABEL_COLOR))
+			.attr('x', (d) => (x(d.value) > 80 ? 8 : x(d.value) + 8))
+			.attr('fill', (d) => (x(d.value) > 80 ? '#fff' : LABEL_COLOR))
 			.attr('text-anchor', 'start')
-			.attr('font-size', '12px')
-			.attr('font-weight', '600')
-			.text((d) => formatLargeNumbers(d.value));
+			.attr('font-size', 12)
+			.attr('font-weight', 600)
+			.text((d) => fmtVal(d.value));
 
-		// Y Axis
+		// Axes
 		g.append('g')
-			.call(d3.axisLeft(yScale).tickSize(0))
-			.call((sel) => {
-				sel.select('.domain').attr('stroke', AXIS_COLOR);
-				sel
-					.selectAll('text')
+			.call(d3.axisLeft(y).tickSize(0))
+			.call((s) => {
+				s.select('.domain').attr('stroke', AXIS_COLOR);
+				s.selectAll('text')
 					.attr('fill', LABEL_COLOR)
-					.attr('font-size', '12px')
+					.attr('font-size', 12)
 					.attr('text-anchor', 'end')
 					.attr('dx', '-8px');
 			});
-
-		// X Axis
 		g.append('g')
-			.attr('transform', `translate(0,${innerH})`)
+			.attr('transform', `translate(0,${iH})`)
 			.call(
 				d3
-					.axisBottom(xScale)
+					.axisBottom(x)
 					.ticks(5)
-					.tickFormat((d) => formatLargeNumbers(Number(d)))
+					.tickFormat((d) => formatLargeNumbers(+d))
 			)
-			.call((sel) => {
-				sel.select('.domain').attr('stroke', AXIS_COLOR);
-				sel.selectAll('.tick line').attr('stroke', AXIS_COLOR);
-				sel
-					.selectAll('text')
-					.attr('fill', LABEL_COLOR)
-					.attr('font-size', '12px')
-					.attr('dy', '1.4em');
+			.call((s) => {
+				s.select('.domain').attr('stroke', AXIS_COLOR);
+				s.selectAll('text').attr('fill', LABEL_COLOR).attr('font-size', 12).attr('dy', '1.4em');
 			});
 
-		// Title
 		g.append('text')
-			.attr('x', innerW / 2)
+			.attr('x', iW / 2)
 			.attr('y', -16)
 			.attr('text-anchor', 'middle')
 			.attr('fill', LABEL_COLOR)
-			.attr('font-size', '14px')
-			.attr('font-weight', '700')
-			.text(`${selectedAnalysis.name} by Country`);
+			.attr('font-size', 14)
+			.attr('font-weight', 700)
+			.text(`${option.label} by Country`);
 	}
 
-	function drawLine() {
-		clearSvg();
-		const g = baseGroup();
-		const ts = timeSeriesData;
+	// ── Line chart ────────────────────────────────────────────────────────────
 
-		if (!ts) {
+	function drawLine() {
+		clear();
+		const g = makeG();
+
+		if (!history?.length) {
 			g.append('text')
-				.attr('x', innerW / 2)
-				.attr('y', innerH / 2)
+				.attr('x', iW / 2)
+				.attr('y', iH / 2)
 				.attr('text-anchor', 'middle')
 				.attr('fill', '#9ca3af')
-				.attr('font-size', '14px')
+				.attr('font-size', 14)
 				.text(
 					selectedCountryName
-						? `No time series data for ${selectedCountryName}`
-						: 'Click a country on the map to view trend'
+						? `No time-series data for ${selectedCountryName}`
+						: 'Click a country name in the list to view its trend'
 				);
 			return;
 		}
 
-		const data = ts.yearOverYear;
-
-		const xScale = d3
+		const data = history;
+		const x = d3
 			.scaleLinear()
 			.domain(d3.extent(data, (d) => d.year) as [number, number])
-			.range([0, innerW]);
-
-		const yScale = d3
+			.range([0, iW]);
+		const y = d3
 			.scaleLinear()
-			.domain([0, d3.max(data, (d) => d.value ?? d.visitors ?? d.percentage)! * 1.15])
-			.range([innerH, 0]);
+			.domain([0, d3.max(data, (d) => d.value)! * 1.15])
+			.nice()
+			.range([iH, 0]);
 
 		// Grid
 		g.append('g')
-			.attr('class', 'grid')
 			.call(
 				d3
-					.axisLeft(yScale)
-					.tickSize(-innerW)
+					.axisLeft(y)
+					.tickSize(-iW)
 					.tickFormat(() => '')
 			)
-			.call((sel) => sel.select('.domain').remove())
+			.call((s) => s.select('.domain').remove())
 			.selectAll('line')
 			.attr('stroke', GRID_COLOR)
 			.attr('stroke-dasharray', '4,3');
 
 		// Area
 		const area = d3
-			.area<{ year: number; value: number }>()
-			.x((d) => xScale(d.year))
-			.y0(innerH)
-			.y1((d) => yScale(d.value))
+			.area<HistPt>()
+			.x((d) => x(d.year))
+			.y0(iH)
+			.y1((d) => y(d.value))
 			.curve(d3.curveMonotoneX);
 		g.append('path').datum(data).attr('fill', LINE_COLOR).attr('opacity', 0.1).attr('d', area);
 
 		// Line
 		const line = d3
-			.line<{ year: number; value: number }>()
-			.x((d) => xScale(d.year))
-			.y((d) => yScale(d.value))
+			.line<HistPt>()
+			.x((d) => x(d.year))
+			.y((d) => y(d.value))
 			.curve(d3.curveMonotoneX);
 		const path = g
 			.append('path')
@@ -333,127 +345,101 @@
 			.ease(d3.easeCubicOut)
 			.attr('stroke-dashoffset', 0);
 
-		// Dots — label only on hover
-		const dots = g
-			.selectAll<SVGCircleElement, { year: number; value: number }>('circle')
+		// Dots
+		g.selectAll<SVGCircleElement, HistPt>('circle.dot')
 			.data(data)
 			.join('circle')
-			.attr('cx', (d) => xScale(d.year))
-			.attr('cy', (d) => yScale(d.value))
+			.attr('class', 'dot')
+			.attr('cx', (d) => x(d.year))
+			.attr('cy', (d) => y(d.value))
 			.attr('r', 0)
 			.attr('fill', LINE_COLOR)
-			.attr('stroke', 'white')
+			.attr('stroke', '#fff')
 			.attr('stroke-width', 2)
-			.style('cursor', 'pointer')
 			.transition()
 			.delay(700)
 			.duration(300)
 			.attr('r', 5);
 
-		// Hover label (single element, repositioned on hover)
-		const hoverLabel = g
+		// Hover label
+		const lbl = g
 			.append('text')
 			.attr('class', 'hover-label')
 			.attr('text-anchor', 'middle')
-			.attr('font-size', '12px')
-			.attr('font-weight', '700')
+			.attr('font-size', 12)
+			.attr('font-weight', 700)
 			.attr('fill', LABEL_COLOR)
 			.attr('opacity', 0)
 			.attr('pointer-events', 'none');
 
-		// Invisible wider hit targets for easier hover
-		g.selectAll<SVGCircleElement, { year: number; value: number }>('circle.hit')
+		// Hit targets
+		g.selectAll<SVGCircleElement, HistPt>('circle.hit')
 			.data(data)
 			.join('circle')
 			.attr('class', 'hit')
-			.attr('cx', (d) => xScale(d.year))
-			.attr('cy', (d) => yScale(d.value))
+			.attr('cx', (d) => x(d.year))
+			.attr('cy', (d) => y(d.value))
 			.attr('r', 14)
 			.attr('fill', 'transparent')
 			.on('mouseenter', function (_, d) {
 				d3.select(this.parentNode as any)
-					.selectAll<SVGCircleElement, { year: number; value: number }>('circle:not(.hit)')
+					.selectAll<SVGCircleElement, HistPt>('circle.dot')
 					.filter((c) => c.year === d.year)
 					.attr('fill', DOT_HOVER_COLOR)
 					.attr('r', 7);
-
-				hoverLabel
-					.attr('x', xScale(d.year))
-					.attr('y', yScale(d.value) - 14)
-					.text(formatLargeNumbers(d.value))
+				lbl
+					.attr('x', x(d.year))
+					.attr('y', y(d.value) - 14)
+					.text(fmtVal(d.value))
 					.attr('opacity', 1);
 			})
 			.on('mouseleave', function (_, d) {
 				d3.select(this.parentNode as any)
-					.selectAll<SVGCircleElement, { year: number; value: number }>('circle:not(.hit)')
+					.selectAll<SVGCircleElement, HistPt>('circle.dot')
 					.filter((c) => c.year === d.year)
 					.attr('fill', LINE_COLOR)
 					.attr('r', 5);
-
-				hoverLabel.attr('opacity', 0);
+				lbl.attr('opacity', 0);
 			});
 
-		// X Axis — every 2nd or 3rd year
-		const tickStep = data.length > 10 ? 3 : 2;
-		const tickYears = data
-			.map((d) => d.year)
-			.filter((_, i) => i % tickStep === 0 || i === data.length - 1);
-
+		// X axis
+		const step = data.length > 10 ? 3 : 2;
+		const ticks = data.map((d) => d.year).filter((_, i) => i % step === 0 || i === data.length - 1);
 		g.append('g')
-			.attr('transform', `translate(0,${innerH})`)
+			.attr('transform', `translate(0,${iH})`)
 			.call(
 				d3
-					.axisBottom(xScale)
-					.tickValues(tickYears)
+					.axisBottom(x)
+					.tickValues(ticks)
 					.tickFormat((d) => String(d))
 					.tickSize(0)
 			)
-			.call((sel) => {
-				sel.select('.domain').attr('stroke', AXIS_COLOR);
-				sel
-					.selectAll('text')
-					.attr('fill', LABEL_COLOR)
-					.attr('font-size', '12px')
-					.attr('dy', '1.4em');
+			.call((s) => {
+				s.select('.domain').attr('stroke', AXIS_COLOR);
+				s.selectAll('text').attr('fill', LABEL_COLOR).attr('font-size', 12).attr('dy', '1.4em');
 			});
 
-		// Y Axis
+		// Y axis
 		g.append('g')
 			.call(
 				d3
-					.axisLeft(yScale)
+					.axisLeft(y)
 					.ticks(5)
-					.tickFormat((d) => formatLargeNumbers(Number(d)))
+					.tickFormat((d) => formatLargeNumbers(+d))
 			)
-			.call((sel) => {
-				sel.select('.domain').attr('stroke', AXIS_COLOR);
-				sel.selectAll('.tick line').attr('stroke', AXIS_COLOR);
-				sel.selectAll('text').attr('fill', LABEL_COLOR).attr('font-size', '12px');
+			.call((s) => {
+				s.select('.domain').attr('stroke', AXIS_COLOR);
+				s.selectAll('text').attr('fill', LABEL_COLOR).attr('font-size', 12);
 			});
 
-		// Title
 		g.append('text')
-			.attr('x', innerW / 2)
+			.attr('x', iW / 2)
 			.attr('y', -16)
 			.attr('text-anchor', 'middle')
 			.attr('fill', LABEL_COLOR)
-			.attr('font-size', '14px')
-			.attr('font-weight', '700')
-			.text(`${ts.country} — ${selectedAnalysis.name}`);
-	}
-
-	function toggleCountry(name: string) {
-		const s = new Set(selectedCountries);
-		s.has(name) ? s.delete(name) : s.add(name);
-		selectedCountries = s;
-	}
-
-	function selectAll() {
-		selectedCountries = new Set(allCountries.map((c) => c.name));
-	}
-
-	function clearAll() {
-		selectedCountries = new Set();
+			.attr('font-size', 14)
+			.attr('font-weight', 700)
+			.text(`${selectedCountryName ?? '—'} — ${option.label}`);
 	}
 </script>
 
@@ -462,30 +448,34 @@
 		<div class="content">
 			<svg bind:this={svgEl}></svg>
 
-			{#if view === 'bar'}
-				<div class="sidebar">
-					<div class="sidebar-header">
-						<h3>Countries</h3>
-						<div class="sidebar-actions">
-							<button onclick={selectAll}>All</button>
-							<button onclick={clearAll}>None</button>
-						</div>
-					</div>
-					<div class="checkboxList">
-						{#each allCountries as country (country.name)}
-							<label class="checkboxItem">
-								<input
-									type="checkbox"
-									checked={selectedCountries.has(country.name)}
-									onchange={() => toggleCountry(country.name)}
-								/>
-								<span class="country-name">{country.name}</span>
-								<span class="country-val">{formatLargeNumbers(country.value)}</span>
-							</label>
-						{/each}
+			<!-- Country list (bar mode) + click-to-trend button (both modes) -->
+			<div class="sidebar">
+				<div class="sidebar-header">
+					<h3>Countries</h3>
+					<div class="sidebar-actions">
+						<button onclick={selectAll}>All</button>
+						<button onclick={clearAll}>None</button>
 					</div>
 				</div>
-			{/if}
+				<div class="checkboxList">
+					{#each validRows as row (row.iso2)}
+						<label class="checkboxItem" class:is-line-selected={row.iso2 === selectedIso2}>
+							<input
+								type="checkbox"
+								checked={selectedNames.has(row.name)}
+								onchange={() => toggleCountry(row)}
+							/>
+							<!-- Clicking the name navigates to line view for that country -->
+							<button
+								class="country-name-btn"
+								onclick={() => onSelectCountry(row.iso2)}
+								title="View trend for {row.name}">{row.name}</button
+							>
+							<span class="country-val">{fmtVal(row.value!)}</span>
+						</label>
+					{/each}
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -497,25 +487,22 @@
 		overflow: hidden;
 		display: flex;
 	}
-
 	.graphContainer {
 		width: 100%;
 		height: 100%;
 		border-radius: 8px;
-		background-color: var(--color-background);
+		background: var(--color-background);
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
 	}
-
 	.content {
 		display: flex;
 		flex: 1;
 		overflow: hidden;
 		min-height: 0;
 	}
-
 	svg {
 		flex: 1;
 		min-width: 0;
@@ -529,8 +516,8 @@
 		flex-direction: column;
 		background: #fafbfc;
 		overflow: hidden;
+		flex-shrink: 0;
 	}
-
 	.sidebar-header {
 		display: flex;
 		align-items: center;
@@ -538,7 +525,6 @@
 		padding: 12px 12px 8px;
 		flex-shrink: 0;
 	}
-
 	.sidebar-header h3 {
 		margin: 0;
 		font-size: 11px;
@@ -547,7 +533,6 @@
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
 	}
-
 	.sidebar-actions {
 		display: flex;
 		gap: 4px;
@@ -557,7 +542,7 @@
 		padding: 2px 7px;
 		border-radius: 4px;
 		border: 1px solid #e5e7eb;
-		background-color: var(--color-background);
+		background: var(--color-background);
 		cursor: pointer;
 		color: #555;
 	}
@@ -577,15 +562,16 @@
 	.checkboxItem {
 		display: flex;
 		align-items: center;
-		gap: 7px;
-		cursor: pointer;
+		gap: 6px;
 		padding: 5px 6px;
 		border-radius: 5px;
-		transition: background 0.1s;
 		user-select: none;
 	}
 	.checkboxItem:hover {
 		background: #efefef;
+	}
+	.checkboxItem.is-line-selected {
+		background: #fff7ed;
 	}
 	.checkboxItem input {
 		cursor: pointer;
@@ -593,7 +579,7 @@
 		flex-shrink: 0;
 	}
 
-	.country-name {
+	.country-name-btn {
 		flex: 1;
 		font-size: 12px;
 		color: #374151;
@@ -601,10 +587,19 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+		padding: 0;
 	}
-	.checkboxItem input:checked + .country-name {
-		color: #4f8ef7;
-		font-weight: 600;
+	.country-name-btn:hover {
+		color: #f7694f;
+		text-decoration: underline;
+	}
+	.is-line-selected .country-name-btn {
+		color: #f7694f;
+		font-weight: 700;
 	}
 
 	.country-val {
@@ -616,9 +611,6 @@
 
 	.checkboxList::-webkit-scrollbar {
 		width: 4px;
-	}
-	.checkboxList::-webkit-scrollbar-track {
-		background: transparent;
 	}
 	.checkboxList::-webkit-scrollbar-thumb {
 		background: #d1d5db;

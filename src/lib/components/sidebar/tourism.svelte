@@ -12,7 +12,7 @@
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 	import WifiHighIcon from 'phosphor-svelte/lib/WifiHighIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
-	import { formatLargeNumbers } from '$lib/utils/utils';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import MediumGraph from '../mediumGraph.svelte';
 
 	const props = $props();
