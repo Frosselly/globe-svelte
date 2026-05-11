@@ -37,7 +37,7 @@
 		for (const [k, v] of Object.entries(patch)) {
 			v === null ? params.delete(k) : params.set(k, v);
 		}
-		goto(`/analysis?${params}`, { replaceState: false, invalidateAll: true });
+		goto(`/map/analysis?${params}`, { replaceState: false, invalidateAll: true });
 	}
 
 	function setIndicator(key: string) {
@@ -61,7 +61,7 @@
 		if (storeIso2 && storeIso2 !== currentCountry) {
 			const params = new URLSearchParams($page.url.searchParams);
 			params.set('country', storeIso2);
-			goto(`/analysis?${params}`, { replaceState: true, invalidateAll: true });
+			goto(`/map/analysis?${params}`, { replaceState: true, invalidateAll: true });
 		}
 	});
 
@@ -164,7 +164,7 @@
 			const json = await res.json();
 			if (!res.ok) {
 				saveError = json.error ?? `Save failed (${res.status})`;
-			} else if (json.view) goto(`/analysis/${json.view.id}`);
+			} else if (json.view) goto(`/map/analysis/${json.view.id}`);
 		} catch (e: any) {
 			saveError = e.message ?? 'Network error';
 		}

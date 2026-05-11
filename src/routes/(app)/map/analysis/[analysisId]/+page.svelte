@@ -65,7 +65,7 @@
 		</div>
 
 		<div class="actions">
-			<a href="/analysis" class="btn-ghost">← New analysis</a>
+			<a href="/map/analysis" class="btn-ghost">← New analysis</a>
 			<a href="/dashboard" class="btn-ghost">Dashboard</a>
 			<button class="btn-danger" onclick={deleteView} disabled={deleting}>
 				{deleting ? 'Deleting…' : 'Delete'}

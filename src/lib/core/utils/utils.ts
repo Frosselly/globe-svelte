@@ -14,3 +14,12 @@ export function formatLargeNumbers(num: number, toFixed: number = 2): string {
 
 	return num.toFixed(toFixed);
 }
+
+export function formatText(text: string) {
+	const words = text
+		.replace(/([A-Z])/g, ' $1')
+		.toLowerCase()
+		.trim()
+		.split(' ');
+	return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
