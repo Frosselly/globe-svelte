@@ -238,7 +238,7 @@ export function cleanupDeckGL(overlay: any) {
 	}
 }
 
-export function setupMapInteractions(map: any, onCountryClick: Function) {
+export function setupMapInteractions(map: any, onCountryClick: Function, onSecondClick: Function) {
 	let hovered: any = null;
 	map.on('mousemove', 'state-fills', (e: any) => {
 		if (e.features.length) {
@@ -254,5 +254,7 @@ export function setupMapInteractions(map: any, onCountryClick: Function) {
 		map.getCanvas().style.cursor = '';
 	});
 	map.on('click', 'state-fills', (e: any) => onCountryClick(e));
+	map.on('click', (e: any) => onSecondClick(e));
+
 	return { hoveredStateId: hovered };
 }

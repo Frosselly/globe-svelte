@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import SmallGraphIcon from '$lib/components/smallGraphIcon.svelte';
 	import ChartBarIcon from 'phosphor-svelte/lib/ChartBarIcon';
 	import FactoryIcon from 'phosphor-svelte/lib/FactoryIcon';
@@ -7,12 +7,9 @@
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import MediumGraph from '../mediumGraph.svelte';
+	import type { FullCountry } from '$lib/core/stores/store.svelte';
 
-	const props = $props();
-
-	$effect(() => {
-		$inspect(props);
-	});
+	const { e }: { e: FullCountry } = $props();
 
 	const props2 = {
 		renewableGrowth: 22.4,
@@ -49,37 +46,59 @@
 			netZero: '2050'
 		}
 	};
+
+	$effect(() => {
+		console.log('e.energyMixCurrent', e.energyMixCurrent);
+	});
 </script>
 
 <section class="topicSection" id="energy">
 	<CollapsibleTopic topicName={'Energy'}>
 		<div class="flex-col">
 			<div class="flex-row">
-				<div class="card flex-col flex">
-					<div class="text-gray bold">Renewable Growth</div>
-					<br />
-					<div>
-						<b class="num-big">{props.renewableGrowth.current.toFixed(1)}%</b>
-						<SmallGraphIcon sign="+" trend={props.renewableGrowth.trend} />
+				{#if e.renewableCurrent}
+					<div class="card flex-col flex">
+						<div class="text-gray bold">Renewable Growth</div>
+						<br />
+						<div>
+							<b class="num-big">{e?.renewableCurrent.toFixed(1)}%</b>
+							<SmallGraphIcon sign="+" trend={e.renewableTrend} />
+						</div>
+						{#if e.renewableHistory && e.renewableHistory.length}
+							<div class="graph">
+								<MediumGraph data={e.renewableHistory} toFixed={0} extraSign={'%'} />
+							</div>
+						{:else}
+							<div class="graph-placeholder"><span class="text-gray">No data</span></div>
+						{/if}
 					</div>
-					<div class="graph">
-						<MediumGraph data={props.renewableGrowth.historicalData} toFixed={0} extraSign={'%'} />
-					</div>
-				</div>
+				{:else}
+					<span class="missing">No data</span>
+				{/if}
 				<div class=" flex-col flex">
 					<div class="flex-row">
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Production</div>
-							<div><b class="num-mid">{formatLargeNumbers(props.production.current)}</b></div>
+							<div>
+								<b class="num-mid"
+									>{e.productionCurrent ? formatLargeNumbers(e.productionCurrent) : '-'}</b
+								>
+							</div>
 						</div>
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Consumption</div>
-							<div><b class="num-mid">{formatLargeNumbers(props.consumption.current)}</b></div>
+							<div>
+								<b class="num-mid"
+									>{e.consumptionCurrent ? formatLargeNumbers(e.consumptionCurrent) : '-'}</b
+								>
+							</div>
 						</div>
 					</div>
 					<div class="card flex-col flex">
 						<div class="text-gray bold">CO2 Emissions</div>
-						<div><b class="num-mid">{formatLargeNumbers(props.co2Emissions.current)}</b></div>
+						<div>
+							<b class="num-mid">{e.co2Current ? formatLargeNumbers(e.co2Current) : '-'}</b>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -91,7 +110,7 @@
 				<br />
 
 				<div class="flex-col">
-					{#each [...props.energyMix.current].sort((a, b) => b.percentage - a.percentage) as item}
+					{#each [...e.energyMixCurrent].sort((a, b) => b.percentage - a.percentage) as item}
 						<div class="flex-col">
 							<div class="between">
 								<div>
@@ -136,14 +155,14 @@
 					{/each}
 				</div> -->
 			</div>
-			{#if props.targets && props.targets.length > 0}
+			{#if e.targets && e.targets.length > 0}
 				<div class="card flex-col wide">
 					<div class="text-gray bold align-center">
 						<TargetIcon size={20} /> Climate & Energy Targets
 					</div>
 					<br />
 					<div class="flex-col">
-						{#each props.targets as target}
+						{#each e.targets as target}
 							<div class="info-card flex-col flex center">
 								<div class="text-gray">{target.title}</div>
 								<div><b>{target.startYear} - {target.endYear || ''}</b></div>

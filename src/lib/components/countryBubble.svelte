@@ -75,7 +75,7 @@
 
 	<!-- Col 3: More Info -->
 	<div class="col-action">
-		<button
+		<!-- <button
 			class="more-btn"
 			class:open
 			onclick={toggleMore}
@@ -83,7 +83,7 @@
 			aria-controls="popout-{country.name}"
 		>
 			More info
-		</button>
+		</button> -->
 		<button class="close-btn" onclick={onclose} aria-controls="close-{country.name}">
 			Close
 		</button>

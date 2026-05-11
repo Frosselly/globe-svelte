@@ -5,8 +5,12 @@
 	import HeartIcon from 'phosphor-svelte/lib/HeartIcon';
 	import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
+	import type { FullCountry } from '$lib/core/stores/store.svelte';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
 
-	const props = {
+	const { c }: { c: FullCountry } = $props();
+
+	const props2 = {
 		population: {
 			value: '125.7M',
 			growthRate: '-0.3',
@@ -48,6 +52,15 @@
 			]
 		}
 	};
+
+	function calcGrowth(lastYear: number, currYear: number) {
+		if (lastYear === 0) {
+			return currYear > 0 ? Infinity : 0;
+		}
+
+		const growth = ((currYear - lastYear) / lastYear) * 100;
+		return formatLargeNumbers(growth);
+	}
 </script>
 
 <section class="topicSection" id="demographics">
@@ -59,12 +72,16 @@
 						<span><UsersIcon size={20} /></span> Population
 					</div>
 					<div>
-						<b class="num-big">{props.population.value}</b>
+						<b class="num-big"
+							>{c.populationCurrent ? formatLargeNumbers(c.populationCurrent) : '-'}</b
+						>
 					</div>
 					<div class="text-gray">
-						<span>{props.population.rank}</span>
-						{' | '}
-						<span>{props.population.growthRate}%</span>
+						<span>{c.populationTrend}</span>
+						{#if c.populationHistory && c.populationHistory.length >= 2}
+							{' | '}
+							<span>{calcGrowth(c.populationHistory[1].value, c.populationHistory[0].value)}%</span>
+						{/if}
 					</div>
 				</div>
 				<div class="card flex-col flex">
@@ -72,21 +89,23 @@
 						<span><CityIcon size={20} /></span> Urbanization
 					</div>
 					<div>
-						<b class="num-big">{props.urbanization}%</b>
+						<b class="num-big"
+							>{c.urbanization ? formatLargeNumbers(c.urbanization[0].value) : '-'}%</b
+						>
 					</div>
 					<div class="text-gray">
-						Density: <span>{props.density}</span>
+						Density: <span>{c.density ? formatLargeNumbers(c.density[0].value) : '-'}</span>
 					</div>
 				</div>
 			</div>
-			<div class="card flex-col wide">
+			<!-- <div class="card flex-col wide">
 				<div class="text-gray bold align-center">
 					<UsersIcon size={20} /> Age Distribution
 				</div>
 				<br />
 				<div class="between">
 					<div class="progress-bar-divided">
-						{#each props.ageDistribution as { percentage, color }, i}
+						{#each props2.medianAge as { percentage, color }, i}
 							<div
 								class="segment bold center"
 								style="width: {percentage}%; background-color: {color}; color: white;"
@@ -98,7 +117,7 @@
 					</div>
 				</div>
 				<div class="flex-row between">
-					{#each props.ageDistribution as { group, label, percentage, color }}
+					{#each props2.medianAge as { group, label, percentage, color }}
 						<div class="flex-col align-center">
 							<div
 								style="height: 1rem; width: 1rem; background-color: {color}; border-radius: 50%"
@@ -108,21 +127,23 @@
 						</div>
 					{/each}
 				</div>
-			</div>
+			</div> -->
 			<div class="card flex-col wide">
 				<div class="between">
 					<div class="text-gray bold align-center">
 						<span><HeartIcon size={20} /></span> Life Expectancy
 					</div>
-					<div class=" bold flex-col">
-						<div><span class={'text-gray'}>Male: </span> {props.lifeExpectancy.male}</div>
-						<div><span class={'text-gray'}>Female: </span>{props.lifeExpectancy.female}</div>
-					</div>
+					<!-- <div class=" bold flex-col">
+						<div><span class={'text-gray'}>Male: </span> {c.lifeExpectancy.male}</div>
+						<div><span class={'text-gray'}>Female: </span>{c.lifeExpectancy.female}</div>
+					</div> -->
 				</div>
 				<div>
-					<div><b>{props.lifeExpectancy.total}</b></div>
+					<div>
+						<b>{c.lifeExpectancy ? formatLargeNumbers(c.lifeExpectancy[0].value) : '-'} years</b>
+					</div>
 				</div>
-				<div class="badge">Rank #{props.lifeExpectancy.rank}</div>
+				<!-- <div class="badge">Rank #{c.lifeExpectancy.rank}</div> -->
 			</div>
 			<div class="card flex-col wide">
 				<div class="text-gray bold align-center">
@@ -132,66 +153,55 @@
 				<div class="grid-2">
 					<div class=" flex-row between">
 						<div class="align-center">Healthcare Spending</div>
-						<div><b class="num-mid">{props.health.healthcareSpending}</b></div>
+						<div>
+							<b class="num-mid"
+								>{c.healthcareSpending ? formatLargeNumbers(c.healthcareSpending[0].value) : '-'}</b
+							>
+						</div>
 					</div>
-					<div class=" flex-row between align-center">
+					<!-- <div class=" flex-row between align-center">
 						<div class="align-center">Physicians</div>
-						<div><b class="num-mid">{props.health.physicians}</b></div>
-					</div>
+						<div><b class="num-mid">{c.physicians}</b></div>
+					</div> -->
 					<div class=" flex-row between align-center">
 						<div class="align-center">Hospital Beds</div>
 
-						<div><b class="num-mid">{props.health.hospitalBeds}</b></div>
+						<div><b class="num-mid">{c.hospitalBeds ? c.hospitalBeds[0].value : '-'}</b></div>
 					</div>
 					<div class=" flex-row between align-center">
 						<div class="align-center">Infant Mortality</div>
-						<div><b class="num-mid">{props.health.infantMortality}</b></div>
+						<div><b class="num-mid">{c.infantMortality ? c.infantMortality[0].value : '-'}</b></div>
 					</div>
 				</div>
-				<hr />
-				<div class="flex-row">
-					{#each props.health.vaccination as { label, value }}
+				<!-- <hr /> -->
+				<!-- <div class="flex-row">
+					{#each c.vaccination as { label, value }}
 						<div class="small-card">
 							{String(label)
 								.replace(/([A-Z])/g, ' $1')
 								.replace(/^./, (c) => c.toUpperCase())}: {value}
 						</div>
 					{/each}
-				</div>
+				</div> -->
 			</div>
 			<div class="card flex-col flex">
 				<div class="text-gray bold align-center">
 					<span><UsersIcon size={20} /></span> Ethnic Composition
 				</div>
-				{#each props.ethnicGroups as group}
-					<div class="between">
-						<div class="text-gray align-center">{group.name}</div>
-						<div class="bold">{group.percentage}%</div>
-					</div>
-				{/each}
+				{#if c.ethnicGroups && c.ethnicGroups.length > 0}
+					{#each c.ethnicGroups as group}
+						<div class="between">
+							<div class="text-gray align-center">{group.group}</div>
+							<div class="bold">{group.percentage}%</div>
+						</div>
+					{/each}
+				{/if}
 				<div class="between">
 					<div class="text-gray align-center"><GraduationCapIcon size={18} /> Literacy Rate</div>
-					<div class="bold">{props.literacy}%</div>
+					<div class="bold">{c.literacy ? c.literacy[0].value : '-'}%</div>
 				</div>
 			</div>
 		</div>
-		<h2>Population</h2>
-		<p>Population growth rate</p>
-		<p>Urbanization</p>
-		<p>Youth employment</p>
-		<p>Education</p>
-		<p>Age structure</p>
-		<p>Sex ratio</p>
-		<p>Life expectancy from birth</p>
-		<p>Infant mortality rate</p>
-		<br />
-		<h2>health</h2>
-		<p>Health index</p>
-		<p>Outbreaks</p>
-		<p>Availability</p>
-		<p>Health spending</p>
-		<p>Price for some operation</p>
-		<p>Price for some dental procedure</p>
 	</CollapsibleTopic>
 </section>
 

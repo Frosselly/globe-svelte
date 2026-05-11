@@ -14,12 +14,13 @@
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import MediumGraph from '../mediumGraph.svelte';
+	import type { FullCountry } from '$lib/core/stores/store.svelte';
 
-	const props = $props();
-	$effect(() => {
-		$inspect(props);
-	});
-	const safetyLevel = $derived(Math.round(5 - (props.safetyScore / 100) * 4));
+	const { e }: { e: FullCountry } = $props();
+
+	const safetyScore = $derived(e.safetyScore ?? 0);
+
+	const safetyLevel = $derived(Math.round(5 - (safetyScore / 100) * 4));
 	// console.log('tourism', props);
 	// const props = {
 	// 	annualVisitors: '31.9M',
@@ -75,35 +76,41 @@
 	<CollapsibleTopic topicName={'Tourism'}>
 		<div class="flex-col">
 			<div class="flex-row">
-				<div class="card card-selectable flex-col flex">
+				<div class="card flex-col flex">
 					<div class="text-gray bold">Annual Visitors</div>
-					<div>
-						<b class="num-big">{formatLargeNumbers(props.annualVisitors?.current)}</b>
-						<SmallGraphIcon sign="+" trend={props.annualVisitors?.trend} />
-					</div>
-					<div class="graph">
-						<MediumGraph
-							data={props.annualVisitors?.yearOverYear.map(
-								(d: { year: number; visitors: number }) => ({ value: d.visitors, year: d.year })
-							)}
-							toFixed={0}
-						/>
-					</div>
+					<br />
+					{#if e.visitorsCurrent}
+						<div>
+							<b class="num-big">{formatLargeNumbers(e.visitorsCurrent)}</b>
+							<SmallGraphIcon sign="+" trend={e.visitorsTrend} />
+						</div>
+						{#if e.visitorsHistory && e.visitorsHistory.length}
+							<div class="graph">
+								<MediumGraph data={e.visitorsHistory} toFixed={0} />
+							</div>
+						{:else}
+							<div class="graph-placeholder"><span class="text-gray">No data</span></div>
+						{/if}
+					{:else}
+						<span class="missing">No data</span>
+					{/if}
 				</div>
 				<div class=" flex-col flex">
 					<div class="flex-row">
 						<div class="card card-selectable flex-col flex">
 							<div class="text-gray bold">Revenue</div>
-							<div><b class="num-mid">{formatLargeNumbers(props.revenueFromVisitors.usd)}</b></div>
+							<div>
+								<b class="num-mid">{e.revenueUsd ? formatLargeNumbers(e.revenueUsd) : '-'}</b>
+							</div>
 						</div>
 						<div class="card flex-col flex">
 							<div class="text-gray bold">World Rank</div>
-							<div><b class="num-mid">{props.tourismRanking}</b></div>
+							<div><b class="num-mid">{e.tourismRanking ? e.tourismRanking : '-'}</b></div>
 						</div>
 					</div>
-					<div class="card card-selectable flex-row between">
+					<div class="card flex-row between">
 						<div class="text-gray">UNESCO Heritage Sites</div>
-						<div><b class="num-mid">{props.unescoHeritageSites}</b></div>
+						<div><b class="num-mid">{e.unescoSites ?? '-'}</b></div>
 					</div>
 				</div>
 			</div>
@@ -146,9 +153,9 @@
 							{/if}
 						</div>
 					</div>
-					<div class="between text-gray"><b>Safety score</b> <span>{props.safetyScore}</span></div>
+					<div class="between text-gray"><b>Safety score</b> <span>{e.safetyScore}</span></div>
 					<div class="progress-bar">
-						<div class="progress-fill" style="width: {props.safetyScore}%;"></div>
+						<div class="progress-fill" style="width: {e.safetyScore}%;"></div>
 					</div>
 					<div class="info-card flex-col">
 						<div class="bold">Level {safetyLevel}</div>
@@ -168,7 +175,7 @@
 					</div>
 				</div>
 			</div>
-			{#if props.dailyBudget}
+			<!-- {#if props.dailyBudget}
 				<div class="card flex-col wide">
 					<div class="text-gray bold align-center">
 						<span><CalendarIcon size={20} /></span> Daily Budget Guide
@@ -208,8 +215,8 @@
 						{/each}
 					</div>
 				</div>
-			{/if}
-			{#if props.bestTime}
+			{/if} -->
+			<!-- {#if props.bestTime}
 				<div class="card flex-col wide">
 					<div class="between">
 						<div class="text-gray bold align-center">
@@ -223,8 +230,8 @@
 					</div>
 					<div class="text-gray">Peak: <span>{props.peakSeason}</span></div>
 				</div>
-			{/if}
-			{#if props.practicalInfo}
+			{/if} -->
+			{#if e.practicalInfo}
 				<div class="flex-row">
 					<div class="card flex-col flex">
 						<div class="text-gray bold align-center">
@@ -234,21 +241,21 @@
 							<div class="text-gray align-center">
 								<TranslateIcon size={18} /> Language
 							</div>
-							<div class="bold">{props.practicalInfo.language}</div>
+							<div class="bold">{e.practicalInfo.language}</div>
 						</div>
 						<div class="between">
 							<div class="text-gray align-center"><ClockIcon size={18} /> Timezone</div>
-							<div class="bold">{props.practicalInfo.timezone}</div>
+							<div class="bold">{e.practicalInfo.timezone}</div>
 						</div>
 						<div class="between">
 							<div class="text-gray align-center"><PlugIcon size={18} /> Plug Type</div>
-							<div class="bold">{props.practicalInfo.plugType}</div>
+							<div class="bold">{e.practicalInfo.plugType}</div>
 						</div>
 						<div class="between">
 							<div class="text-gray align-center"><WifiHighIcon size={18} />Internet</div>
 							<div class="bold">
-								{props.practicalInfo.internetSpeed.mbps} Mbps
-								<span>({props.practicalInfo.internetSpeed.quality})</span>
+								{e.practicalInfo.internetSpeed.mbps} Mbps
+								<span>({e.practicalInfo.internetSpeed.quality})</span>
 							</div>
 						</div>
 					</div>

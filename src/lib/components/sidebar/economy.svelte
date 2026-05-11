@@ -16,7 +16,7 @@
 	import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
 
-	// All data comes from cd.economy — one line, reactive, null-safe
+	// All data comes from cd.economy - one line, reactive, null-safe
 	// const e = $derived(cd.economy);
 	const { e }: { e: FullCountry } = $props();
 
@@ -30,7 +30,7 @@
 <section class="topicSection" id="economy">
 	<CollapsibleTopic topicName="Economy">
 		<div class="flex-col">
-			<!-- GDP trend — the one "main" indicator with graph -->
+			<!-- GDP trend - the one "main" indicator with graph -->
 			<div class="flex-row">
 				<div class="card flex-col flex">
 					<div class="text-gray bold">
@@ -61,11 +61,11 @@
 					<div class="flex-row">
 						<div class="card flex-col flex">
 							<div class="text-gray bold">World Rank</div>
-							<b class="num-mid">{e.worldRank !== null ? `#${e.worldRank}` : '—'}</b>
+							<b class="num-mid">{e.worldRank !== null ? `#${e.worldRank}` : '-'}</b>
 						</div>
 						<div class="card flex-col flex">
 							<div class="text-gray bold">Per Capita GDP</div>
-							<b class="num-mid">{e.perCapitaGdp ? formatLargeNumbers(e.perCapitaGdp) : '—'}</b>
+							<b class="num-mid">{e.perCapitaGdp ? formatLargeNumbers(e.perCapitaGdp) : '-'}</b>
 						</div>
 					</div>
 					<div class="flex-row">
@@ -75,11 +75,11 @@
 								<!-- Inflation also has yearly data -->
 								<HistoryBadge />
 							</div>
-							<b class="num-mid">{e.inflationCurrent !== null ? `${e.inflationCurrent}%` : '—'}</b>
+							<b class="num-mid">{e.inflationCurrent !== null ? `${e.inflationCurrent}%` : '-'}</b>
 						</div>
 						<!-- <div class="card flex-col flex">
 							<div class="text-gray bold">Unemployment Rank</div>
-							<b class="num-mid">{e.unemploymentRank !== null ? `#${e.unemploymentRank}` : '—'}</b>
+							<b class="num-mid">{e.unemploymentRank !== null ? `#${e.unemploymentRank}` : '-'}</b>
 						</div> -->
 					</div>
 				</div>
@@ -176,19 +176,31 @@
 					<div class="grid-2">
 						<div class="flex-row between align-center">
 							<div><ScalesIcon size={16} /> Ease of Doing Business</div>
-							<b class="num-mid">{e.businessEnvironment.easeOfDoingBusiness || '—'}</b>
+							<b class="num-mid">{e.businessEnvironment.easeOfDoingBusiness ?? 'No data'}</b>
 						</div>
 						<div class="flex-row between align-center">
 							<div><CurrencyCircleDollarIcon size={16} /> Corruption Index</div>
-							<b class="num-mid">{e.businessEnvironment.corruptionPerceptionsIndex ?? '—'}</b>
+							<b class="num-mid"
+								>{e.businessEnvironment.corruptionPerceptionsIndex > 0
+									? e.businessEnvironment.corruptionPerceptionsIndex
+									: 'No data'}</b
+							>
 						</div>
 						<div class="flex-row between align-center">
 							<div><PiggyBankIcon size={16} /> Competitiveness Index</div>
-							<b class="num-mid">{e.businessEnvironment.globalCompetitivenessIndex ?? '—'}</b>
+							<b class="num-mid"
+								>{e.businessEnvironment.globalCompetitivenessIndex > 0
+									? e.businessEnvironment.globalCompetitivenessIndex
+									: 'No data'}</b
+							>
 						</div>
 						<div class="flex-row between align-center">
 							<div><ChartBarIcon size={16} /> Innovation Index</div>
-							<b class="num-mid">{e.businessEnvironment.globalInnovationIndex ?? '—'}</b>
+							<b class="num-mid"
+								>{e.businessEnvironment.globalInnovationIndex > 0
+									? e.businessEnvironment.globalInnovationIndex
+									: 'No data'}</b
+							>
 						</div>
 					</div>
 				{:else}
@@ -226,7 +238,7 @@
 						<div class="flex-col">
 							<div class="text-gray">Work Week</div>
 							<div class="num-mid">
-								{e.labourMarket.avgWorkWeek ? e.labourMarket.avgWorkWeek + ' hrs' : '—'}
+								{e.labourMarket.avgWorkWeek ? e.labourMarket.avgWorkWeek + ' hrs' : '-'}
 							</div>
 						</div>
 					</div>
@@ -239,11 +251,6 @@
 </section>
 
 <style>
-	.missing {
-		color: #9ca3af;
-		font-size: 0.83rem;
-		font-style: italic;
-	}
 	.graph-placeholder {
 		height: 60px;
 		display: flex;

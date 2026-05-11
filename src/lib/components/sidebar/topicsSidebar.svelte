@@ -12,19 +12,16 @@
 	import UserIcon from 'phosphor-svelte/lib/UserIcon';
 
 	import { mapState, setCurrentDataset } from '$lib/components/map/mapStore.svelte';
-	import {
-		selectedCountryStore,
-		type CountrySnapshot,
-		type FullCountry
-	} from '../../core/stores/store.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
+	import { selectedCountryStore } from '$lib/core/stores/store.svelte';
+	import Demographics from './demographics.svelte';
+	import Military from './military.svelte';
+	import Environment from './environment.svelte';
 
 	// ── Props ──────────────────────────────────────────────────────────────────
-	let {
-		visible,
-		selectedSidebar = 'countryInfo',
-		countryData
-	}: { visible: boolean; selectedSidebar?: string; countryData: FullCountry | null } = $props();
+	let { visible, selectedSidebar = 'countryInfo' } = $props();
+
+	const countryData = $derived(selectedCountryStore.country);
 
 	// ── Auth ───────────────────────────────────────────────────────────────────
 	type AuthUser = { id: string; email: string; displayName: string | null; isAdmin: boolean };
@@ -206,9 +203,7 @@
 				<div class="row">
 					{#if countryData}
 						<div class="row">
-							<figure class="country-flag">
-								<picture><img src={countryData.flagSvg} alt="" /></picture>
-							</figure>
+							<figure class="country-flag"><picture><img src="" alt="" /></picture></figure>
 							<div>
 								<h2>{countryData?.name}</h2>
 								<h3>{countryData?.capital}</h3>
@@ -243,10 +238,14 @@
 					</div>
 				</div>
 			</section>
+			{#if countryData?.populationCurrent}<Demographics c={countryData} />{/if}
 			{#if countryData}<Economy e={countryData} />{/if}
-			<!-- {#if countryData?.renewableCurrent}
-				<Energy {...countryData} />{/if}
-			{#if countryData?.visitorsCurrent}<Tourism {...countryData} />{/if} -->
+			{#if countryData?.renewableCurrent}
+				<Energy e={countryData} />
+			{/if}
+			{#if countryData?.visitorsCurrent}<Tourism e={countryData} />{/if}
+			{#if countryData?.budgetCurrent}<Military c={countryData} />{/if}
+			{#if countryData?.envPerformanceIndex}<Environment c={countryData} />{/if}
 
 			<!-- ── Saved / Chat tab ──────────────────────────────────────────────────── -->
 		{:else}
@@ -255,6 +254,9 @@
 				{#if !authLoaded}
 					<p class="muted">Loading…</p>
 				{:else if !user}
+					<div class="flex center">
+						<h2 class="section-h">Register to save views and use AI chat</h2>
+					</div>
 					<div class="auth-card">
 						<div class="auth-tabs">
 							<button class:atab-active={authMode === 'login'} onclick={() => (authMode = 'login')}
@@ -361,13 +363,12 @@
 							{/each}
 						</div>
 					{/if}
+					<!-- Chat always visible in this tab -->
+					<h3 class="section-h">AI Data Chat</h3>
+					<div class="chatbox">
+						<Chat bind:this={chatRef} {user} {onSaveView} />
+					</div>
 				{/if}
-
-				<!-- Chat always visible in this tab -->
-				<h3 class="section-h">AI Data Chat</h3>
-				<div class="chatbox">
-					<Chat bind:this={chatRef} {user} {onSaveView} />
-				</div>
 			</section>
 		{/if}
 	</div>

@@ -130,7 +130,7 @@
 			// 	],
 			// 	id: 'blank'
 			// },
-			style: 'https://tiles.openfreemap.org/styles/positron',
+			style: 'https://tiles.openfreemap.org/styles/bright',
 			center: [lng, lat],
 			zoom: zoom
 		});
@@ -256,7 +256,7 @@
 	function setupMapInteractionsOnce() {
 		if (interactionsSetup) return;
 		interactionsSetup = true;
-		setupMapInteractions(map, handleCountryClick);
+		setupMapInteractions(map, handleCountryClick, handleSecondClick);
 	}
 
 	function createPopup(): maplibregl.Popup {
@@ -307,6 +307,19 @@
 		currentPopup = createPopup();
 		currentPopup.setDOMContent(componentDom);
 		currentPopup.setLngLat(e.lngLat).addTo(map);
+	}
+
+	async function handleSecondClick(e: any) {
+		if (!e.features || e.features.length === 0) {
+			if (currentPopup) {
+				currentPopup.remove();
+				currentPopup = null;
+			}
+			if (currentComponent) {
+				unmount(currentComponent);
+				currentComponent = null;
+			}
+		}
 	}
 
 	$effect(() => {

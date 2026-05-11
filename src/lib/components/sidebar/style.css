@@ -72,6 +72,12 @@ hr {
 	opacity: 0.8;
 }
 
+.missing {
+	color: #9ca3af;
+	font-size: 0.83rem;
+	font-style: italic;
+}
+
 /* INFO CARDS */
 .info-card {
 	border: 1px solid var(--border-color, #b5d4fa);
