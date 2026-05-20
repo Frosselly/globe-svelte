@@ -21,7 +21,7 @@ export type AnalysisOption = {
 };
 
 export const ANALYSIS_OPTIONS: AnalysisOption[] = [
-	// ── Economy ────────────────────────────────────────────────────────────────
+	// -- Economy
 	{
 		key: 'gdp',
 		scalarKey: 'gdp',
@@ -102,7 +102,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		topic: 'Economy',
 		format: 'currency'
 	},
-	// ── Energy ─────────────────────────────────────────────────────────────────
+	// -- Energy
 	{
 		key: 'renewableShare',
 		scalarKey: 'renewableShare',
@@ -143,7 +143,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		topic: 'Energy',
 		format: 'number'
 	},
-	// ── Military ───────────────────────────────────────────────────────────────
+	// -- Military
 	{
 		key: 'militaryRank',
 		scalarKey: 'militaryRank',
@@ -184,7 +184,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		topic: 'Military',
 		format: 'number'
 	},
-	// ── Environment ────────────────────────────────────────────────────────────
+	// -- Environment
 	{
 		key: 'forestCoverage',
 		scalarKey: 'forestCoverage',
@@ -225,7 +225,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		topic: 'Environment',
 		format: 'number'
 	},
-	// ── Tourism ────────────────────────────────────────────────────────────────
+	// -- Tourism
 	{
 		key: 'visitors',
 		scalarKey: 'visitors',
@@ -266,7 +266,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		topic: 'Tourism',
 		format: 'number'
 	},
-	// ── Demographics ───────────────────────────────────────────────────────────
+	// -- Demographics
 	{
 		key: 'population',
 		scalarKey: 'population',

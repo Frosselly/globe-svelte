@@ -59,7 +59,7 @@
 
 	onMount(() => {
 		const gridOptions: GridOptions<any> = {
-			theme: darkTheme, // Apply custom dark theme
+			theme: darkTheme,
 			columnDefs,
 			rowData,
 			defaultColDef: {
@@ -69,7 +69,7 @@
 		};
 
 		if (gridDiv) {
-			createGrid(gridDiv, gridOptions); // Create the grid with custom options
+			createGrid(gridDiv, gridOptions);
 		}
 	});
 </script>

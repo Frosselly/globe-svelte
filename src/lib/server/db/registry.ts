@@ -3,7 +3,7 @@ import { economy, energy, military, environment, tourism, demographics } from '.
 //a file to change the queries indicators UNFINISHED
 
 export const CONFIG = {
-	// ── Economy ────────────────────────────────────────────────────────────────
+	// -- Economy ----------------
 	gdp: {
 		table: economy,
 		col: 'gdpCurrent',
@@ -69,7 +69,7 @@ export const CONFIG = {
 		format: 'currency'
 	},
 
-	// ── Energy ─────────────────────────────────────────────────────────────────
+	// -- Energy -----------------
 	renewableShare: {
 		table: energy,
 		col: 'renewableCurrent',
@@ -111,7 +111,7 @@ export const CONFIG = {
 		format: 'percent'
 	},
 
-	// ── Environment ────────────────────────────────────────────────────────────
+	// -- Environment ------------
 	forestCoverage: {
 		table: environment,
 		col: 'forestCoverageCurrent',
@@ -153,7 +153,7 @@ export const CONFIG = {
 		format: 'percent'
 	},
 
-	// ── Military ───────────────────────────────────────────────────────────────
+	// -- Military ---------------
 	militaryRank: {
 		table: military,
 		col: 'globalRank',
@@ -187,7 +187,7 @@ export const CONFIG = {
 		format: 'number'
 	},
 
-	// ── Tourism ────────────────────────────────────────────────────────────────
+	// -- Tourism ----------------
 	visitors: {
 		table: tourism,
 		col: 'visitorsCurrent',
@@ -221,7 +221,7 @@ export const CONFIG = {
 		format: 'number'
 	},
 
-	// ── Demographics ───────────────────────────────────────────────────────────
+	// -- Demographics -----------
 	population: {
 		table: demographics,
 		col: 'populationCurrent',

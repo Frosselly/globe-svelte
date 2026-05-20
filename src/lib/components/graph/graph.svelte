@@ -35,7 +35,7 @@
 		onSelectionChange?: (iso2s: string[]) => void;
 	}>();
 
-	// ── Data prep ─────────────────────────────────────────────────────────────
+	// -- Data prep -------------
 
 	const validRows = $derived(
 		(rows ?? [])
@@ -50,7 +50,7 @@
 	// Checkbox state — auto-select top 5 on first load
 	let selectedNames = $state<Set<string>>(new Set());
 	$effect(() => {
-		console.log('selectedCountryName', selectedCountryName);
+		// // console.log('selectedCountryName', selectedCountryName);
 		if (validRows.length) {
 			const initialRows = validRows.slice(0, 5).map((r) => r.name);
 			if (selectedCountryName) initialRows.push(selectedCountryName);
@@ -79,7 +79,7 @@
 		onSelectionChange([selectedCountryName]);
 	}
 
-	// ── SVG dimensions ────────────────────────────────────────────────────────
+	// -- SVG dimensions --------
 
 	let containerEl = $state<HTMLDivElement | null>(null);
 	let svgEl = $state<SVGSVGElement | null>(null);
@@ -99,7 +99,7 @@
 		return () => ro.disconnect();
 	});
 
-	// ── Colours ───────────────────────────────────────────────────────────────
+	// -- Colours ---------------
 
 	const BAR_COLOR = '#4f8ef7';
 	const SELECTED_BAR_COLOR = '#f7694f';
@@ -109,7 +109,7 @@
 	const LABEL_COLOR = '#374151';
 	const DOT_HOVER_COLOR = '#c0392b';
 
-	// ── Draw ──────────────────────────────────────────────────────────────────
+	// -- Draw ------------------
 
 	$effect(() => {
 		if (!svgEl) return;
@@ -141,7 +141,7 @@
 		return formatLargeNumbers(v);
 	}
 
-	// ── Bar chart ─────────────────────────────────────────────────────────────
+	// -- Bar chart -------------
 
 	function drawBar() {
 		clear();
@@ -267,7 +267,7 @@
 			.text(`${option.label} by Country`);
 	}
 
-	// ── Line chart ────────────────────────────────────────────────────────────
+	// -- Line chart ------------
 
 	function drawLine() {
 		clear();

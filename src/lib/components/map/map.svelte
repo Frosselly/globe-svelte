@@ -18,6 +18,7 @@
 	import * as pmtiles from 'pmtiles';
 	import { mount, unmount, onDestroy, onMount, untrack } from 'svelte';
 	import { countriesStore, selectedCountryStore } from '../../core/stores/store.svelte.ts';
+	import countryOutlinesJson from '$lib/assets/countries.geo.json';
 
 	const { toggleTopics, onPosChange } = $props();
 
@@ -40,7 +41,7 @@
 	let scale: number[] | null = $state(null);
 	let geoData: any = $state(null);
 	let valueData: any = $state(null);
-	let countryOutlinesJson: any = $state(null);
+	// let countryOutlinesJson: any = $state(null);
 	let interactionsSetup = false;
 
 	let countryGeneralInfo = $state({
@@ -67,7 +68,7 @@
 	});
 
 	onMount(async () => {
-		await fetchCountryOutlines();
+		// await fetchCountryOutlines();
 		initializeMap(mapContainer);
 	});
 
@@ -77,13 +78,13 @@
 		if (currentPopup) currentPopup.remove();
 	});
 
-	async function fetchCountryOutlines() {
-		if (!countryOutlinesJson) {
-			console.log('fetcj?????');
-			const geoRes = await fetch('http://localhost:5173/countries.geo.json');
-			countryOutlinesJson = await geoRes.json();
-		}
-	}
+	// async function fetchCountryOutlines() {
+	// 	if (!countryOutlinesJson) {
+	// 		// console.log('fetcj?????');
+	// 		const geoRes = await fetch('http://localhost:5173/countries.geo.json');
+	// 		countryOutlinesJson = await geoRes.json();
+	// 	}
+	// }
 
 	async function initializeMap(mapContainer: string | HTMLElement) {
 		const protocol = new (pmtiles as any).Protocol();
@@ -338,10 +339,10 @@
 				const res = await fetch(
 					`https://restcountries.com/v3.1/alpha?codes=${encodeURIComponent(iso2)}`
 				);
-				console.log('restcountries res', res);
+				// console.log('restcountries res', res);
 				if (res.ok) {
 					const data = await res.json();
-					console.log('restcountries data', data);
+					// console.log('restcountries data', data);
 					selectedCountryStore.selectCountry(iso2);
 					if (Array.isArray(data) && data.length > 0) {
 						const c = data[0];
@@ -378,7 +379,7 @@
 </script>
 
 {#if loading}
-	<div class="map-loader" class:fade-out={fadeOut}>
+	<div class="map-loader" data-testid="map-loader" class:fade-out={fadeOut}>
 		<div class="loader-content">
 			<div class="loader-text">{loadingText}</div>
 			<div class="progress-track">

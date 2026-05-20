@@ -21,7 +21,7 @@
 	const safetyScore = $derived(e.safetyScore ?? 0);
 
 	const safetyLevel = $derived(Math.round(5 - (safetyScore / 100) * 4));
-	// console.log('tourism', props);
+	// // console.log('tourism', props);
 	// const props = {
 	// 	annualVisitors: '31.9M',
 	// 	trend: '12.4%',

@@ -17,18 +17,19 @@ export interface CountryMetadata {
 	capital: string[];
 	region: string;
 	borders: string[];
-	area: string;
-	population: string;
-	car: string;
+	area: number;
+	population: number;
+	car: Car;
 	timezones: string[];
 	continents: string[];
-	flag: string;
+	flagEmoji: string;
+	flagSvg: string;
+	flagPng: string;
 	name: string;
-	currencies: string;
+	currencies: Currencies;
 	languages: string;
-	latlng: string[];
-	postalCode: string;
-	gini: string;
+	latlng: number[];
+	gini: number;
 }
 
 export interface RESTCountry {

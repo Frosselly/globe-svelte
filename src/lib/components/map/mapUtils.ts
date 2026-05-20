@@ -5,14 +5,14 @@ import maplibregl from 'maplibre-gl';
 
 export type IndicatorRow = { iso2: string; name: string; value: number | null };
 
-// ── Geo ───────────────────────────────────────────────────────────────────────
+// -- Geo -----------------------
 
 export async function loadGeoData(url: string) {
 	const res = await fetch(url);
 	return res.json();
 }
 
-// ── Convert rows → valueData for geo merge ────────────────────────────────────
+// -- Convert rows → valueData for geo merge -----------
 
 function rowsToValueData(
 	rows: IndicatorRow[],
@@ -23,7 +23,7 @@ function rowsToValueData(
 		.map((r) => ({ iso2: r.iso2, iso3: meta[r.iso2]?.iso3 ?? r.iso2, value: r.value as number }));
 }
 
-// ── Merge + scale ─────────────────────────────────────────────────────────────
+// -- Merge + scale
 
 export function mergeDataWithGeo(
 	geoData: any,
@@ -71,7 +71,7 @@ export async function prepareDataset(
 	return { geoData, valueData, scale };
 }
 
-// ── Layer helpers  ──────────────────────────────────────────
+// -- Layer helpers
 
 export function calculateColorScale(valueData: { value: number }[]) {
 	const vals = valueData
@@ -88,6 +88,7 @@ export function calculateColorScale(valueData: { value: number }[]) {
 		vals[Math.floor((vals.length - 1) * 0.75)],
 		vals[vals.length - 1]
 	];
+	//remove duplicates for maplibre and resort them
 	const uniqueStops = Array.from(new Set(rawStops)).sort((a, b) => a - b);
 
 	if (uniqueStops.length < 2) {
@@ -101,6 +102,8 @@ export function createColorExpression(stops: number[]) {
 	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
 	const interpolation: any[] = ['interpolate', ['linear'], ['get', 'value']];
 
+	//function to match stops to colors if one or other is larger it confomr to closest largest
+	//gets stops into 0-1 range and multiplies with available color amount to find closes color
 	stops.forEach((stop, index) => {
 		const colorIndex = Math.floor((index / (stops.length - 1)) * (colorRamp.length - 1));
 		interpolation.push(stop, colorRamp[colorIndex]);
@@ -173,18 +176,39 @@ export function setupFlatDisplay(map: any, colorExpression: any, labelName: stri
 	map.on('mouseleave', 'state-fills', () => activePopup.remove());
 }
 
-export function getColumnColor(value: number, max: number): [number, number, number, number] {
-	const r = value / max;
-	if (r < 0.33) return [211, 48, 39, 200];
-	if (r < 0.66) return [254, 224, 144, 200];
-	return [26, 152, 80, 200];
+function hexToRgb(hex: string, alpha: number = 200): [number, number, number, number] {
+	const r = parseInt(hex.slice(1, 3), 16);
+	const g = parseInt(hex.slice(3, 5), 16);
+	const b = parseInt(hex.slice(5, 7), 16);
+	return [r, g, b, alpha];
 }
 
-export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], scale: any) {
+export function getColumnColor(value: number, stops: number[]): [number, number, number, number] {
+	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
+
+	// If the value is null or undefined
+	if (value == null) return [200, 200, 200, 200];
+
+	// Find which "bucket" the value falls into based on our stops
+	// We iterate backwards to find the highest stop the value exceeds
+	for (let i = stops.length - 1; i >= 0; i--) {
+		if (value >= stops[i]) {
+			// Map the stop index to a color in the ramp
+			const colorIdx = Math.floor((i / (stops.length - 1)) * (colorRamp.length - 1));
+			return hexToRgb(colorRamp[colorIdx]);
+		}
+	}
+
+	// Default to the first color
+	return hexToRgb(colorRamp[0]);
+}
+
+export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], stops: number[]) {
 	if (map.getLayer('state-fills')) map.removeLayer('state-fills');
 	if (map.getLayer('state-borders')) map.removeLayer('state-borders');
 	const b3 = Object.fromEntries(valueData.map((d: any) => [d.iso3, d]));
 	const b2 = Object.fromEntries(valueData.map((d: any) => [d.iso2, d]));
+	const maxVal = stops[stops.length - 1];
 	const cols = geoData.features
 		.map((f: any) => {
 			const iso3 = f.properties.adm0_a3,
@@ -196,7 +220,7 @@ export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], sc
 			if (lx == null || ly == null) return null;
 			return {
 				position: [lx, ly] as [number, number],
-				height: Math.max(item.value / scale.max, 0.01) * 500000,
+				height: Math.max(item.value / maxVal, 0.01) * 500000,
 				value: item.value,
 				iso3,
 				name: f.properties.name || iso3
@@ -211,19 +235,27 @@ export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], sc
 		id: 'column-layer',
 		data: cols,
 		diskResolution: 12,
-		radius: 40000,
+		radius: 50000,
 		extruded: true,
 		getPosition: (d: any) => d.position,
 		getElevation: (d: any) => d.height,
-		getFillColor: (d: any) => getColumnColor(d.value, scale.max),
+		getFillColor: (d: any) => getColumnColor(d.value, stops),
 		pickable: true,
 		autoHighlight: true,
 		highlightColor: [255, 255, 255, 80],
+		parameters: {
+			depthTest: true, // 3d depth
+			depthMask: true,
+			blend: true
+		},
 		onHover: (i: any) => {
 			map.getCanvas().style.cursor = i.object ? 'pointer' : '';
 		}
 	});
-	const overlay = new MapboxOverlay({ interleaved: false, layers: [layer] });
+	const overlay = new MapboxOverlay({
+		interleaved: true,
+		layers: [layer]
+	});
 	map.addControl(overlay);
 	return overlay;
 }

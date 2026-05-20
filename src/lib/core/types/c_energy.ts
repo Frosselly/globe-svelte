@@ -1,5 +1,4 @@
-import { HistoricalData } from './c_shared';
-
+import type { HistoricalData } from './c_shared';
 export interface CountryEnergy {
 	lastUpdated: string;
 	iso2: string;
@@ -12,6 +11,7 @@ export interface CountryEnergy {
 	renewableSources: RenewableSource[];
 	infrastructure?: InfrastructureFact[];
 	targets: EnergyTarget[];
+	energyRank: number;
 }
 
 export interface TimeSeries<T = number> {

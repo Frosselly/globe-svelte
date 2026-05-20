@@ -27,10 +27,6 @@
 
 	let { country, open = $bindable(false), onclose, toggleMore }: Props = $props();
 
-	// function toggleMore() {
-	// 	open = !open;
-	// }
-
 	function handleBackdropClick() {
 		open = false;
 		onclose?.();
@@ -87,8 +83,7 @@
 		<button class="close-btn" onclick={onclose} aria-controls="close-{country.name}">
 			Close
 		</button>
-
-		<!-- {#if open}
+		<!--
 			<div
 				id="popout-{country.name}"
 				class="popout"

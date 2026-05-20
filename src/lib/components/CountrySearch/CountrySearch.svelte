@@ -26,7 +26,7 @@
 			.then((r) => r.json())
 			.then((data) => (countries = data));
 		if (selectedOption) {
-			console.log('selected:', selectedOption);
+			// console.log('selected:', selectedOption);
 			selectedCountryStore.selectCountry(selectedOption.cca2);
 		}
 	});

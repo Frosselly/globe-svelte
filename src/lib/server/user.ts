@@ -1,12 +1,3 @@
-/**
- * src/lib/server/user.ts
- *
- * Thin auth layer:
- *   - bcrypt password hashing (node built-in crypto for PBKDF2 to avoid a dep)
- *   - random session token stored in the `sessions` table
- *   - SvelteKit cookie helpers
- */
-
 import { users, sessions } from '$lib/server/db/schema/users';
 import { eq, lt } from 'drizzle-orm';
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
@@ -19,15 +10,15 @@ const scryptAsync = promisify(scrypt);
 const SESSION_COOKIE = 'sid';
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
 
-// ── Password helpers ──────────────────────────────────────────────────────────
+// -- Password helpers ----------
 
-async function hashPassword(plain: string): Promise<string> {
+export async function hashPassword(plain: string): Promise<string> {
 	const salt = randomBytes(16).toString('hex');
 	const derived = (await scryptAsync(plain, salt, 64)) as Buffer;
 	return `${salt}:${derived.toString('hex')}`;
 }
 
-async function verifyPassword(plain: string, stored: string): Promise<boolean> {
+export async function verifyPassword(plain: string, stored: string): Promise<boolean> {
 	const [salt, hash] = stored.split(':');
 	if (!salt || !hash) return false;
 	const derived = (await scryptAsync(plain, salt, 64)) as Buffer;
@@ -35,7 +26,7 @@ async function verifyPassword(plain: string, stored: string): Promise<boolean> {
 	return timingSafeEqual(derived, storedBuf);
 }
 
-// ── Session helpers ───────────────────────────────────────────────────────────
+// -- Session helpers -----------
 
 function makeToken(): string {
 	return randomBytes(32).toString('hex');
@@ -46,7 +37,7 @@ export async function purgeExpiredSessions() {
 	await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// -- Public API ----------------
 
 export type AuthUser = {
 	id: string;
@@ -107,19 +98,24 @@ export async function loginUser(
 
 /** Resolve a session token to a user, or null if invalid / expired. */
 export async function getUserFromToken(token: string): Promise<AuthUser | null> {
-	const [row] = await db
-		.select({
-			session: sessions,
-			user: {
-				id: users.id,
-				email: users.email,
-				displayName: users.displayName,
-				isAdmin: users.isAdmin
-			}
-		})
-		.from(sessions)
-		.innerJoin(users, eq(users.id, sessions.userId))
-		.where(eq(sessions.token, token));
+	let row = null;
+	try {
+		[row] = await db
+			.select({
+				session: sessions,
+				user: {
+					id: users.id,
+					email: users.email,
+					displayName: users.displayName,
+					isAdmin: users.isAdmin
+				}
+			})
+			.from(sessions)
+			.innerJoin(users, eq(users.id, sessions.userId))
+			.where(eq(sessions.token, token));
+	} catch (err) {
+		console.error('DB unreachable or query failed:', err);
+	}
 
 	if (!row) return null;
 	if (row.session.expiresAt < new Date()) {
@@ -135,7 +131,7 @@ export async function logoutUser(token: string) {
 	await db.delete(sessions).where(eq(sessions.token, token));
 }
 
-// ── SvelteKit event helpers ──────────────────────────────────────────────────
+// -- SvelteKit event helpers --
 
 /** Read the session cookie and resolve to a user. */
 export async function getUserFromEvent(event: RequestEvent): Promise<AuthUser | null> {
@@ -160,7 +156,7 @@ export function clearSessionCookie(event: RequestEvent) {
 	event.cookies.delete(SESSION_COOKIE, { path: '/' });
 }
 
-// ── Admin helpers ────────────────────────────────────────────────────────────
+// -- Admin helpers ------------
 
 export async function listUsers(): Promise<AuthUser[]> {
 	return db

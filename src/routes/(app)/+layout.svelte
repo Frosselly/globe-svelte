@@ -6,25 +6,28 @@
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
 	import { setSelectedSidebar, sidebarState } from '$lib/core/stores/store.svelte.js';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 
 	let { data, children } = $props();
 
-	let current_url = $state($page.url.pathname.split('/').filter(Boolean).pop() || '/');
+	let current_url = $state(page.url.pathname.split('/').filter(Boolean).pop() || '/');
 
-	onMount(() => {
-		goto('/map');
-	});
+	// onMount(() => {
+	// 	goto('/map');
+	// });
 
 	$effect(() => {
-		current_url = $page.url.pathname.split('/').filter(Boolean).pop() || '/';
-		console.log('data.user', data.user);
+		current_url = page.url.pathname.split('/').filter(Boolean).pop() || '/';
+		// // console.log('data.user', data.user);
 	});
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+	<link href="https://fonts.googleapis.com/css2?family=Metrophobic&display=swap" rel="stylesheet" />
 </svelte:head>
 
 <header>
@@ -33,16 +36,16 @@
 		<div class="countrySearch">
 			<CountrySearch
 				onSelect={(country) => {
-					console.log(country.cca2, country.name.common);
+					// // console.log(country.cca2, country.name.common);
 				}}
 			/>
 		</div>
 	</nav>
 	<nav>
-		{#if data.user.isAdmin}
+		{#if data.user?.isAdmin}
 			<a href={'/auth/admin'} class="btn btn-sm btn-default">Manage users</a>
 		{/if}
-		<a href={'/map'} class="btn btn-sm btn-default">Map</a>
+		<a href={'/'} class="btn btn-sm btn-default">Map</a>
 	</nav>
 	<nav>
 		<div>
@@ -56,7 +59,7 @@
 			<button
 				class="btn btn-sm btn-default"
 				disabled={current_url === 'analysis'}
-				onclick={() => goto('/map/analysis')}>Analysis</button
+				onclick={() => goto('/analysis')}>Analysis</button
 			>
 			<button
 				class="btn btn-sm btn-default"

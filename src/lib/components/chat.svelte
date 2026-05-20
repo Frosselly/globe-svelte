@@ -11,14 +11,14 @@
 	import ChartCard from './ChartCard.svelte';
 	import type { Candidate, DataResult, Message } from '$lib/core/types';
 
-	// ── Props ──────────────────────────────────────────────────────────────────
+	// -- Props
 
 	let {
 		user = null as { id: string; email: string; displayName: string | null } | null,
 		onSaveView = (_v: any) => {}
 	} = $props();
 
-	// ── State ──────────────────────────────────────────────────────────────────
+	// -- State
 
 	let messages: Message[] = $state([]);
 	let input = $state('');
@@ -49,7 +49,7 @@
 		scrollBottom();
 	}
 
-	// ── Send ───────────────────────────────────────────────────────────────────
+	// -- Send
 
 	async function handleSend() {
 		const prompt = input.trim();
@@ -72,7 +72,7 @@
 				return;
 			}
 
-			// ── Disambiguation response ────────────────────────────────────────
+			// -- Disambiguation response
 			if (data.disambiguation) {
 				push({
 					kind: 'disambig',
@@ -91,14 +91,14 @@
 				return;
 			}
 
-			// ── Error response ────────────────────────────────────────────────
+			// -- Error response
 			if (!res.ok || data.error) {
 				push({ kind: 'error', text: data.error ?? `Server error ${res.status}` });
 				loading = false;
 				return;
 			}
 
-			// ── Success ───────────────────────────────────────────────────────
+			// -- Success
 			pushChartResult(data);
 		} catch (err) {
 			console.error(err);
@@ -107,7 +107,7 @@
 		loading = false;
 	}
 
-	// ── Pick a candidate from the disambig card ─────────────────────────────
+	// -- Pick a candidate from the disambig card ----
 
 	async function pickCandidate(msgIdx: number, candidate: Candidate) {
 		// Find the disambig message and mark it as loading
@@ -171,7 +171,7 @@
 		);
 	}
 
-	// ── Replay saved view (called from topicsSidebar) ─────────────────────────
+	// -- Replay saved view (called from topicsSidebar)
 
 	export async function replayView(view: {
 		indicator: string;
@@ -198,7 +198,6 @@
 			});
 			const data = await res.json().catch(() => null);
 
-			// Replace "Loading…" placeholder
 			messages = messages.slice(0, -1);
 
 			if (!res.ok || !data?.series) {
@@ -222,7 +221,7 @@
 		loading = false;
 	}
 
-	// ── Save a chart result ───────────────────────────────────────────────────
+	// -- Save a chart result
 
 	async function saveResult(result: DataResult, idx: number) {
 		if (!user || saving) return;
@@ -257,7 +256,7 @@
 	}
 </script>
 
-<!-- ── Template ──────────────────────────────────────────────────────────── -->
+<!-- -- Template -->
 
 <div class="chat-root" class:expanded>
 	<!-- Header -->

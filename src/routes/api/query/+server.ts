@@ -28,10 +28,10 @@ import { env } from '$env/dynamic/private';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { getIndicators, type Indicator } from '$lib/worldbank/indicators';
 import { db } from '$lib/server/db/client';
+import { getIndicators, type Indicator } from '$lib/server/worldbank/indicators';
 
-// ── AI schema ─────────────────────────────────────────────────────────────────
+// -- AI schema -----------------
 
 const QuerySchema = z.object({
 	indicator: z.string(),
@@ -43,7 +43,7 @@ const QuerySchema = z.object({
 });
 type ParsedQuery = z.infer<typeof QuerySchema>;
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// -- Types ---------------------
 
 type SeriesPoint = { date: string; value: number | null };
 type SeriesRow = { country: string; code: string; series: SeriesPoint[] };
@@ -54,7 +54,7 @@ export type Candidate = {
 	source: string;
 };
 
-// ── World Bank helpers ────────────────────────────────────────────────────────
+// -- World Bank helpers --------
 
 /**
  * Probe one indicator for one country.
@@ -131,7 +131,7 @@ function trimNullYears(series: SeriesRow[], start: number, end: number): SeriesR
 	return series.map((row) => ({ ...row, series: row.series.filter((p) => liveYears.has(p.date)) }));
 }
 
-// ── Registry search ───────────────────────────────────────────────────────────
+// -- Registry search -----------
 
 /**
  * Score every indicator in the registry by word overlap with `concept`.
@@ -163,7 +163,7 @@ function searchRegistry(
 		.map((x) => x.ind);
 }
 
-// ── AI parsing ────────────────────────────────────────────────────────────────
+// -- AI parsing ----------------
 
 async function parseWithAI(prompt: string): Promise<ParsedQuery | null> {
 	const gateway = createGoogleGenerativeAI({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
@@ -217,7 +217,7 @@ User: ${prompt}`.trim()
 	}
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
+// -- Handler -------------------
 
 export const POST: RequestHandler = async (event) => {
 	const body = await event.request.json().catch(() => null);
@@ -226,7 +226,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const user = await getUserFromEvent(event);
 
-	// ── 1. AI parse ───────────────────────────────────────────────────────────
+	// -- 1. AI parse -----------
 	const parsed = await parseWithAI(prompt);
 	if (!parsed) {
 		return json(
@@ -239,7 +239,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const probeISO = parsed.countriesIso3[0] ?? 'WLD';
 
-	// ── 2. Probe the AI-supplied code ─────────────────────────────────────────
+	// -- 2. Probe the AI-supplied code ----------------
 	const aiCodeValid = await probeIndicator(parsed.indicator, probeISO);
 
 	if (aiCodeValid) {
@@ -253,7 +253,7 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// ── 3. AI code was wrong — search registry ────────────────────────────────
+	// -- 3. AI code was wrong — search registry -------
 	console.warn(`[query] "${parsed.indicator}" invalid — searching registry`);
 
 	const indicators = await getIndicators();
@@ -290,10 +290,10 @@ export const POST: RequestHandler = async (event) => {
 		);
 	}
 
-	// ── 3a. Exactly one valid candidate → use it silently ────────────────────
+	// -- 3a. Exactly one valid candidate → use it silently --------------------
 	if (validCandidates.length === 1) {
 		const c = validCandidates[0]!;
-		console.log(`[query]  → auto-resolved to "${c.id}" (${c.name})`);
+		// console.log(`[query]  → auto-resolved to "${c.id}" (${c.name})`);
 		return await fetchAndRespond({
 			event,
 			user,
@@ -303,7 +303,7 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// ── 3b. Multiple valid candidates → ask the user to pick ─────────────────
+	// -- 3b. Multiple valid candidates → ask the user to pick -----------------
 	// Persist a pending chat message so "replay" can link back to it later
 	let messageId: string | undefined;
 	if (user) {
@@ -335,7 +335,7 @@ export const POST: RequestHandler = async (event) => {
 	});
 };
 
-// ── Shared fetch + respond helper ─────────────────────────────────────────────
+// -- Shared fetch + respond helper --------------------
 
 async function fetchAndRespond({
 	event,

@@ -48,7 +48,7 @@
 	};
 
 	$effect(() => {
-		console.log('e.energyMixCurrent', e.energyMixCurrent);
+		// console.log('e.energyMixCurrent', e.energyMixCurrent);
 	});
 </script>
 

@@ -1,4 +1,4 @@
-import { HistoricalData } from './c_shared';
+import type { HistoricalData } from './c_shared';
 
 export interface CountryEconomy {
 	iso2: string;

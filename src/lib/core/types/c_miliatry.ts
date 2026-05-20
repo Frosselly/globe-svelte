@@ -1,10 +1,10 @@
-import { HistoricalData } from './c_shared';
+import type { HistoricalData } from './c_shared';
 
 export interface CountryMilitary {
 	iso2: string;
 	lastUpdated: string;
 	budget: MilitaryBudget;
-	globalRank: number;
+	militaryRank: number;
 	gdpAllocation: GDPAllocation;
 	personnel: MilitaryPersonnel;
 	branches: MilitaryBranch[];

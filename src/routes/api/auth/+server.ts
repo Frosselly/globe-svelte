@@ -15,7 +15,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	switch (body.action) {
-		// ── Register ──────────────────────────────────────────────────────────
+		// -- Register ----------
 		case 'register': {
 			const { email, password, displayName } = body;
 			if (!email || !password)
@@ -35,7 +35,7 @@ export const POST: RequestHandler = async (event) => {
 			}
 		}
 
-		// ── Login ─────────────────────────────────────────────────────────────
+		// -- Login -------------
 		case 'login': {
 			const { email, password } = body;
 			if (!email || !password)
@@ -46,7 +46,7 @@ export const POST: RequestHandler = async (event) => {
 			return json({ user: result.user });
 		}
 
-		// ── Logout ────────────────────────────────────────────────────────────
+		// -- Logout ------------
 		case 'logout': {
 			const token = event.cookies.get('sid');
 			if (token) await logoutUser(token);
@@ -54,7 +54,7 @@ export const POST: RequestHandler = async (event) => {
 			return json({ ok: true });
 		}
 
-		// ── Me (get current user from cookie) ─────────────────────────────────
+		// -- Me (get current user from cookie) --------
 		case 'me': {
 			const user = await getUserFromEvent(event);
 			if (!user) return json({ user: null }, { status: 401 });

@@ -16,8 +16,8 @@
 		rowData,
 		context = {},
 		pagination = true,
-		quickFilterText = '', // Accepts search queries
-		onSelectionChanged = undefined // Callback for checkbox selection
+		quickFilterText = '',
+		onSelectionChanged = undefined
 	} = $props();
 
 	let gridDiv: HTMLDivElement;
@@ -25,7 +25,7 @@
 
 	onMount(() => {
 		const gridOptions: GridOptions<any> = {
-			theme: themeQuartz, // Default white/light theme
+			theme: themeQuartz,
 			columnDefs,
 			rowData,
 			context,
@@ -42,7 +42,7 @@
 			},
 			defaultColDef: {
 				sortable: true,
-				filter: true, // Enables column-specific filter menus
+				filter: true,
 				flex: 1,
 				minWidth: 100
 			}
@@ -53,14 +53,12 @@
 		}
 	});
 
-	// Reactively update row data
 	$effect(() => {
 		if (gridApi && rowData) {
 			gridApi.setGridOption('rowData', rowData);
 		}
 	});
 
-	// Reactively update search bar filter
 	$effect(() => {
 		if (gridApi && quickFilterText !== undefined) {
 			gridApi.setGridOption('quickFilterText', quickFilterText);
@@ -75,7 +73,6 @@
 <div bind:this={gridDiv} class="grid-wrapper" style="height: 500px; width: 100%;"></div>
 
 <style>
-	/* Scoped CSS for dynamic HTML injected by AG Grid */
 	.grid-wrapper :global(.grid-action-btn) {
 		padding: 6px 12px;
 		font-size: 13px;

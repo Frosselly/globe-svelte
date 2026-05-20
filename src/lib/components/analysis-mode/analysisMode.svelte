@@ -4,14 +4,11 @@
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 	import Graph from '../graph/graph.svelte';
 	import { Combobox } from 'melt/builders';
-	import { derived } from 'svelte/store';
 	import analysisOptions from '$lib/assets/analysisOptions.json';
 	import { countriesStore, modeState } from '../../core/stores/store.svelte';
 	import { mapState, setCurrentDataset, setDisplayMode } from '../map/mapStore.svelte';
 
 	const { onClose } = $props();
-
-	type AnalysisOption = { name: string; key: string; timeSeries: boolean };
 
 	const combobox = new Combobox<string>({
 		value: analysisOptions[0].name
@@ -27,6 +24,7 @@
 	const selectedAnalysis = $derived(
 		analysisOptions.find((o) => o.name === combobox.value) ?? analysisOptions[0]
 	);
+
 	// --- View mode ---
 	let selectedOption = $state(0);
 	const options: { icon: any; text: string; value: 'line' | 'bar' | 'map' }[] = [
@@ -43,12 +41,17 @@
 <div class="container">
 	<div class="header">
 		<div class="header-left">
-			<div class="badge">Analysis Mode</div>
+			<div class="badge" data-testid="analysis-badge">Analysis Mode</div>
 
 			<div class="combobox-wrap">
 				<label {...combobox.label} class="sr-only">Select metric</label>
 				<div class="combobox-input-wrap">
-					<input {...combobox.input} class="combobox-input" placeholder="Select metric…" />
+					<input
+						{...combobox.input}
+						data-testid="metric-input"
+						class="combobox-input"
+						placeholder="Select metric…"
+					/>
 					<button {...combobox.trigger} class="combobox-chevron" class:open={combobox.open}>
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
 							<path

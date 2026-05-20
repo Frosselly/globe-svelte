@@ -4,6 +4,9 @@
 	/* --color-secondary: #06b6d4; */
 	--color-background: #f9fafb;
 	--color-text: #111827;
+	font-family: 'Metrophobic', sans-serif;
+	font-style: normal;
+	font-weight: 300;
 }
 /* 
 [data-theme='dark'] {

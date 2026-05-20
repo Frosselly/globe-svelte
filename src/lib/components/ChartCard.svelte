@@ -26,7 +26,7 @@
 		else drawLine();
 	}
 
-	// ── Line chart ────────────────────────────────────────────────────────────
+	// -- Line chart ------------
 
 	function drawLine() {
 		const el = canvasEl!;
@@ -138,7 +138,7 @@
 		});
 	}
 
-	// ── Bar chart ─────────────────────────────────────────────────────────────
+	// -- Bar chart -------------
 
 	function drawBar() {
 		const el = canvasEl!;
@@ -234,7 +234,7 @@
 	}
 </script>
 
-<!-- ── Template ──────────────────────────────────────────────────────────── -->
+<!-- -- Template ------------ -->
 
 <div class="card-inner">
 	<!-- Toolbar -->

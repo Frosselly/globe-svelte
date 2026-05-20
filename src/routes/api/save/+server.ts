@@ -10,7 +10,7 @@ import { getUserFromEvent } from '$lib/server/user';
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 
-// ── GET — list saved items ────────────────────────────────────────────────────
+// -- GET — list saved items ----
 
 export const GET: RequestHandler = async (event) => {
 	const user = await getUserFromEvent(event);
@@ -43,7 +43,7 @@ export const GET: RequestHandler = async (event) => {
 	return json({ views, messages });
 };
 
-// ── POST — create a saved view ────────────────────────────────────────────────
+// -- POST — create a saved view
 
 export const POST: RequestHandler = async (event) => {
 	const user = await getUserFromEvent(event);
@@ -108,7 +108,7 @@ export const POST: RequestHandler = async (event) => {
 	return json({ view }, { status: 201 });
 };
 
-// ── DELETE — remove a saved view ──────────────────────────────────────────────
+// -- DELETE — remove a saved view ---------------------
 
 export const DELETE: RequestHandler = async (event) => {
 	const user = await getUserFromEvent(event);

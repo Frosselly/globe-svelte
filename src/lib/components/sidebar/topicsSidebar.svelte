@@ -17,74 +17,25 @@
 	import Demographics from './demographics.svelte';
 	import Military from './military.svelte';
 	import Environment from './environment.svelte';
+	import { authStore } from '$lib/core/stores/authStore.svelte';
+	import AuthPanel from '../AuthPanel.svelte';
 
-	// ── Props ──────────────────────────────────────────────────────────────────
-	let { visible, selectedSidebar = 'countryInfo' } = $props();
+	// -- Props ------------------
+	let { visible, selectedSidebar = 'countryInfo', onDragStart = null } = $props();
 
 	const countryData = $derived(selectedCountryStore.country);
 
-	// ── Auth ───────────────────────────────────────────────────────────────────
-	type AuthUser = { id: string; email: string; displayName: string | null; isAdmin: boolean };
-	let user = $state<AuthUser | null>(null);
-	let authLoaded = $state(false);
-	let authMode = $state<'login' | 'register'>('login');
-	let authEmail = $state('');
-	let authPass = $state('');
-	let authName = $state('');
-	let authError = $state('');
-	let authBusy = $state(false);
+	// -- Auth -------------------
+	onMount(() =>
+		authStore.fetchMe().then(() => {
+			if (authStore.user) fetchSaved();
+		})
+	);
 
-	async function fetchMe() {
-		try {
-			const r = await fetch('/api/auth', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action: 'me' })
-			});
-			const d = await r.json();
-			user = d.user ?? null;
-		} catch {
-			user = null;
-		}
-		authLoaded = true;
-	}
+	// saved views logic stays here (or moves to savedStore)
+	const user = $derived(authStore.user);
 
-	async function handleAuth() {
-		authError = '';
-		authBusy = true;
-		try {
-			const body: any = { action: authMode, email: authEmail, password: authPass };
-			if (authMode === 'register') body.displayName = authName;
-			const r = await fetch('/api/auth', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body)
-			});
-			const d = await r.json();
-			if (!r.ok) authError = d.error ?? 'Failed';
-			else {
-				user = d.user;
-				authEmail = authPass = authName = '';
-				fetchSaved();
-			}
-		} catch (e: any) {
-			authError = e.message;
-		}
-		authBusy = false;
-	}
-
-	async function handleLogout() {
-		await fetch('/api/auth', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ action: 'logout' })
-		});
-		user = null;
-		views = [];
-		chats = [];
-	}
-
-	// ── Saved data ─────────────────────────────────────────────────────────────
+	// -- Saved data -------------
 	type SavedView = {
 		id: string;
 		label: string;
@@ -146,7 +97,7 @@
 		deletingId = null;
 	}
 
-	// ── Chat ref ───────────────────────────────────────────────────────────────
+	// -- Chat ref ---------------
 	let chatRef: { replayView: (v: any) => void } | null = $state(null);
 
 	function replaySaved(v: SavedView) {
@@ -176,13 +127,6 @@
 		});
 	}
 
-	// ── Init ───────────────────────────────────────────────────────────────────
-	onMount(() =>
-		fetchMe().then(() => {
-			if (user) fetchSaved();
-		})
-	);
-
 	function fmtDate(iso: string) {
 		return new Date(iso).toLocaleDateString(undefined, {
 			year: 'numeric',
@@ -195,13 +139,20 @@
 
 {#if visible}
 	<div class="content" in:fly={{ x: 300, duration: 300 }} out:fly={{ x: 300, duration: 300 }}>
-		<!-- ── Country Info ──────────────────────────────────────────────────────── -->
+		<!-- -- Country Info -------- -->
 		{#if selectedSidebar === 'countryInfo'}
-			<div class="drag-point"><hr /></div>
+			<div
+				class="drag-point"
+				onpointerdown={onDragStart}
+				role="separator"
+				aria-label="Drag to resize sidebar"
+			>
+				<hr />
+			</div>
 			<br />
-			<section class="topicSection">
-				<div class="row">
-					{#if countryData}
+			{#if countryData}
+				<section class="topicSection">
+					<div class="row">
 						<div class="row">
 							<figure class="country-flag"><picture><img src="" alt="" /></picture></figure>
 							<div>
@@ -209,87 +160,52 @@
 								<h3>{countryData?.capital}</h3>
 							</div>
 						</div>
-					{/if}
-				</div>
-				<hr />
-				<div class="carousel">
-					<div
-						class="card card-selectable flex"
-						onclick={() => {
-							mapState.currentDataset
-								? setCurrentDataset('')
-								: setCurrentDataset('economyInfo.gdp.current');
-						}}
-					>
-						<div><span><UserIcon size={16} /></span><span><b> Population</b></span></div>
-						<div><b>{formatLargeNumbers(Number(countryData?.population))}</b></div>
 					</div>
-					<div class="card card-selectable flex">
-						<div class="flex-row">
-							<span><CurrencyDollarIcon size={16} /></span><span><b> GDP</b></span>
+					<hr />
+					<div class="carousel">
+						<div
+							class="card card-selectable flex"
+							onclick={() => {
+								mapState.currentDataset
+									? setCurrentDataset('')
+									: setCurrentDataset('economyInfo.gdp.current');
+							}}
+						>
+							<div><span><UserIcon size={16} /></span><span><b> Population</b></span></div>
+							<div><b>{formatLargeNumbers(Number(countryData?.population))}</b></div>
 						</div>
-						<div><b>{formatLargeNumbers(Number(countryData?.gdpCurrent))}</b></div>
-					</div>
-					<div class="card card-selectable flex">
-						<div class="flex-row">
-							<span><MapPinIcon size={16} /></span><span><b> Area</b></span>
+						<div class="card card-selectable flex">
+							<div class="flex-row">
+								<span><CurrencyDollarIcon size={16} /></span><span><b> GDP</b></span>
+							</div>
+							<div><b>{formatLargeNumbers(Number(countryData?.gdpCurrent))}</b></div>
 						</div>
-						<div><b>{formatLargeNumbers(Number(countryData?.area))}</b></div>
+						<div class="card card-selectable flex">
+							<div class="flex-row">
+								<span><MapPinIcon size={16} /></span><span><b> Area</b></span>
+							</div>
+							<div><b>{formatLargeNumbers(Number(countryData?.area))}</b></div>
+						</div>
 					</div>
-				</div>
-			</section>
-			{#if countryData?.populationCurrent}<Demographics c={countryData} />{/if}
-			{#if countryData}<Economy e={countryData} />{/if}
-			{#if countryData?.renewableCurrent}
-				<Energy e={countryData} />
-			{/if}
-			{#if countryData?.visitorsCurrent}<Tourism e={countryData} />{/if}
-			{#if countryData?.budgetCurrent}<Military c={countryData} />{/if}
-			{#if countryData?.envPerformanceIndex}<Environment c={countryData} />{/if}
+				</section>
 
-			<!-- ── Saved / Chat tab ──────────────────────────────────────────────────── -->
+				{#if countryData?.populationCurrent}<Demographics c={countryData} />{/if}
+				{#if countryData}<Economy e={countryData} />{/if}
+				{#if countryData?.renewableCurrent}
+					<Energy e={countryData} />
+				{/if}
+				{#if countryData?.visitorsCurrent}<Tourism e={countryData} />{/if}
+				{#if countryData?.budgetCurrent}<Military c={countryData} />{/if}
+				{#if countryData?.envPerformanceIndex}<Environment c={countryData} />{/if}
+			{:else}
+				<div class="sidebarInfoText">Click on a country</div>
+			{/if}
+			<!-- -- Saved / Chat tab ---- -->
 		{:else}
 			<section class="topicSection">
 				<!-- Auth -->
-				{#if !authLoaded}
-					<p class="muted">Loading…</p>
-				{:else if !user}
-					<div class="flex center">
-						<h2 class="section-h">Register to save views and use AI chat</h2>
-					</div>
-					<div class="auth-card">
-						<div class="auth-tabs">
-							<button class:atab-active={authMode === 'login'} onclick={() => (authMode = 'login')}
-								>Sign in</button
-							>
-							<button
-								class:atab-active={authMode === 'register'}
-								onclick={() => (authMode = 'register')}>Register</button
-							>
-						</div>
-						{#if authMode === 'register'}
-							<input class="auth-input" placeholder="Name (optional)" bind:value={authName} />
-						{/if}
-						<input class="auth-input" type="email" placeholder="Email" bind:value={authEmail} />
-						<input
-							class="auth-input"
-							type="password"
-							placeholder="Password"
-							bind:value={authPass}
-							onkeydown={(e) => e.key === 'Enter' && handleAuth()}
-						/>
-						{#if authError}<p class="auth-err">{authError}</p>{/if}
-						<button class="btn-primary" disabled={authBusy} onclick={handleAuth}>
-							{authBusy ? '…' : authMode === 'login' ? 'Sign in' : 'Create account'}
-						</button>
-					</div>
-				{:else}
-					<!-- User bar -->
-					<div class="user-bar">
-						<span class="user-name">{user.displayName ?? user.email}</span>
-						<button class="btn-ghost btn-sm" onclick={handleLogout}>Sign out</button>
-					</div>
-
+				<AuthPanel onLogin={fetchSaved} />
+				{#if user}
 					<!-- Sub-tabs -->
 					<div class="sub-tabs">
 						<button class:stab-active={savedTab === 'views'} onclick={() => (savedTab = 'views')}>
@@ -382,6 +298,17 @@
 		flex-direction: column;
 		height: 100%;
 		overflow-y: auto;
+		background: #fff;
+	}
+
+	.sidebarInfoText {
+		width: 100%;
+		height: 100%;
+		padding-top: 5rem;
+		text-align: center;
+		font-weight: bold;
+		color: #727272;
+		font-size: 1.2rem;
 	}
 
 	.drag-point {
@@ -389,15 +316,30 @@
 	}
 	@media (max-width: 1200px) {
 		.drag-point {
-			display: block;
-			position: fixed;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 24px;
+			cursor: grab;
+			touch-action: none;
+			background: var(--color-background);
+			position: sticky; /* sticks to top of sidebar scroll */
+			top: 0;
+			z-index: 10;
 			width: 100%;
-			background: hsl(0, 0%, 97%);
-			border: 1px solid hsl(0, 0%, 95%);
-			height: 20px;
+		}
+		.drag-point:active {
+			cursor: grabbing;
+		}
+		.drag-point hr {
+			width: 40px;
+			height: 4px;
+			border-radius: 2px;
+			border: none;
+			background: #d1d5db;
+			margin: 0;
 		}
 	}
-
 	.carousel {
 		display: flex;
 		gap: 16px;
@@ -424,78 +366,6 @@
 	:global(.strong-hr) {
 		border: none;
 		border-top: 2px solid #000;
-	}
-
-	/* Auth */
-	.auth-card {
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
-		border-radius: 10px;
-		padding: 14px;
-		display: flex;
-		flex-direction: column;
-		gap: 9px;
-	}
-	.auth-tabs {
-		display: flex;
-		border-radius: 7px;
-		overflow: hidden;
-		border: 1px solid #d1d5db;
-	}
-	.auth-tabs button {
-		flex: 1;
-		padding: 7px;
-		border: none;
-		background: #f3f4f6;
-		font-size: 0.86rem;
-		cursor: pointer;
-	}
-	.atab-active {
-		background: #fff !important;
-		font-weight: 600;
-	}
-	.auth-input {
-		padding: 8px 11px;
-		border-radius: 7px;
-		border: 1px solid #d1d5db;
-		font-size: 0.87rem;
-		width: 100%;
-		box-sizing: border-box;
-	}
-	.auth-err {
-		color: #dc2626;
-		font-size: 0.8rem;
-		margin: 0;
-	}
-	.btn-primary {
-		background: #0ea5e9;
-		color: #fff;
-		border: none;
-		padding: 9px;
-		border-radius: 8px;
-		cursor: pointer;
-		font-size: 0.9rem;
-	}
-	.btn-primary:disabled {
-		opacity: 0.5;
-		cursor: default;
-	}
-	.btn-primary:hover:not(:disabled) {
-		background: #0284c7;
-	}
-
-	/* User bar */
-	.user-bar {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: #f3f4f6;
-		border-radius: 8px;
-		padding: 8px 12px;
-	}
-	.user-name {
-		font-weight: 600;
-		font-size: 0.88rem;
 	}
 
 	/* Sub-tabs */
@@ -610,21 +480,6 @@
 	.btn-del:disabled {
 		opacity: 0.4;
 		cursor: default;
-	}
-	.btn-ghost {
-		background: transparent;
-		border: 1px solid #d1d5db;
-		color: #374151;
-		border-radius: 6px;
-		padding: 5px 10px;
-		font-size: 0.82rem;
-	}
-	.btn-ghost:hover {
-		background: #f3f4f6;
-	}
-	.btn-sm {
-		padding: 4px 9px !important;
-		font-size: 0.78rem !important;
 	}
 
 	/* Misc */

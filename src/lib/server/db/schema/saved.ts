@@ -10,11 +10,11 @@ import {
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
-// ── Enums ────────────────────────────────────────────────────────────────────
+// -- Enums --------------------
 
 export const viewModeEnum = pgEnum('view_mode', ['line', 'bar', 'map']);
 
-// ── Saved views ──────────────────────────────────────────────────────────────
+// -- Saved views --------------
 //
 // One row = one bookmark the user created by clicking "Save" in Analysis Mode
 // or from the chat.
@@ -58,7 +58,7 @@ export const savedViews = pgTable('saved_views', {
 	createdAt: timestamp('created_at').defaultNow()
 });
 
-// ── Chat messages ────────────────────────────────────────────────────────────
+// -- Chat messages ------------
 //
 // Each user message + bot response pair is stored so the user can quickly
 // revisit past queries.  The `parsedQuery` stores what the AI extracted so

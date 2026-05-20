@@ -1,4 +1,4 @@
-import { HistoricalData } from './c_shared';
+import type { HistoricalData } from './c_shared';
 
 export interface CountryEnvironment {
 	iso2: string;
@@ -27,6 +27,7 @@ export interface CountryEnvironment {
 		seaLevelRise: number;
 	};
 	envPerformanceIndex: number;
+	environmentRank: number;
 }
 
 export interface Trend {

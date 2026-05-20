@@ -23,7 +23,7 @@ export const demographics = pgTable('demographics', {
 	literacyCurrent: real('literacy_current'),
 	literacy: jsonb('literacy').$type<HistoricalData[]>(),
 
-	// Ethnic groups — null percentages are fine here, kept as-is
+	// Ethnic groups
 	ethnicGroups: jsonb('ethnic_groups').$type<{ group: string; percentage: number | null }[]>(),
 
 	// Health sub-object

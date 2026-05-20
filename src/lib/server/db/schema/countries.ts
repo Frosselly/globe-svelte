@@ -1,13 +1,5 @@
 // schema/countries.ts
-import {
-	pgTable,
-	varchar,
-	real,
-	doublePrecision,
-	integer,
-	jsonb,
-	timestamp
-} from 'drizzle-orm/pg-core';
+import { pgTable, varchar, real, integer, jsonb, timestamp } from 'drizzle-orm/pg-core';
 
 export const countries = pgTable('countries', {
 	iso2: varchar('iso2', { length: 2 }).primaryKey(),

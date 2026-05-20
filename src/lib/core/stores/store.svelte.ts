@@ -10,7 +10,7 @@
  *   4. SelectedCountryStore  – current country with lazy full-snapshot fetch
  */
 
-// ── 1. UI state ───────────────────────────────────────────────────────────────
+// -- 1. UI state ---------------
 
 export type Mode = 'map' | 'analysis';
 export type SidebarTab = 'countryInfo' | 'saved';
@@ -25,7 +25,7 @@ export function setSelectedSidebar(tab: SidebarTab) {
 	sidebarState.selected = tab;
 }
 
-// ── 2. Types ──────────────────────────────────────────────────────────────────
+// -- 2. Types ------------------
 
 /** Minimal row from the DB countries table — enough for map + search. */
 export type CountryIndex = {
@@ -144,7 +144,7 @@ export type CountryHistory = {
 
 export type FullCountry = CountrySnapshot & CountryHistory;
 
-// ── 3. CountriesStore ─────────────────────────────────────────────────────────
+// -- 3. CountriesStore ---------
 
 class CountriesStore {
 	countries = $state<Record<string, CountryIndex>>({});
@@ -166,7 +166,7 @@ class CountriesStore {
 
 export const countriesStore = new CountriesStore();
 
-// ── 4. SelectedCountryStore ───────────────────────────────────────────────────
+// -- 4. SelectedCountryStore ---
 
 class SelectedCountryStore {
 	country = $state<FullCountry | null>(null);
@@ -177,21 +177,10 @@ class SelectedCountryStore {
 	private snapshotCache = new Map<string, CountrySnapshot>();
 	private historyCache = new Map<string, CountryHistory>();
 
-	/**
-	 * Legacy setter — kept so existing call sites don't break immediately.
-	 * Gradually replace with selectCountry(iso2).
-	 * @deprecated
-	 */
-	setCountry(data: any) {
-		this.country = data as FullCountry;
-	}
-
-	/**
-	 * Select a country by ISO2.
-	 * - Immediately populates country with index data (name, flag, capital)
-	 * - Then fetches the full snapshot in the background
-	 */
 	async selectCountry(iso2: string) {
+		if (!iso2) {
+			this.country = null;
+		}
 		const upper = iso2.toUpperCase();
 		this.error = null;
 		this.historyLoaded = this.historyCache.has(upper);
@@ -224,12 +213,8 @@ class SelectedCountryStore {
 
 	/**
 	 * Fetch time-series history on demand.
-	 * Call this inside a sidebar topic component (economy, energy, etc.)
+	 * Call this inside a sidebar topic component
 	 * when its trend/chart section becomes visible.
-	 *
-	 * Example usage in a topic component:
-	 *   import { selectedCountryStore } from '$lib/core/stores/store.svelte';
-	 *   onMount(() => selectedCountryStore.loadHistory());
 	 */
 	async loadHistory(iso2?: string) {
 		const upper = (iso2 ?? this.country?.iso2)?.toUpperCase();
@@ -276,7 +261,6 @@ class SelectedCountryStore {
 		}
 	}
 
-	/** Country name — works with both old JSON shape and new DB shape. */
 	get name(): string | null {
 		return (this.country as any)?.metadata?.name?.common ?? this.country?.name ?? null;
 	}

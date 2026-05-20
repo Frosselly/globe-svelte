@@ -24,9 +24,9 @@ import { eq, desc, asc, and, sql, isNotNull } from 'drizzle-orm';
 import { countries, economy, energy, environment, military, tourism, demographics } from './schema';
 import type { HistoricalData } from '$lib/core/types/c_shared';
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 // 1. One country — every topic, only current/scalar values
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 
 export async function getCountrySnapshot(iso2: string) {
 	const [row] = await db
@@ -125,14 +125,14 @@ export async function getCountrySnapshot(iso2: string) {
 /*
  * Usage:
  *   const france = await getCountrySnapshot('FR');
- *   console.log(france?.gdpCurrent);       // 3160442622465
- *   console.log(france?.energyMixCurrent); // [{ name: 'Nuclear', percentage: 37.4 }, …]
- *   console.log(france?.alliances);        // [{ name: 'NATO', … }]
+ *   // console.log(france?.gdpCurrent);       // 3160442622465
+ *   // console.log(france?.energyMixCurrent); // [{ name: 'Nuclear', percentage: 37.4 }, …]
+ *   // console.log(france?.alliances);        // [{ name: 'NATO', … }]
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 // 2. One country — snapshot + historical data for every trended indicator
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 
 export async function getCountryWithHistory(iso2: string) {
 	const snapshot = await getCountrySnapshot(iso2);
@@ -178,13 +178,13 @@ export async function getCountryWithHistory(iso2: string) {
  * Usage:
  *   const fr = await getCountryWithHistory('FR');
  *   fr?.gdpHistory?.forEach(({ year, value }) =>
- *     console.log(year, (value / 1e12).toFixed(2) + 'T USD')
+ *     // console.log(year, (value / 1e12).toFixed(2) + 'T USD')
  *   );
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 // 3. Single indicator history for one country
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 
 // All supported indicator keys and their source table/column
 export type IndicatorKey =
@@ -360,16 +360,16 @@ export async function getIndicatorHistory(
  * Usage:
  *   const co2 = await getIndicatorHistory('FR', 'co2');
  *   co2?.slice(0, 5).forEach(({ year, value }) =>
- *     console.log(year, (value / 1e6).toFixed(1) + 'Mt')
+ *     // console.log(year, (value / 1e6).toFixed(1) + 'Mt')
  *   );
  *
  *   const pop = await getIndicatorHistory('AW', 'population');
- *   console.log(pop?.at(0)); // { year: 2024, value: 107995 }
+ *   // console.log(pop?.at(0)); // { year: 2024, value: 107995 }
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 // 4. One scalar value per country (latest, or a specific year)
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 
 /**
  * Indicators whose current value is a dedicated scalar column — these are
@@ -659,10 +659,10 @@ export async function getLatestIndicatorAllCountries(
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 // Internal helper: extract one year from a jsonb history column for every country
 // Uses a Postgres jsonb path expression — no client-side processing.
-// ─────────────────────────────────────────────────────────────────────────────
+// ----
 
 // Maps each ScalarIndicator to the table and jsonb history column it lives in
 const INDICATOR_HISTORY_MAP: Record<
