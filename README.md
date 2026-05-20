@@ -1,42 +1,29 @@
-# sv
+# Interaktyvios šalių svetainės (darbo failai)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Interaktyvi svetainė apie pasaulio šalis, kurioje galima: pasirinkti šalis and žemėlapio, analizuoti šalių duoemnis ir kita.
 
-## Creating a project
+## Struktūra
 
-If you're seeing this, you've probably already done this step. Congrats!
+"dataTransformation" - duomenų apdirbimas ir įkėlimas į duomenų bazę. Tuo pačiu šių duomenų išsaugojimas duomenų bazėje
+"website" - full-stack SvelteKit realizacija svetainės
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Pasiledimas
 
-To recreate this project with the same configuration:
+Abi sistemos buvo parašytos naudojant JavaScript ir TypeScript per VSCode.
+Operacinė sistema naudota Windows 10 WSL
 
-```sh
-# recreate this project
-pnpm dlx sv create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" mcp="ide:vscode+setup:remote" --install pnpm globe-svelte
-```
+### Reikalavimai pasileidimui
 
-## Developing
+- pnpm
+- Docker
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Norit pasileisti vieną iš dviejų sistemų tame aplanke reikia panaudoti komandą `pnpm install`
 
-```sh
-npm run dev
+### "dataTransformation"
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+Šiai versijai projekto pasileisti reikalinga turėti duomenų bazę kitaip puslapis nepasileis. Yra sukurtas transformuotų duomenų failas "database_dump.sql", kurį galima įkelti arba galima pačiam sugeneruoti duoemenis "dataTransformation" aplanke atkomentavus dataTransformation/src/index.ts faile `// await persistToDb(results);` funkiją.
 
-## Building
+### "website"
 
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Svetainės pasileidimui website/.env faile priderinti/pakeisti duoemnų bazės nuorodą jei skiriasi ir naudoti savo Gemini AI API raktą.
+Tuomet galima naudoti `pnpm dev` pasileidimui kūrimo aplinkoje.
