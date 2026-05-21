@@ -2,43 +2,75 @@ import { formatLargeNumbers } from '$lib/core/utils/utils';
 import { ColumnLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import maplibregl from 'maplibre-gl';
+import { mapState } from './mapStore.svelte';
 
 export type IndicatorRow = { iso2: string; name: string; value: number | null };
 
-// -- Geo -----------------------
+//  LAYERS utils
 
-export async function loadGeoData(url: string) {
-	const res = await fetch(url);
-	return res.json();
+export function calculateColorScale(valueData: { value: number }[]) {
+	const vals = valueData
+		.map((d) => d.value)
+		.filter((v) => isFinite(v) && v !== null)
+		.sort((a, b) => a - b);
+
+	if (vals.length === 0) return [0, 1];
+
+	const rawStops = [
+		vals[0],
+		vals[Math.floor((vals.length - 1) * 0.25)],
+		vals[Math.floor((vals.length - 1) * 0.5)],
+		vals[Math.floor((vals.length - 1) * 0.75)],
+		vals[vals.length - 1]
+	];
+	//remove duplicates for maplibre and resort them
+	const uniqueStops = Array.from(new Set(rawStops)).sort((a, b) => a - b);
+
+	if (uniqueStops.length < 2) {
+		return [uniqueStops[0], uniqueStops[0] + 0.000001];
+	}
+
+	return uniqueStops;
 }
 
-// -- Convert rows → valueData for geo merge -----------
-
-function rowsToValueData(
-	rows: IndicatorRow[],
-	meta: Record<string, { iso3?: string | null }>
-): { iso2: string; iso3: string; value: number }[] {
-	return rows
-		.filter((r): r is IndicatorRow & { value: number } => r.value !== null && isFinite(r.value))
-		.map((r) => ({ iso2: r.iso2, iso3: meta[r.iso2]?.iso3 ?? r.iso2, value: r.value as number }));
-}
-
-// -- Merge + scale
-
-export function mergeDataWithGeo(
-	geoData: any,
-	valueData: { iso2: string; iso3: string; value: number }[]
-) {
-	const byIso3 = Object.fromEntries(valueData.map((d) => [d.iso3, d.value]));
-	const byIso2 = Object.fromEntries(valueData.map((d) => [d.iso2, d.value]));
-	const clone = JSON.parse(JSON.stringify(geoData));
-	clone.features.forEach((f: any) => {
-		const iso3 = f.properties.adm0_a3;
-		const iso2 = f.id ?? f.properties.iso_a2_eh;
-		f.properties.value = byIso3[iso3] ?? byIso2[iso2] ?? null;
+export function setupMapLayers(map: any, opacity: [number, number]) {
+	cleanFlat(map);
+	map.addLayer({
+		id: 'state-fills',
+		type: 'fill',
+		source: 'countries',
+		layout: {},
+		paint: {
+			'fill-color': 'white',
+			'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], ...opacity]
+		},
+		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
 	});
-	return clone;
+	map.addLayer({
+		id: 'state-borders',
+		type: 'line',
+		source: 'countries',
+		layout: {},
+		paint: { 'line-color': '#627BC1', 'line-width': 2 },
+		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
+	});
 }
+
+export function createColorExpression(stops: number[]) {
+	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
+	const interpolation: any[] = ['interpolate', ['linear'], ['get', 'value']];
+
+	//function to match stops to colors if one or other is larger it confomr to closest largest
+	//gets stops into 0-1 range and multiplies with available color amount to find closes color
+	stops.forEach((stop, index) => {
+		const colorIndex = Math.floor((index / (stops.length - 1)) * (colorRamp.length - 1));
+		interpolation.push(stop, colorRamp[colorIndex]);
+	});
+
+	return ['case', ['!=', ['get', 'value'], null], interpolation, '#cccccc'];
+}
+
+// MAIN prepare of data
 
 export async function prepareDataset(
 	indicatorKey: string | null,
@@ -71,79 +103,10 @@ export async function prepareDataset(
 	return { geoData, valueData, scale };
 }
 
-// -- Layer helpers
+// FLAT display setup
 
-export function calculateColorScale(valueData: { value: number }[]) {
-	const vals = valueData
-		.map((d) => d.value)
-		.filter((v) => isFinite(v) && v !== null)
-		.sort((a, b) => a - b);
-
-	if (vals.length === 0) return [0, 1];
-
-	const rawStops = [
-		vals[0],
-		vals[Math.floor((vals.length - 1) * 0.25)],
-		vals[Math.floor((vals.length - 1) * 0.5)],
-		vals[Math.floor((vals.length - 1) * 0.75)],
-		vals[vals.length - 1]
-	];
-	//remove duplicates for maplibre and resort them
-	const uniqueStops = Array.from(new Set(rawStops)).sort((a, b) => a - b);
-
-	if (uniqueStops.length < 2) {
-		return [uniqueStops[0], uniqueStops[0] + 0.000001];
-	}
-
-	return uniqueStops;
-}
-
-export function createColorExpression(stops: number[]) {
-	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
-	const interpolation: any[] = ['interpolate', ['linear'], ['get', 'value']];
-
-	//function to match stops to colors if one or other is larger it confomr to closest largest
-	//gets stops into 0-1 range and multiplies with available color amount to find closes color
-	stops.forEach((stop, index) => {
-		const colorIndex = Math.floor((index / (stops.length - 1)) * (colorRamp.length - 1));
-		interpolation.push(stop, colorRamp[colorIndex]);
-	});
-
-	return ['case', ['!=', ['get', 'value'], null], interpolation, '#cccccc'];
-}
-
-function cleanFlat(map: any) {
-	if (activePopup) activePopup.remove();
-	if (map.getLayer('state-fills')) map.removeLayer('state-fills');
-	if (map.getLayer('state-borders')) map.removeLayer('state-borders');
-}
-function clean3D(map: any) {
-	if (map.getLayer('state-fills-3d')) map.removeLayer('state-fills-3d');
-}
-
-export function setupMapLayers(map: any, opacity: [number, number]) {
-	cleanFlat(map);
-	map.addLayer({
-		id: 'state-fills',
-		type: 'fill',
-		source: 'countries',
-		layout: {},
-		paint: {
-			'fill-color': 'white',
-			'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], ...opacity]
-		},
-		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
-	});
-	map.addLayer({
-		id: 'state-borders',
-		type: 'line',
-		source: 'countries',
-		layout: {},
-		paint: { 'line-color': '#627BC1', 'line-width': 2 },
-		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
-	});
-}
 let activePopup: any = null;
+
 export function setupFlatDisplay(map: any, colorExpression: any, labelName: string) {
 	if (!labelName) return;
 	cleanFlat(map);
@@ -168,13 +131,31 @@ export function setupFlatDisplay(map: any, colorExpression: any, labelName: stri
 	activePopup = new maplibregl.Popup({ closeButton: false, className: 'custom-popup', offset: 25 });
 	map.on('mousemove', 'state-fills', (e: any) => {
 		const value = e.features[0].properties.value;
+		if (!value || !activePopup) return;
 		activePopup
-			.setText(`${labelName}: ${value ? formatLargeNumbers(Number(value)) : 'No data'}`)
+			.setText(`${labelName}: ${formatLargeNumbers(Number(value))}`)
 			.setLngLat(e.lngLat)
 			.addTo(map);
 	});
-	map.on('mouseleave', 'state-fills', () => activePopup.remove());
+	map.on('mouseleave', 'state-fills', () => {
+		if (!activePopup) return;
+		activePopup.remove();
+		// activePopup = null;
+	});
 }
+
+export function cleanFlat(map: any) {
+	if (activePopup) {
+		activePopup.remove();
+		activePopup = null;
+	}
+	if (map.getLayer('state-fills')) {
+		map.removeLayer('state-fills');
+	}
+	if (map.getLayer('state-borders')) map.removeLayer('state-borders');
+}
+
+// 3D COLUMN setup
 
 function hexToRgb(hex: string, alpha: number = 200): [number, number, number, number] {
 	const r = parseInt(hex.slice(1, 3), 16);
@@ -270,6 +251,10 @@ export function cleanupDeckGL(overlay: any) {
 	}
 }
 
+function clean3D(map: any) {
+	if (map.getLayer('state-fills-3d')) map.removeLayer('state-fills-3d');
+}
+
 export function setupMapInteractions(map: any, onCountryClick: Function, onSecondClick: Function) {
 	let hovered: any = null;
 	map.on('mousemove', 'state-fills', (e: any) => {
@@ -289,4 +274,37 @@ export function setupMapInteractions(map: any, onCountryClick: Function, onSecon
 	map.on('click', (e: any) => onSecondClick(e));
 
 	return { hoveredStateId: hovered };
+}
+
+// UTILS
+
+//  DATA utils
+
+export async function loadGeoData(url: string) {
+	const res = await fetch(url);
+	return res.json();
+}
+
+function rowsToValueData(
+	rows: IndicatorRow[],
+	meta: Record<string, { iso3?: string | null }>
+): { iso2: string; iso3: string; value: number }[] {
+	return rows
+		.filter((r): r is IndicatorRow & { value: number } => r.value !== null && isFinite(r.value))
+		.map((r) => ({ iso2: r.iso2, iso3: meta[r.iso2]?.iso3 ?? r.iso2, value: r.value as number }));
+}
+
+export function mergeDataWithGeo(
+	geoData: any,
+	valueData: { iso2: string; iso3: string; value: number }[]
+) {
+	const byIso3 = Object.fromEntries(valueData.map((d) => [d.iso3, d.value]));
+	const byIso2 = Object.fromEntries(valueData.map((d) => [d.iso2, d.value]));
+	const clone = JSON.parse(JSON.stringify(geoData));
+	clone.features.forEach((f: any) => {
+		const iso3 = f.properties.adm0_a3;
+		const iso2 = f.id ?? f.properties.iso_a2_eh;
+		f.properties.value = byIso3[iso3] ?? byIso2[iso2] ?? null;
+	});
+	return clone;
 }

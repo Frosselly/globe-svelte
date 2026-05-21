@@ -5,7 +5,7 @@
 	import Graph from '../graph/graph.svelte';
 	import { Combobox } from 'melt/builders';
 	import analysisOptions from '$lib/assets/analysisOptions.json';
-	import { countriesStore, modeState } from '../../core/stores/store.svelte';
+	import { countriesStore } from '../../core/stores/store.svelte';
 	import { mapState, setCurrentDataset, setDisplayMode } from '../map/mapStore.svelte';
 
 	const { onClose } = $props();

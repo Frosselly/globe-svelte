@@ -18,6 +18,7 @@
 	import TableIcon from 'phosphor-svelte/lib/TableIcon';
 	import AGTable from '$lib/components/table/AGTable.svelte';
 	import type { PageData } from './$types';
+	import { resolve } from '$app/paths';
 
 	let { data }: { data: PageData } = $props();
 
@@ -181,6 +182,12 @@
 			setIndicatorRows(data.rows);
 		}
 	});
+
+	function onClose() {
+		setCurrentDataset('');
+		setIndicatorRows([]);
+		setDisplayMode('none');
+	}
 </script>
 
 <!-- -- Template ----------- -->
@@ -235,7 +242,7 @@
 					{saving ? 'Saving…' : 'Save view'}
 				</button>
 			{/if}
-			<a href="/" class="close-btn" title="Close">✕</a>
+			<a href={resolve('/')} class="close-btn" title="Close" onclick={() => onClose()}>✕</a>
 		</div>
 	</div>
 
@@ -291,7 +298,7 @@
 				<p class="map-hint">{data.option.label} colour-coded on the map.</p>
 			</div>
 		{:else if currentView === 'table'}
-			<!-- <AGTable columnDefs= 
+			<!-- <AGTable columnDefs=
 rowData/> -->
 			<div>Not implemented</div>
 		{:else}

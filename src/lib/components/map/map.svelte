@@ -9,7 +9,8 @@
 		cleanupDeckGL,
 		setupFlatDisplay,
 		setupColumnsDisplay,
-		prepareDataset
+		prepareDataset,
+		cleanFlat
 	} from './mapUtils';
 	import CountryBubble from '$lib/components/countryBubble.svelte';
 	import { layers, namedFlavor } from '@protomaps/basemaps';
@@ -74,6 +75,7 @@
 
 	onDestroy(() => {
 		cleanupDeckGL(deck);
+		if (map) cleanFlat(map);
 		if (currentComponent) unmount(currentComponent);
 		if (currentPopup) currentPopup.remove();
 	});

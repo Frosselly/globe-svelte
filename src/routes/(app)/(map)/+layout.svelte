@@ -3,6 +3,7 @@
 	import TopicsSidebar from '$lib/components/sidebar/topicsSidebar.svelte';
 	import Map from '$lib/components/map/map.svelte';
 	import { page } from '$app/state';
+	import { mapState } from '$lib/components/map/mapStore.svelte.js';
 
 	let { data, children } = $props();
 
@@ -19,6 +20,7 @@
 	let zoom = $state(2.67);
 	$effect(() => {
 		$inspect('mode', modeState.selected);
+		$inspect('mapState.currentDataset', mapState.currentDataset);
 		$inspect('selectedMode', selectedMode);
 		// if (modeState.selected) // console.log(modeState.selected);
 		$inspect('selectedCountryStore.country', selectedCountryStore.country);
