@@ -154,7 +154,9 @@
 				<section class="topicSection">
 					<div class="row">
 						<div class="row">
-							<figure class="country-flag"><picture><img src="" alt="" /></picture></figure>
+							<figure class="country-flag">
+								<picture><img src={countryData?.flagSvg} alt="" /></picture>
+							</figure>
 							<div>
 								<h2>{countryData?.name}</h2>
 								<h3>{countryData?.capital}</h3>
@@ -350,9 +352,19 @@
 		gap: 16px;
 	}
 	.country-flag picture {
-		width: 80px;
+		width: 120px;
 		height: 50px;
-		background: gray;
+		/*background: gray;*/
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+
+	.country-flag img {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
 		display: block;
 	}
 
