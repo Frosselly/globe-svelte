@@ -47,36 +47,40 @@
 		validRows.find((r) => r.iso2 === selectedIso2)?.name ?? null
 	);
 
-	// Checkbox state — auto-select top 5 on first load
-	let selectedNames = $state<Set<string>>(new Set());
+	const defaultNames = $derived(
+		new Set([
+			...validRows.slice(0, 5).map((r) => r.name),
+			...(selectedCountryName ? [selectedCountryName] : [])
+		])
+	);
+
+	let userNames = $state<Set<string> | null>(null);
+
+	let prevValidKey = $state('');
 	$effect(() => {
-		// // console.log('selectedCountryName', selectedCountryName);
-		if (validRows.length) {
-			const initialRows = validRows.slice(0, 5).map((r) => r.name);
-			if (selectedCountryName) initialRows.push(selectedCountryName);
-			selectedNames = new Set(initialRows);
-			onSelectionChange(initialRows);
+		const key = validRows.map((r) => r.iso2).join(',');
+		if (key !== prevValidKey) {
+			prevValidKey = key;
+			userNames = null;
 		}
 	});
 
+	const selectedNames = $derived(userNames ?? defaultNames);
 	const filteredRows = $derived(validRows.filter((r) => selectedNames.has(r.name)));
+
+	$effect(() => {
+		const iso2s = validRows.filter((r) => selectedNames.has(r.name)).map((r) => r.iso2);
+		onSelectionChange(iso2s);
+	});
 
 	function toggleCountry(row: Row & { value: number }) {
 		const s = new Set(selectedNames);
 		s.has(row.name) ? s.delete(row.name) : s.add(row.name);
-		selectedNames = s;
-		// Emit current selection iso2s
-		onSelectionChange(validRows.filter((r) => s.has(r.name)).map((r) => r.iso2));
+		userNames = s;
 	}
 
 	function selectAll() {
-		selectedNames = new Set(validRows.map((r) => r.name));
-		onSelectionChange(validRows.map((r) => r.iso2));
-	}
-
-	function clearAll() {
-		selectedNames = new Set([selectedCountryName]);
-		onSelectionChange([selectedCountryName]);
+		userNames = new Set(validRows.map((r) => r.name));
 	}
 
 	// -- SVG dimensions --------
@@ -288,7 +292,7 @@
 			return;
 		}
 
-		const data = history;
+		const data = [...history].sort((a, b) => a.year - b.year);
 		const x = d3
 			.scaleLinear()
 			.domain(d3.extent(data, (d) => d.year) as [number, number])

@@ -110,7 +110,9 @@
 				<br />
 
 				<div class="flex-col">
-					{#each [...e.energyMixCurrent].sort((a, b) => b.percentage - a.percentage) as item}
+					{#each (e.energyMixCurrent ?? [])
+						.slice()
+						.sort((a, b) => b.percentage - a.percentage) as item (item.name)}
 						<div class="flex-col">
 							<div class="between">
 								<div>

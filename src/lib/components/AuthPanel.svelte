@@ -41,7 +41,7 @@
 	<div class="flex center">
 		<h2 class="section-h">Register to save views and use AI chat</h2>
 	</div>
-	<div class="auth-card">
+	<form class="auth-card">
 		<div class="auth-tabs">
 			<button class:atab-active={mode === 'login'} onclick={() => (mode = 'login')}>Sign in</button>
 			<button class:atab-active={mode === 'register'} onclick={() => (mode = 'register')}
@@ -63,7 +63,7 @@
 		<button class="btn-primary" disabled={busy} onclick={handleAuth}>
 			{busy ? '…' : mode === 'login' ? 'Sign in' : 'Create account'}
 		</button>
-	</div>
+	</form>
 {:else}
 	<div class="user-bar">
 		<span class="user-name">{authStore.user.displayName ?? authStore.user.email}</span>

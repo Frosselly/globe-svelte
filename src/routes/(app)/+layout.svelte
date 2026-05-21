@@ -6,21 +6,11 @@
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
 	import { setSelectedSidebar, sidebarState } from '$lib/core/stores/store.svelte.js';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 
 	let { data, children } = $props();
 
-	let current_url = $state(page.url.pathname.split('/').filter(Boolean).pop() || '/');
-
-	// onMount(() => {
-	// 	goto('/map');
-	// });
-
-	$effect(() => {
-		current_url = page.url.pathname.split('/').filter(Boolean).pop() || '/';
-		// // console.log('data.user', data.user);
-	});
+	let current_url = $derived(page.url.pathname.split('/').filter(Boolean)[0] || '/');
 </script>
 
 <svelte:head>
@@ -45,7 +35,6 @@
 		{#if data.user?.isAdmin}
 			<a href={'/auth/admin'} class="btn btn-sm btn-default">Manage users</a>
 		{/if}
-		<a href={'/'} class="btn btn-sm btn-default">Map</a>
 	</nav>
 	<nav>
 		<div>

@@ -404,12 +404,14 @@ export type ScalarIndicator =
 	| 'literacy'
 	| 'healthcareRank';
 
+// TODO support year format
 export async function getLatestIndicatorAllCountries(
 	indicator: ScalarIndicator,
 	year?: number
 ): Promise<{ iso2: string; name: string; value: number | null }[]> {
 	// When a specific year is requested we need to dig into jsonb history.
 	// For current values we query the scalar column directly — far cheaper.
+
 	if (year !== undefined) {
 		return getIndicatorForYear(indicator, year);
 	}

@@ -2,11 +2,18 @@
 	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 	import Graph from '$lib/components/graph/graph.svelte';
-	import { mapState, setCurrentDataset, setDisplayMode } from '$lib/components/map/mapStore.svelte';
+	import {
+		mapState,
+		setCurrentDataset,
+		setDisplayMode,
+		setIndicatorRows
+	} from '$lib/components/map/mapStore.svelte';
+	import { savedStore } from '$lib/core/stores/savedStore.svelte';
+	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const { view, option, rows, lineResults } = data;
+	const { view, option, rows, lineResults } = $derived(data);
 
 	let label = $state(view.label);
 	let renaming = $state(false);
@@ -19,6 +26,11 @@
 	let selectedLineIso2 = $state<string | null>(null);
 	$effect(() => {
 		if (firstIso2 && !selectedLineIso2) selectedLineIso2 = firstIso2;
+		if (view.mode === 'map') {
+			setCurrentDataset(option.scalarKey);
+			setDisplayMode('flat');
+			setIndicatorRows(rows);
+		}
 	});
 
 	const activeHistory = $derived(
@@ -34,16 +46,24 @@
 			body: JSON.stringify({ id: view.id, label })
 		});
 		if (!res.ok) renameErr = 'Failed to rename';
+		savedStore.refresh();
 		renaming = false;
 	}
 
 	async function deleteView() {
-		if (!confirm('Delete this analysis?')) return;
-		deleting = true;
+		// if (!confirm('Delete this analysis?')) return;
+		// deleting = true;
 		await fetch(`/api/save?id=${view.id}`, { method: 'DELETE' });
-		goto('/dashboard');
+		savedStore.refresh();
+		goto('/');
 	}
 </script>
+
+<DeleteConfirmationModal
+	open={deleting}
+	onconfirm={deleteView}
+	oncancel={() => (deleting = false)}
+/>
 
 <div class="container">
 	<header class="analysis-header">
@@ -66,8 +86,8 @@
 
 		<div class="actions">
 			<a href="/analysis" class="btn-ghost">← New analysis</a>
-			<a href="/dashboard" class="btn-ghost">Dashboard</a>
-			<button class="btn-danger" onclick={deleteView} disabled={deleting}>
+			<!-- <a href="/dashboard" class="btn-ghost">Dashboard</a> -->
+			<button class="btn-danger" onclick={() => (deleting = true)} disabled={deleting}>
 				{deleting ? 'Deleting…' : 'Delete'}
 			</button>
 		</div>
