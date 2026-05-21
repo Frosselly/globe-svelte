@@ -9,6 +9,7 @@
 		setIndicatorRows
 	} from '$lib/components/map/mapStore.svelte';
 	import { savedStore } from '$lib/core/stores/savedStore.svelte';
+	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -50,13 +51,19 @@
 	}
 
 	async function deleteView() {
-		if (!confirm('Delete this analysis?')) return;
-		deleting = true;
+		// if (!confirm('Delete this analysis?')) return;
+		// deleting = true;
 		await fetch(`/api/save?id=${view.id}`, { method: 'DELETE' });
 		savedStore.refresh();
 		goto('/');
 	}
 </script>
+
+<DeleteConfirmationModal
+	open={deleting}
+	onconfirm={deleteView}
+	oncancel={() => (deleting = false)}
+/>
 
 <div class="container">
 	<header class="analysis-header">
@@ -80,7 +87,7 @@
 		<div class="actions">
 			<a href="/analysis" class="btn-ghost">← New analysis</a>
 			<!-- <a href="/dashboard" class="btn-ghost">Dashboard</a> -->
-			<button class="btn-danger" onclick={deleteView} disabled={deleting}>
+			<button class="btn-danger" onclick={() => (deleting = true)} disabled={deleting}>
 				{deleting ? 'Deleting…' : 'Delete'}
 			</button>
 		</div>

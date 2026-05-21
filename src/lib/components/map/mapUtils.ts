@@ -3,6 +3,8 @@ import { ColumnLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import maplibregl from 'maplibre-gl';
 import { mapState } from './mapStore.svelte';
+import AnalysisMapInfoModal from '../AnalysisMapInfoModal.svelte';
+import { mount } from 'svelte';
 
 export type IndicatorRow = { iso2: string; name: string; value: number | null };
 
@@ -132,15 +134,44 @@ export function setupFlatDisplay(map: any, colorExpression: any, labelName: stri
 	map.on('mousemove', 'state-fills', (e: any) => {
 		const value = e.features[0].properties.value;
 		if (!value || !activePopup) return;
-		activePopup
-			.setText(`${labelName}: ${formatLargeNumbers(Number(value))}`)
-			.setLngLat(e.lngLat)
-			.addTo(map);
+		// activePopup
+		// 	.setText(`${labelName}: ${formatLargeNumbers(Number(value))}`)
+		createLabel(e.features[0].properties.name, labelName, value);
+		activePopup.setLngLat(e.lngLat).addTo(map);
 	});
 	map.on('mouseleave', 'state-fills', () => {
 		if (!activePopup) return;
 		activePopup.remove();
 		// activePopup = null;
+	});
+}
+
+function createLabel(countryName: string, labelName: string, value: string) {
+	if (activePopup) {
+		activePopup.remove();
+		activePopup = null;
+	}
+	const componentDom = document.createElement('div');
+	activePopup = mount(AnalysisMapInfoModal, {
+		target: componentDom,
+		props: {
+			countryName,
+			labelName,
+			value
+		}
+	});
+
+	activePopup = createPopup();
+	activePopup.setDOMContent(componentDom);
+	// return currentPopup;
+}
+
+export function createPopup(): maplibregl.Popup {
+	return new maplibregl.Popup({
+		closeButton: false,
+		closeOnClick: false,
+		className: 'custom-popup',
+		offset: 25
 	});
 }
 

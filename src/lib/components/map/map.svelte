@@ -10,7 +10,8 @@
 		setupFlatDisplay,
 		setupColumnsDisplay,
 		prepareDataset,
-		cleanFlat
+		cleanFlat,
+		createPopup
 	} from './mapUtils';
 	import CountryBubble from '$lib/components/countryBubble.svelte';
 	import { layers, namedFlavor } from '@protomaps/basemaps';
@@ -289,15 +290,6 @@
 		if (interactionsSetup) return;
 		interactionsSetup = true;
 		setupMapInteractions(map, handleCountryClick, handleSecondClick);
-	}
-
-	function createPopup(): maplibregl.Popup {
-		return new maplibregl.Popup({
-			closeButton: false,
-			closeOnClick: false,
-			className: 'custom-popup',
-			offset: 25
-		});
 	}
 
 	async function handleCountryClick(e: any) {

@@ -27,12 +27,13 @@
 
 	let { country, open = $bindable(false), onclose, toggleMore }: Props = $props();
 
-	function handleBackdropClick() {
-		open = false;
-		onclose?.();
-	}
+	// function handleBackdropClick() {
+	// 	open = false;
+	// 	onclose?.();
+	// }
 </script>
 
+<!--
 {#if open}
 	<div
 		class="backdrop"
@@ -41,7 +42,7 @@
 		in:fly={{ duration: 200, y: 0, opacity: 0 }}
 		out:fly={{ duration: 180, y: 0, opacity: 0 }}
 	></div>
-{/if}
+{/if} -->
 
 <div class="bubble-card" class:elevated={open}>
 	<!-- Col 1: Flag + Identity -->
@@ -125,8 +126,6 @@
 </div>
 
 <style>
-	@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
 	.backdrop {
 		position: fixed;
 		inset: 0;
