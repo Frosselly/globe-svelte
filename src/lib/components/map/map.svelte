@@ -20,6 +20,7 @@
 	import { mount, unmount, onDestroy, onMount, untrack } from 'svelte';
 	import { countriesStore, selectedCountryStore } from '../../core/stores/store.svelte.ts';
 	import countryOutlinesJson from '$lib/assets/countries.geo.json';
+	import { page } from '$app/state';
 
 	const { toggleTopics, onPosChange } = $props();
 
@@ -27,6 +28,7 @@
 	let progress = $state(0);
 	let fadeOut = $state(false);
 	let loadingText = $state('Initializing map...');
+	let initialFlyCompleted = $state(false);
 
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
@@ -54,13 +56,17 @@
 		currency: '¥ Yen (JPY)'
 	});
 
+	const isAnalysis = $derived(page.url.pathname.split('/').filter(Boolean)[0] === 'analysis');
+
 	$effect(() => {
 		const dataset = mapState.currentDataset;
 		const mode = mapState.displayMode;
 		if (!map) return;
-
+		if (!isAnalysis) {
+			loadDataset(null, 'none');
+		}
 		untrack(() => {
-			if (dataset) {
+			if (dataset && isAnalysis) {
 				loadDataset(dataset, mode);
 			} else {
 				loadDataset(null, mode);
@@ -98,7 +104,6 @@
 
 		map = new maplibregl.Map({
 			container: mapContainer,
-
 			// style: {
 			// 	version: 8,
 			// 	glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
@@ -133,13 +138,13 @@
 			// 	],
 			// 	id: 'blank'
 			// },
-			style: 'https://tiles.openfreemap.org/styles/bright',
-			center: [lng, lat],
-			zoom: zoom
+			style: 'https://tiles.openfreemap.org/styles/bright'
+			// center: [lng, lat],
+			// zoom: zoom
 		});
 
 		map.addControl(new maplibregl.GlobeControl(), 'top-right');
-		map.on('move', updateData);
+		if (initialFlyCompleted) map.on('move', updateData);
 
 		popup = createPopup();
 		setMapInstance(map);
@@ -147,6 +152,10 @@
 		map.on('style.load', () => {
 			progress = 60;
 			loadingText = 'Loading countries...';
+
+			map.setProjection({
+				type: 'globe'
+			});
 
 			map.addSource('countries', {
 				type: 'geojson',
@@ -159,16 +168,36 @@
 			loadingText = 'Finalizing...';
 		});
 
+		let hasSettled = false;
+
 		map.on('idle', () => {
 			progress = 100;
 			loadingText = 'Ready';
 
-			setTimeout(() => {
-				fadeOut = true;
+			if (!hasSettled) {
+				hasSettled = true;
+
+				// small delay so UI finishes first
 				setTimeout(() => {
-					loading = false;
-				}, 600);
-			}, 200);
+					map
+						.flyTo({
+							center: [lng, lat],
+							zoom,
+							speed: 0.6,
+							curve: 1.4,
+							essential: true
+						})
+						.once('moveend', () => {
+							initialFlyCompleted = true;
+						});
+
+					fadeOut = true;
+
+					setTimeout(() => {
+						loading = false;
+					}, 600);
+				}, 200);
+			}
 		});
 	}
 	async function loadDataset(keyPath: string | null, mode: 'flat' | 'columns' | 'none') {

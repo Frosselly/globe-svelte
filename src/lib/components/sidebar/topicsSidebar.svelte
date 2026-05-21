@@ -11,7 +11,7 @@
 	import MapPinIcon from 'phosphor-svelte/lib/MapPinIcon';
 	import UserIcon from 'phosphor-svelte/lib/UserIcon';
 
-	import { mapState, setCurrentDataset } from '$lib/components/map/mapStore.svelte';
+	import { mapState, setCurrentDataset, setDisplayMode } from '$lib/components/map/mapStore.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import { selectedCountryStore } from '$lib/core/stores/store.svelte';
 	import Demographics from './demographics.svelte';
@@ -19,6 +19,9 @@
 	import Environment from './environment.svelte';
 	import { authStore } from '$lib/core/stores/authStore.svelte';
 	import AuthPanel from '../AuthPanel.svelte';
+	import { goto } from '$app/navigation';
+	import { OPTION_BY_KEY } from '$lib/assets/analysisOptions';
+	import { savedStore, type SavedView } from '$lib/core/stores/savedStore.svelte';
 
 	// -- Props ------------------
 	let { visible, selectedSidebar = 'countryInfo', onDragStart = null } = $props();
@@ -28,7 +31,7 @@
 	// -- Auth -------------------
 	onMount(() =>
 		authStore.fetchMe().then(() => {
-			if (authStore.user) fetchSaved();
+			if (authStore.user) savedStore.refresh();
 		})
 	);
 
@@ -36,80 +39,59 @@
 	const user = $derived(authStore.user);
 
 	// -- Saved data -------------
-	type SavedView = {
-		id: string;
-		label: string;
-		mode: 'line' | 'bar' | 'map';
-		indicator: string;
-		indicatorName: string | null;
-		countries: string[];
-		startYear: number;
-		endYear: number;
-		selectedYear: number | null;
-		mapDisplayMode: string | null;
-		createdAt: string;
-	};
-	type ChatMsg = {
-		id: string;
-		userMessage: string;
-		botReply: string | null;
-		parsedQuery: {
-			indicator: string;
-			indicatorName?: string;
-			countriesIso3: string[];
-			start: number;
-			end: number;
-			chart: string;
-		} | null;
-		savedViewId: string | null;
-		createdAt: string;
-	};
 
-	let views = $state<SavedView[]>([]);
-	let chats = $state<ChatMsg[]>([]);
-	let savedReady = $state(false);
+	const views = $derived(savedStore.views);
+	const chats = $derived(savedStore.chats);
+	const savedReady = $derived(savedStore.ready);
+	const deletingId = $derived(savedStore.deletingId);
 	let savedTab = $state<'views' | 'history'>('views');
-	let deletingId = $state<string | null>(null);
 
 	async function fetchSaved() {
 		if (!user) return;
 		try {
 			const r = await fetch('/api/save');
 			if (r.ok) {
-				const d = await r.json();
-				views = d.views ?? [];
-				chats = d.messages ?? [];
+				const newView = await r.json();
+				savedStore.addView(newView);
+				// chats = d.messages ?? [];
 			}
 		} catch {}
-		savedReady = true;
+		// savedReady = true;
 	}
 
 	function onSaveView(v: SavedView) {
-		views = [v, ...views];
+		savedStore.addView(v);
 	}
 
-	async function deleteView(id: string) {
-		deletingId = id;
-		try {
-			await fetch(`/api/save?id=${id}`, { method: 'DELETE' });
-			views = views.filter((v) => v.id !== id);
-		} catch {}
-		deletingId = null;
-	}
+	// async function deleteView(id: string) {
+	// 	deletingId = id;
+	// 	try {
+	// 		await fetch(`/api/save?id=${id}`, { method: 'DELETE' });
+	// 		views = views.filter((v) => v.id !== id);
+	// 	} catch {}
+	// 	deletingId = null;
+	// }
 
 	// -- Chat ref ---------------
 	let chatRef: { replayView: (v: any) => void } | null = $state(null);
 
 	function replaySaved(v: SavedView) {
-		chatRef?.replayView({
-			indicator: v.indicator,
-			indicatorName: v.indicatorName,
-			countries: v.countries,
-			startYear: v.startYear,
-			endYear: v.endYear,
-			mode: v.mode,
-			selectedYear: v.selectedYear
-		});
+		const indicator = OPTION_BY_KEY[v.indicator];
+
+		//if local indicator does not exists it was a chat query
+		if (!indicator) {
+			chatRef?.replayView({
+				indicator: v.indicator,
+				indicatorName: v.indicatorName,
+				countries: v.countries,
+				startYear: v.startYear,
+				endYear: v.endYear,
+				mode: v.mode,
+				selectedYear: v.selectedYear
+			});
+		} else {
+			goto(`/analysis/${v.id}`);
+		}
 		// switch to saved tab so the chart (inside Chat) is visible
 		selectedSidebar = 'saved';
 	}
@@ -139,17 +121,17 @@
 
 {#if visible}
 	<div class="content" in:fly={{ x: 300, duration: 300 }} out:fly={{ x: 300, duration: 300 }}>
+		<div
+			class="drag-point"
+			onpointerdown={onDragStart}
+			role="separator"
+			aria-label="Drag to resize sidebar"
+		>
+			<hr />
+		</div>
+		<br />
 		<!-- -- Country Info -------- -->
 		{#if selectedSidebar === 'countryInfo'}
-			<div
-				class="drag-point"
-				onpointerdown={onDragStart}
-				role="separator"
-				aria-label="Drag to resize sidebar"
-			>
-				<hr />
-			</div>
-			<br />
 			{#if countryData}
 				<section class="topicSection">
 					<div class="row">
@@ -238,7 +220,7 @@
 												class="btn-del"
 												title="Delete"
 												disabled={deletingId === v.id}
-												onclick={() => deleteView(v.id)}>🗑</button
+												onclick={() => savedStore.deleteView(v.id)}>🗑</button
 											>
 										</div>
 										<div class="item-meta">

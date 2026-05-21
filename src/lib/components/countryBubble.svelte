@@ -8,7 +8,7 @@
 		capital: string;
 		population: string;
 		region: string;
-		currency: string;
+		currencies: string;
 		// extra: {
 		// 	area: string;
 		// 	languages: string[];
@@ -63,7 +63,7 @@
 		</div>
 		<div class="stat-row">
 			<span class="stat-label">Currency</span>
-			<span class="stat-value">{country.currency}</span>
+			<span class="stat-value">{country.currencies}</span>
 		</div>
 	</div>
 

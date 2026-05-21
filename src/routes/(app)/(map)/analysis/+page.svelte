@@ -19,6 +19,8 @@
 	import AGTable from '$lib/components/table/AGTable.svelte';
 	import type { PageData } from './$types';
 	import { resolve } from '$app/paths';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { savedStore } from '$lib/core/stores/savedStore.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -60,7 +62,7 @@
 	$effect(() => {
 		const storeIso2 = selectedCountryStore.country?.iso2;
 		if (storeIso2 && storeIso2 !== currentCountry) {
-			const params = new URLSearchParams(page.url.searchParams);
+			const params = new SvelteURLSearchParams(page.url.searchParams);
 			params.set('country', storeIso2);
 			goto(`/analysis?${params}`, { replaceState: true, invalidateAll: true });
 		}
@@ -141,6 +143,8 @@
 
 	async function saveView() {
 		if (!data.user || saving) return;
+
+		if (currentView === 'line' && !currentCountry) return;
 		saving = true;
 		saveError = null;
 
@@ -158,7 +162,7 @@
 					mode: currentView,
 					indicator: currentIndicator,
 					indicatorName: data.option.label,
-					countries: countriesToSave,
+					countries: currentView !== 'line' ? countriesToSave : Array(currentCountry),
 					startYear: MIN_YEAR,
 					endYear: MAX_YEAR,
 					selectedYear: currentView !== 'line' ? currentYear : null
@@ -167,7 +171,10 @@
 			const json = await res.json();
 			if (!res.ok) {
 				saveError = json.error ?? `Save failed (${res.status})`;
-			} else if (json.view) goto(`/analysis/${json.view.id}`);
+			} else if (json.view) {
+				savedStore.refresh();
+				goto(`/analysis/${json.view.id}`);
+			}
 		} catch (e: any) {
 			saveError = e.message ?? 'Network error';
 		}
