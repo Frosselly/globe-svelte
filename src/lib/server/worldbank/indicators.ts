@@ -1,7 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const CACHE_PATH = path.resolve('data/indicators.json');
+const CACHE_PATH =
+	process.env.NODE_ENV === 'development'
+		? path.resolve('data/indicators.json')
+		: '/tmp/indicators.json';
 const CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 const WB_INDICATOR_URL = 'https://api.worldbank.org/v2/indicator?format=json&per_page=20000';
@@ -21,7 +24,7 @@ export async function getIndicators(): Promise<Indicator[]> {
 		if (cached) return cached;
 
 		const fresh = await fetchIndicators();
-		await writeCache(fresh);
+		writeCache(fresh).catch((err) => console.warn('Cache write failed:', err));
 		return fresh;
 	} catch (err) {
 		console.error('Indicator registry error:', err);
