@@ -23,8 +23,8 @@
 		rows,
 		history,
 		selectedIso2 = null as string | null,
-		onSelectCountry = (_iso2: string) => {},
-		onSelectionChange = (_iso2s: string[]) => {}
+		onSelectCountry,
+		onSelectionChange
 	} = $props<{
 		view: 'bar' | 'line';
 		option: AnalysisOption;
@@ -456,7 +456,7 @@
 					<h3>Countries</h3>
 					<div class="sidebar-actions">
 						<button onclick={selectAll}>All</button>
-						<button onclick={clearAll}>None</button>
+						<button onclick={() => onSelectionChange('')}>None</button>
 					</div>
 				</div>
 				<div class="checkboxList">
