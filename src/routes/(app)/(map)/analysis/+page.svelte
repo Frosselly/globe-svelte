@@ -36,16 +36,16 @@
 	const currentCountry = $derived(page.url.searchParams.get('country') ?? null);
 
 	function navigate(patch: Record<string, string | null>) {
-		const params = new URLSearchParams(page.url.searchParams);
+		const params = new SvelteURLSearchParams(page.url.searchParams);
 		for (const [k, v] of Object.entries(patch)) {
 			v === null ? params.delete(k) : params.set(k, v);
 		}
-		goto(`/analysis?${params}`, { replaceState: false, invalidateAll: true });
+		goto(resolve(`/analysis?${params}`), { replaceState: false, invalidateAll: true });
 	}
 
-	function setIndicator(key: string) {
-		navigate({ indicator: key, country: null });
-	}
+	// function setIndicator(key: string) {
+	// 	navigate({ indicator: key, country: null });
+	// }
 	function setView(v: 'bar' | 'line' | 'map' | 'table') {
 		navigate({ view: v });
 	}
@@ -59,19 +59,26 @@
 		}
 	});
 
-	$effect(() => {
-		const storeIso2 = selectedCountryStore.country?.iso2;
-		if (storeIso2 && storeIso2 !== currentCountry) {
-			const params = new SvelteURLSearchParams(page.url.searchParams);
-			params.set('country', storeIso2);
-			goto(`/analysis?${params}`, { replaceState: true, invalidateAll: true });
-		}
-	});
+	// $effect(() => {
+	// 	const storeIso2 = selectedCountryStore.country?.iso2;
+	// 	if (storeIso2 && storeIso2 !== currentCountry) {
+	// 		const params = new SvelteURLSearchParams(page.url.searchParams);
+	// 		params.set('country', storeIso2);
+	// 		goto(`/analysis?${params}`, { replaceState: true, invalidateAll: true });
+	// 	}
+	// });
 
 	// -- Clicking a country name in the graph list → line view -----------------
 
+	let selectedIso2s = $state<string[]>([]);
+
+	function handleSelectionChange(iso2s: string[]) {
+		selectedIso2s = iso2s;
+	}
+
 	function handleSelectCountry(iso2: string) {
 		// Also update the store so the sidebar and map stay in sync
+
 		selectedCountryStore.selectCountry(iso2);
 		navigate({ country: iso2, view: 'line' });
 	}
@@ -130,11 +137,6 @@
 
 	// -- Selection tracking for save ------------------
 	// graph.svelte calls this whenever the checkbox set changes
-
-	let selectedIso2s = $state<string[]>([]);
-	function handleSelectionChange(iso2s: string[]) {
-		selectedIso2s = iso2s;
-	}
 
 	// -- Save ------------------
 

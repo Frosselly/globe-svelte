@@ -1,7 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
-	import type { ChartMode, DataResult } from '$lib/core/types';
+	import type { ChartMode, DataResult, SeriesRow } from '$lib/core/types';
+	import {
+		setCurrentDataset,
+		setDisplayMode,
+		setIndicatorRows,
+		type IndicatorRow
+	} from './map/mapStore.svelte';
+	import AGTable from './table/AGTable.svelte';
+	import AGTableAdmin from './table/AGTableAdmin.svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { goto } from '$app/navigation';
 
 	let { result }: { result: DataResult } = $props();
 
@@ -22,8 +32,32 @@
 	function draw() {
 		if (!canvasEl) return;
 		canvasEl.innerHTML = '';
-		if (mode === 'bar') drawBar();
+		if (mode === 'bar') showMap();
 		else drawLine();
+	}
+
+	function showMap() {
+		const params = new SvelteURLSearchParams();
+		params.set('view', 'map');
+		goto(`/analysis?${params}`, { replaceState: false, invalidateAll: true });
+		const indicatorRows = seriesToIndicatorRows(result.series);
+		setIndicatorRows(indicatorRows);
+		setCurrentDataset(result.indicator);
+		setDisplayMode('flat');
+	}
+
+	export function seriesToIndicatorRows(rows: SeriesRow[]): IndicatorRow[] {
+		return rows.map((row) => {
+			const latest = row.series
+				.filter((p) => p.value !== null)
+				.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+			return {
+				iso2: row.code ?? '',
+				name: row.country,
+				value: latest?.value ?? null
+			};
+		});
 	}
 
 	// -- Line chart ------------

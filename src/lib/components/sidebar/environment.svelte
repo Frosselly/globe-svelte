@@ -35,9 +35,9 @@
 		}
 	};
 
-	$effect(() => {
-		$inspect(c.naturalHazards);
-	});
+	// $effect(() => {
+	// 	$inspect(c.naturalHazards);
+	// });
 </script>
 
 <section class="topicSection" id="environment">

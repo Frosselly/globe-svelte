@@ -180,6 +180,7 @@ class SelectedCountryStore {
 	async selectCountry(iso2: string) {
 		if (!iso2) {
 			this.country = null;
+			return;
 		}
 		const upper = iso2.toUpperCase();
 		this.error = null;

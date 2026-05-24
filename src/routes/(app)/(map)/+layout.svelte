@@ -6,7 +6,7 @@
 	import { mapState } from '$lib/components/map/mapStore.svelte.js';
 
 	let { data, children } = $props();
-
+	const selectedCountryNav = $derived(page.url.searchParams.get('country'));
 	let selectedMode = $derived(modeState.selected);
 
 	// $effect(() => {
@@ -18,22 +18,25 @@
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
 	let zoom = $state(2.67);
+	// Single effect: URL param (?country=XX) drives country selection.
+	// data.iso2 is intentionally NOT read here — each page's own load is responsible
+	// for seeding the store when it needs a specific country (e.g. saved-view page).
+	// This prevents the layout racing against the page and clobbering mid-render state.
 	$effect(() => {
-		$inspect('mode', modeState.selected);
-		$inspect('mapState.currentDataset', mapState.currentDataset);
-		$inspect('selectedMode', selectedMode);
-		// if (modeState.selected) // console.log(modeState.selected);
-		$inspect('selectedCountryStore.country', selectedCountryStore.country);
-		$inspect('gdpHistory', selectedCountryStore.country?.gdpHistory);
-
-		if (selectedCountryStore.country && !selectedCountryStore.historyLoaded)
-			selectedCountryStore.loadHistory();
+		const iso2 = selectedCountryNav?.toUpperCase();
+		if (iso2 && selectedCountryStore.country?.iso2?.toUpperCase() !== iso2) {
+			selectedCountryStore.selectCountry(iso2);
+		}
 	});
 
+	// Lazy-load history once a snapshot is ready (but not loading)
 	$effect(() => {
-		const iso2 = data?.iso2;
-		if (iso2 && selectedCountryStore.country?.iso2 !== iso2) {
-			selectedCountryStore.selectCountry(iso2);
+		if (
+			selectedCountryStore.country &&
+			!selectedCountryStore.loading &&
+			!selectedCountryStore.historyLoaded
+		) {
+			selectedCountryStore.loadHistory();
 		}
 	});
 
@@ -66,7 +69,7 @@
 		window.removeEventListener('pointermove', onDragMove);
 		window.removeEventListener('pointerup', onDragEnd);
 		// Tell MapLibre to re-measure its container
-		mapRef?.resize();
+		// mapRef?.resize();
 	}
 
 	// Map instance ref so we can call resize()

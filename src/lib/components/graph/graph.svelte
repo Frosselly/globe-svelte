@@ -69,8 +69,11 @@
 	const filteredRows = $derived(validRows.filter((r) => selectedNames.has(r.name)));
 
 	$effect(() => {
+		// Only notify parent about checkbox selection in bar mode.
+		// In line mode this callback is not used — onSelectCountry handles navigation.
+		if (view !== 'bar') return;
 		const iso2s = validRows.filter((r) => selectedNames.has(r.name)).map((r) => r.iso2);
-		onSelectionChange(iso2s);
+		onSelectionChange?.(iso2s);
 	});
 
 	function toggleCountry(row: Row & { value: number }) {
@@ -451,33 +454,40 @@
 			<svg bind:this={svgEl}></svg>
 
 			<!-- Country list (bar mode)  -->
-			<div class="sidebar">
-				<div class="sidebar-header">
-					<h3>Countries</h3>
-					<div class="sidebar-actions">
-						<button onclick={selectAll}>All</button>
-						<button onclick={() => onSelectionChange('')}>None</button>
+			{#if view === 'bar'}
+				<div class="sidebar">
+					<div class="sidebar-header">
+						<h3>Countries</h3>
+						<div class="sidebar-actions">
+							<button onclick={selectAll}>All</button>
+							<button
+								onclick={() => {
+									userNames = null;
+								}}>None</button
+							>
+						</div>
+					</div>
+
+					<div class="checkboxList">
+						{#each validRows as row (row.iso2)}
+							<label class="checkboxItem" class:is-line-selected={row.iso2 === selectedIso2}>
+								<input
+									type="checkbox"
+									checked={selectedNames.has(row.name)}
+									onchange={() => toggleCountry(row)}
+								/>
+								<!-- Clicking the name navigates to line view for that country -->
+								<button
+									class="country-name-btn"
+									onclick={() => onSelectCountry(row.iso2)}
+									title="View trend for {row.name}">{row.name}</button
+								>
+								<span class="country-val">{fmtVal(row.value!)}</span>
+							</label>
+						{/each}
 					</div>
 				</div>
-				<div class="checkboxList">
-					{#each validRows as row (row.iso2)}
-						<label class="checkboxItem" class:is-line-selected={row.iso2 === selectedIso2}>
-							<input
-								type="checkbox"
-								checked={selectedNames.has(row.name)}
-								onchange={() => toggleCountry(row)}
-							/>
-							<!-- Clicking the name navigates to line view for that country -->
-							<button
-								class="country-name-btn"
-								onclick={() => onSelectCountry(row.iso2)}
-								title="View trend for {row.name}">{row.name}</button
-							>
-							<span class="country-val">{fmtVal(row.value!)}</span>
-						</label>
-					{/each}
-				</div>
-			</div>
+			{/if}
 		</div>
 	</div>
 </div>

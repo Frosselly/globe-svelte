@@ -43,12 +43,12 @@
 		}
 	};
 
-	$effect(() => {
-		$inspect(Object.values(c.branches));
-		$inspect(c.equipment);
-		$inspect(c.alliances);
-		$inspect(c.capabilities);
-	});
+	// $effect(() => {
+	// 	$inspect(Object.values(c.branches));
+	// 	$inspect(c.equipment);
+	// 	$inspect(c.alliances);
+	// 	$inspect(c.capabilities);
+	// });
 </script>
 
 <section class="topicSection" id="military">

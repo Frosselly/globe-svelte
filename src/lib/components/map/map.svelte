@@ -14,7 +14,7 @@
 		createPopup
 	} from './mapUtils';
 	import CountryBubble from '$lib/components/countryBubble.svelte';
-	import { layers, namedFlavor } from '@protomaps/basemaps';
+	// import { layers, namedFlavor } from '@protomaps/basemaps';
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import * as pmtiles from 'pmtiles';
@@ -22,6 +22,7 @@
 	import { countriesStore, selectedCountryStore } from '../../core/stores/store.svelte.ts';
 	import countryOutlinesJson from '$lib/assets/countries.geo.json';
 	import { page } from '$app/state';
+	// import { resolve } from '$app/paths';
 
 	const { toggleTopics, onPosChange } = $props();
 
@@ -59,10 +60,12 @@
 
 	const isAnalysis = $derived(page.url.pathname.split('/').filter(Boolean)[0] === 'analysis');
 
+	let mapReady = $state(false);
+
 	$effect(() => {
 		const dataset = mapState.currentDataset;
 		const mode = mapState.displayMode;
-		if (!map) return;
+		if (!map || !mapReady) return;
 		if (!isAnalysis) {
 			loadDataset(null, 'none');
 		}
@@ -98,7 +101,8 @@
 	async function initializeMap(mapContainer: string | HTMLElement) {
 		const protocol = new (pmtiles as any).Protocol();
 		maplibregl.addProtocol('pmtiles', (protocol as any).tile.bind(protocol));
-		const TILE_URL = 'pmtiles://planet_z6.pmtiles';
+		// const TILE_URL = 'pmtiles://planet_z6.pmtiles';
+		// const TILE_URL = resolve('static/planet_z6.pmtiles');
 
 		progress = 10;
 		loadingText = 'Loading tiles...';
@@ -111,13 +115,13 @@
 			// 	sources: {
 			// 		protomaps: {
 			// 			type: 'vector',
-			// 			url: TILE_URL,
+			// 			url: planet_z6,
 			// 			attribution:
 			// 				'<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
 			// 		}
 			// 	},
 			// 	layers: layers('protomaps', namedFlavor('light'), { lang: 'en' })
-			// },
+			// }
 			// style: {
 			// 	version: 8,
 			// 	sources: {
@@ -164,7 +168,9 @@
 				promoteId: 'iso_a2_eh'
 			});
 
-			loadDataset(mapState.currentDataset, mapState.displayMode);
+			mapReady = true;
+
+			// loadDataset(mapState.currentDataset, mapState.displayMode);
 			progress = 85;
 			loadingText = 'Finalizing...';
 		});
@@ -346,9 +352,9 @@
 		}
 	}
 
-	$effect(() => {
-		$inspect(currentPopup);
-	});
+	// $effect(() => {
+	// 	// $inspect(currentPopup);
+	// });
 
 	async function handleCountryClickLogic(feature: any) {
 		const props = feature.properties || {};

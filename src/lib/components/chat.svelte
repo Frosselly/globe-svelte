@@ -272,7 +272,7 @@
 
 	<!-- Message list -->
 	<div class="chat-list" bind:this={listEl}>
-		{#each messages as m, i}
+		{#each messages as m, i (i)}
 			{#if m.kind === 'text'}
 				<div class="msg {m.from}">
 					<span class="msg-text">{m.text}</span>
@@ -314,7 +314,7 @@
 					</div>
 
 					<div class="candidate-list">
-						{#each m.data.candidates as c}
+						{#each m.data.candidates as c, i (c.id + i)}
 							<button
 								class="candidate"
 								class:candidate-picked={m.data.pickedId === c.id}
