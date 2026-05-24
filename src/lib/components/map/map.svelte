@@ -30,7 +30,6 @@
 	let progress = $state(0);
 	let fadeOut = $state(false);
 	let loadingText = $state('Initializing map...');
-	let initialFlyCompleted = $state(false);
 
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
@@ -155,7 +154,6 @@
 				exaggeration: 1
 			})
 		);
-		if (initialFlyCompleted) map.on('move', updateData);
 
 		popup = createPopup();
 		setMapInstance(map);
@@ -225,7 +223,7 @@
 							essential: true
 						})
 						.once('moveend', () => {
-							initialFlyCompleted = true;
+							map.on('move', updateData);
 
 							//Terrain
 							map.addSource('terrainSource', {
