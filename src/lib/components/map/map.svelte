@@ -149,6 +149,12 @@
 		});
 
 		map.addControl(new maplibregl.GlobeControl(), 'top-right');
+		map.addControl(
+			new maplibregl.TerrainControl({
+				source: 'terrainSource',
+				exaggeration: 1
+			})
+		);
 		if (initialFlyCompleted) map.on('move', updateData);
 
 		popup = createPopup();
@@ -158,9 +164,33 @@
 			progress = 60;
 			loadingText = 'Loading countries...';
 
+			map.getCanvas().style.background = '#DEDBE0';
+
+			// if (map.getLayer('background')) {
+			// 	map.setPaintProperty('background', 'background-color', '#DEDBE0');
+			// }
+			//
+
+			// //hide tile errors
+			map.on('error', (e) => {
+				if (typeof e?.error?.message === 'string' && e.error.message.includes('mapterhorn')) {
+					return;
+				}
+				// Let all other real errors through
+				console.error(e);
+			});
+
 			map.setProjection({
 				type: 'globe'
 			});
+
+			map.setSky({
+				'sky-color': '#DEDBE0',
+				'sky-horizon-blend': 0.5,
+				'horizon-color': '#DEDBE0'
+				// 'horizon-fog-blend': 0.5
+			}); // atmospheric haze
+			// ---
 
 			map.addSource('countries', {
 				type: 'geojson',
@@ -196,6 +226,31 @@
 						})
 						.once('moveend', () => {
 							initialFlyCompleted = true;
+
+							//Terrain
+							map.addSource('terrainSource', {
+								type: 'raster-dem',
+								url: 'https://tiles.mapterhorn.com/tilejson.json',
+								tileSize: 256,
+								maxzoom: 8 // low detail
+							});
+
+							map.addSource('hillshadeSource', {
+								type: 'raster-dem',
+								url: 'https://tiles.mapterhorn.com/tilejson.json',
+								tileSize: 256,
+								maxzoom: 8 // low detail
+							});
+
+							map.addLayer({
+								id: 'hills',
+								type: 'hillshade',
+								source: 'hillshadeSource',
+								layout: { visibility: 'visible' },
+								paint: { 'hillshade-shadow-color': '#473B24', 'hillshade-exaggeration': 0.5 }
+							});
+
+							// map.setTerrain({ source: 'terrainSource', exaggeration: 1.5 });
 						});
 
 					fadeOut = true;
