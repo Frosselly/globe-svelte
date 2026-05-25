@@ -147,24 +147,17 @@
 					</div>
 					<hr />
 					<div class="carousel">
-						<div
-							class="card card-selectable flex"
-							onclick={() => {
-								mapState.currentDataset
-									? setCurrentDataset('')
-									: setCurrentDataset('economyInfo.gdp.current');
-							}}
-						>
+						<div class="card flex">
 							<div><span><UserIcon size={16} /></span><span><b> Population</b></span></div>
 							<div><b>{formatLargeNumbers(Number(countryData?.population))}</b></div>
 						</div>
-						<div class="card card-selectable flex">
+						<div class="card flex">
 							<div class="flex-row">
 								<span><CurrencyDollarIcon size={16} /></span><span><b> GDP</b></span>
 							</div>
 							<div><b>{formatLargeNumbers(Number(countryData?.gdpCurrent))}</b></div>
 						</div>
-						<div class="card card-selectable flex">
+						<div class="card flex">
 							<div class="flex-row">
 								<span><MapPinIcon size={16} /></span><span><b> Area</b></span>
 							</div>

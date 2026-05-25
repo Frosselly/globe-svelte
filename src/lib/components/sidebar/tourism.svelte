@@ -97,7 +97,7 @@
 				</div>
 				<div class=" flex-col flex">
 					<div class="flex-row">
-						<div class="card card-selectable flex-col flex">
+						<div class="card flex-col flex">
 							<div class="text-gray bold">Revenue</div>
 							<div>
 								<b class="num-mid">{e.revenueUsd ? formatLargeNumbers(e.revenueUsd) : '-'}</b>
