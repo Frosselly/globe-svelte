@@ -124,7 +124,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		format: 'number'
 	},
 	{
-		key: 'energyProduction',
+		key: 'production',
 		scalarKey: 'energyProduction',
 		historyKey: 'productionHistory',
 		label: 'Energy Production (TWh)',
@@ -134,7 +134,7 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
 		format: 'number'
 	},
 	{
-		key: 'energyConsumption',
+		key: 'consumption',
 		scalarKey: 'energyConsumption',
 		historyKey: 'consumptionHistory',
 		label: 'Energy Consumption (TWh)',

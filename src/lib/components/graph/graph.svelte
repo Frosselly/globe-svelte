@@ -56,6 +56,14 @@
 
 	let userNames = $state<Set<string> | null>(null);
 
+	// Search filter for the country list sidebar
+	let countrySearch = $state('');
+	const displayedRows = $derived(
+		countrySearch.trim()
+			? validRows.filter((r) => r.name.toLowerCase().includes(countrySearch.trim().toLowerCase()))
+			: validRows
+	);
+
 	let prevValidKey = $state('');
 	$effect(() => {
 		const key = validRows.map((r) => r.iso2).join(',');
@@ -462,29 +470,45 @@
 							<button onclick={selectAll}>All</button>
 							<button
 								onclick={() => {
-									userNames = null;
+									userNames = new Set();
 								}}>None</button
 							>
 						</div>
 					</div>
 
+					<!-- Search -->
+					<div class="sidebar-search">
+						<input
+							type="search"
+							class="search-input"
+							placeholder="Search countries…"
+							bind:value={countrySearch}
+						/>
+					</div>
+
 					<div class="checkboxList">
-						{#each validRows as row (row.iso2)}
+						{#each displayedRows as row (row.iso2)}
 							<label class="checkboxItem" class:is-line-selected={row.iso2 === selectedIso2}>
 								<input
 									type="checkbox"
 									checked={selectedNames.has(row.name)}
 									onchange={() => toggleCountry(row)}
 								/>
-								<!-- Clicking the name navigates to line view for that country -->
-								<button
-									class="country-name-btn"
-									onclick={() => onSelectCountry(row.iso2)}
-									title="View trend for {row.name}">{row.name}</button
+								<!-- Name click toggles the checkbox; use ↗ to switch to line/trend view -->
+								<button class="country-name-btn" onclick={() => toggleCountry(row)} title={row.name}
+									>{row.name}</button
 								>
 								<span class="country-val">{fmtVal(row.value!)}</span>
+								<button
+									class="trend-btn"
+									onclick={() => onSelectCountry?.(row.iso2)}
+									title="View trend for {row.name}">↗</button
+								>
 							</label>
 						{/each}
+						{#if displayedRows.length === 0}
+							<span class="search-empty">No matches</span>
+						{/if}
 					</div>
 				</div>
 			{/if}
@@ -627,5 +651,53 @@
 	.checkboxList::-webkit-scrollbar-thumb {
 		background: #d1d5db;
 		border-radius: 2px;
+	}
+
+	.sidebar-search {
+		padding: 0 8px 6px;
+		flex-shrink: 0;
+	}
+	.search-input {
+		width: 100%;
+		box-sizing: border-box;
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
+		padding: 5px 8px;
+		font-size: 12px;
+		outline: none;
+		background: #fff;
+		color: #374151;
+	}
+	.search-input:focus {
+		border-color: #4f8ef7;
+	}
+	.search-empty {
+		display: block;
+		padding: 10px 6px;
+		font-size: 12px;
+		color: #9ca3af;
+		text-align: center;
+	}
+
+	.trend-btn {
+		flex-shrink: 0;
+		background: none;
+		border: none;
+		padding: 0 2px;
+		font-size: 11px;
+		color: #9ca3af;
+		cursor: pointer;
+		line-height: 1;
+		border-radius: 3px;
+		opacity: 0;
+		transition:
+			opacity 120ms,
+			color 120ms;
+	}
+	.checkboxItem:hover .trend-btn {
+		opacity: 1;
+	}
+	.trend-btn:hover {
+		color: #4f8ef7;
 	}
 </style>

@@ -182,6 +182,7 @@ class SelectedCountryStore {
 			this.country = null;
 			return;
 		}
+		console.log('selectCountry', iso2);
 		const upper = iso2.toUpperCase();
 		this.error = null;
 		this.historyLoaded = this.historyCache.has(upper);

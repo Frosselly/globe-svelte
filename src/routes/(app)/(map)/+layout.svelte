@@ -18,16 +18,13 @@
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
 	let zoom = $state(2.67);
-	// Single effect: URL param (?country=XX) drives country selection.
-	// data.iso2 is intentionally NOT read here — each page's own load is responsible
-	// for seeding the store when it needs a specific country (e.g. saved-view page).
-	// This prevents the layout racing against the page and clobbering mid-render state.
-	$effect(() => {
-		const iso2 = selectedCountryNav?.toUpperCase();
-		if (iso2 && selectedCountryStore.country?.iso2?.toUpperCase() !== iso2) {
-			selectedCountryStore.selectCountry(iso2);
-		}
-	});
+
+	// $effect(() => {
+	// 	const iso2 = selectedCountryNav?.toUpperCase();
+	// 	if (iso2 && selectedCountryStore.country?.iso2?.toUpperCase() !== iso2) {
+	// 		selectedCountryStore.selectCountry(iso2);
+	// 	}
+	// });
 
 	// Lazy-load history once a snapshot is ready (but not loading)
 	$effect(() => {

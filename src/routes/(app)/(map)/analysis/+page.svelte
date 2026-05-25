@@ -21,6 +21,7 @@
 	import { resolve } from '$app/paths';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { savedStore } from '$lib/core/stores/savedStore.svelte';
+	import { onMount } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -34,6 +35,37 @@
 		Number(page.url.searchParams.get('year') ?? new Date().getFullYear())
 	);
 	const currentCountry = $derived(page.url.searchParams.get('country') ?? null);
+
+	// -- Sync map-selected country → URL when analysis page first mounts --------
+
+	// onMount(() => {
+	// 	const iso2 = selectedCountryStore.country?.iso2;
+	// 	if (iso2 && !currentCountry) {
+	// 		navigate({ country: iso2 });
+	// 	}
+	// });
+	//
+	onMount(() => {
+		if (currentCountry) {
+			selectedCountryStore.selectCountry(currentCountry.toUpperCase());
+		}
+	});
+
+	$effect(() => {
+		const iso2 = selectedCountryStore.country?.iso2;
+
+		if (!iso2) return;
+
+		if (currentCountry === iso2) return;
+
+		navigate({ country: iso2 });
+	});
+
+	$effect(() => {
+		if (currentView === 'map' && mapState.displayMode === 'none') {
+			setDisplayMode('flat');
+		}
+	});
 
 	function navigate(patch: Record<string, string | null>) {
 		const params = new SvelteURLSearchParams(page.url.searchParams);
@@ -53,12 +85,6 @@
 		navigate({ year: String(y) });
 	}
 
-	$effect(() => {
-		if (currentView === 'map' && mapState.displayMode === 'none') {
-			setDisplayMode('flat');
-		}
-	});
-
 	// $effect(() => {
 	// 	const storeIso2 = selectedCountryStore.country?.iso2;
 	// 	if (storeIso2 && storeIso2 !== currentCountry) {
@@ -77,8 +103,6 @@
 	}
 
 	function handleSelectCountry(iso2: string) {
-		// Also update the store so the sidebar and map stay in sync
-
 		selectedCountryStore.selectCountry(iso2);
 		navigate({ country: iso2, view: 'line' });
 	}
@@ -116,7 +140,7 @@
 		const { key, label } = data.option;
 		if (!combobox.open) {
 			combobox.value = key;
-			combobox.inputValue = label; // ← keep display in sync too
+			combobox.inputValue = label;
 		}
 	});
 	// -- View options ----------
