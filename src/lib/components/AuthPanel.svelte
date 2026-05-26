@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { authStore } from '$lib/core/stores/authStore.svelte';
 
-	let { onLogin } = $props<{ onLogin: () => void }>();
+	let { onLogin, onLogout } = $props<{ onLogin: () => void; onLogout?: () => void }>();
 
 	let mode = $state<'login' | 'register'>('login');
 	let email = $state('');
@@ -67,7 +67,13 @@
 {:else}
 	<div class="user-bar">
 		<span class="user-name">{authStore.user.displayName ?? authStore.user.email}</span>
-		<button class="btn-ghost btn-sm" onclick={() => authStore.logout()}>Sign out</button>
+		<button
+			class="btn-ghost btn-sm"
+			onclick={() => {
+				authStore.logout();
+				onLogout?.();
+			}}>Sign out</button
+		>
 	</div>
 	<!-- User bar -->
 	<!-- <div class="user-bar">

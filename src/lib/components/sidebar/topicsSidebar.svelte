@@ -46,17 +46,17 @@
 	const deletingId = $derived(savedStore.deletingId);
 	let savedTab = $state<'views' | 'history'>('views');
 
-	async function fetchSaved() {
-		if (!user) return;
-		try {
-			const r = await fetch('/api/save');
-			if (r.ok) {
-				const newView = await r.json();
-				savedStore.addView(newView);
-				// chats = d.messages ?? [];
-			}
-		} catch {}
-		// savedReady = true;
+	// Clear store whenever user logs out so data never bleeds to the next user
+	$effect(() => {
+		if (!user) savedStore.refresh();
+	});
+
+	function onLogin() {
+		savedStore.refresh();
+	}
+
+	function onLogout() {
+		savedStore.refresh();
 	}
 
 	function onSaveView(v: SavedView) {
@@ -181,7 +181,7 @@
 		{:else}
 			<section class="topicSection">
 				<!-- Auth -->
-				<AuthPanel onLogin={fetchSaved} />
+				<AuthPanel {onLogin} {onLogout} />
 				{#if user}
 					<!-- Sub-tabs -->
 					<div class="sub-tabs">
