@@ -1,29 +1,43 @@
-# Interaktyvios šalių svetainės (darbo failai)
+# Globe Svelte
 
-Interaktyvi svetainė apie pasaulio šalis, kurioje galima: pasirinkti šalis and žemėlapio, analizuoti šalių duoemnis ir kita.
+A country data view and analysis website built with SvelteKit and TypeScript.
 
-## Struktūra
+## Overview
 
-"dataTransformation" - duomenų apdirbimas ir įkėlimas į duomenų bazę. Tuo pačiu šių duomenų išsaugojimas duomenų bazėje
-"website" - full-stack SvelteKit realizacija svetainės
+Globe Svelte is an interactive platform for exploring and analyzing country data. The application provides a user-friendly interface to browse country information, visualize data through interactive components, and gain insights into global statistics.
 
-## Pasiledimas
+## Tech Stack
 
-Abi sistemos buvo parašytos naudojant JavaScript ir TypeScript per VSCode.
-Operacinė sistema naudota Windows 10 WSL
+- **Frontend & Backend**: SvelteKit
+- **Language**: TypeScript
+- **Styling**: CSS
+- **Database**: PostgreSQL 
 
-### Reikalavimai pasileidimui
+## Features
+
+- **Interactive country browsing** - Explore countries using an interactive map
+- **Data analysis** - View and analyze country statistics and information
+- **Authentication and saving analysis** - Create an account to save analysis results
+- **AI chat** - Use AI chat to get data from World Bank Data Group
+
+## Installation
+
+### Requirements
 
 - pnpm
 - Docker
 
-Norit pasileisti vieną iš dviejų sistemų tame aplanke reikia panaudoti komandą `pnpm install`
+### Setup
 
-### "dataTransformation"
+1. Install dependencies:
+```bash
+pnpm install
+```
 
-Šiai versijai projekto pasileisti reikalinga turėti duomenų bazę kitaip puslapis nepasileis. Yra sukurtas transformuotų duomenų failas "database_dump.sql", kurį galima įkelti arba galima pačiam sugeneruoti duoemenis "dataTransformation" aplanke atkomentavus dataTransformation/src/index.ts faile `// await persistToDb(results);` funkiją.
+2. **For the website:**
+   - Configure `.env` with your database connection string and Gemini AI API key
+   - Run the development server:
+   ```bash
+   pnpm dev
+   ```
 
-### "website"
-
-Svetainės pasileidimui website/.env faile priderinti/pakeisti duoemnų bazės nuorodą jei skiriasi ir naudoti savo Gemini AI API raktą.
-Tuomet galima naudoti `pnpm dev` pasileidimui kūrimo aplinkoje.
