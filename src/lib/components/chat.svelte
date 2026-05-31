@@ -10,6 +10,9 @@
 	import { onMount, tick } from 'svelte';
 	import ChartCard from './ChartCard.svelte';
 	import type { Candidate, DataResult, Message } from '$lib/core/types';
+	import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
+	import OptionIcon from 'phosphor-svelte/lib/OptionIcon';
 
 	// -- Props
 
@@ -279,7 +282,7 @@
 				</div>
 			{:else if m.kind === 'error'}
 				<div class="msg-error">
-					<span class="err-icon">⚠</span>
+					<span class="err-icon"><WarningIcon size="12" /></span>
 					{m.text}
 				</div>
 			{:else if m.kind === 'chart'}
@@ -295,9 +298,7 @@
 								{saving ? '…' : '⭐ Save view'}
 							</button>
 						{:else if m.result.savedViewId}
-							<span class="saved-badge">✓ Saved</span>
-						{:else if !user}
-							<span class="auth-hint"><a href="/login">Sign in</a> to save</span>
+							<span class="saved-badge"><CheckIcon size="12" /> Saved</span>
 						{/if}
 						<span class="chart-src">World Bank · {m.result.start}–{m.result.end}</span>
 					</div>
@@ -306,7 +307,7 @@
 				<!-- Indicator picker card -->
 				<div class="disambig-card">
 					<div class="disambig-header">
-						<span class="disambig-icon">🔍</span>
+						<span class="disambig-icon"><OptionIcon size="12" /></span>
 						<div>
 							<div class="disambig-title">Multiple indicators found for "{m.data.concept}"</div>
 							<div class="disambig-sub">Pick the one you want:</div>
@@ -360,13 +361,11 @@
 	.chat-root {
 		display: flex;
 		flex-direction: column;
-		background: #0f1724;
-		color: #e6eef8;
-		border-radius: 12px;
+		background: #fff;
+
 		overflow: hidden;
 		height: 100%;
 		min-height: 420px;
-		font-family: system-ui, sans-serif;
 	}
 	.chat-root.expanded {
 		position: fixed;
@@ -389,12 +388,10 @@
 	}
 	.chat-sub {
 		font-size: 0.8rem;
-		color: #7ba3c8;
 	}
 	.btn-icon {
 		background: transparent;
 		border: none;
-		color: #7ba3c8;
 		font-size: 1rem;
 		cursor: pointer;
 	}
@@ -423,6 +420,7 @@
 	}
 	.msg-text {
 		padding: 8px 11px;
+		border: 1px solid #e5e7eb;
 		border-radius: 10px;
 		font-size: 0.87rem;
 		line-height: 1.45;
@@ -430,12 +428,10 @@
 		white-space: pre-wrap;
 	}
 	.msg.user .msg-text {
-		background: linear-gradient(120deg, #0369a1, #0ea5e9);
-		color: #fff;
+		border: 1px solid #e5e7eb;
 	}
 	.msg.bot .msg-text {
 		background: rgba(255, 255, 255, 0.04);
-		color: #dce9f6;
 	}
 
 	/* Error */
@@ -447,7 +443,7 @@
 		border: 1px solid rgba(220, 38, 38, 0.28);
 		border-radius: 10px;
 		padding: 10px 12px;
-		color: #fca5a5;
+		color: rgba(220, 38, 38, 0.28);
 		font-size: 0.87rem;
 		line-height: 1.45;
 		align-self: flex-start;
@@ -474,9 +470,12 @@
 		gap: 8px;
 	}
 	.btn-save {
-		background: rgba(255, 255, 255, 0.06);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: #93c5fd;
+		display: flex;
+		gap: 4px;
+		align-items: center;
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		color: #0ea5e9;
 		padding: 4px 10px;
 		border-radius: 6px;
 		font-size: 0.75rem;
@@ -484,7 +483,7 @@
 		white-space: nowrap;
 	}
 	.btn-save:hover:not(:disabled) {
-		background: rgba(255, 255, 255, 0.12);
+		background: #dbeafe;
 	}
 	.btn-save:disabled {
 		opacity: 0.45;
@@ -622,27 +621,28 @@
 	.chat-input {
 		flex: 1;
 		padding: 9px 12px;
-		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		border: 1px solid #ccc;
+		border-radius: 4px;
 		background: rgba(255, 255, 255, 0.03);
 		color: inherit;
 		font-size: 0.88rem;
 	}
 	.chat-input:focus {
 		outline: none;
-		border-color: #0ea5e9;
+		border-color: #000;
 	}
 	.btn-send {
-		background: #0ea5e9;
+		color: #0ea5e9;
 		border: none;
-		color: #fff;
+		background-color: #eff6ff;
 		padding: 9px 16px;
+		border: 1px solid #bfdbfe;
 		border-radius: 8px;
 		font-size: 1.1rem;
 		cursor: pointer;
 	}
 	.btn-send:hover:not(:disabled) {
-		background: #0284c7;
+		background: #dbeafe;
 	}
 	.btn-send:disabled {
 		opacity: 0.5;

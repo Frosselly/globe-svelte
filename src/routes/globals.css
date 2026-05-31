@@ -1,13 +1,13 @@
 /*@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');*/
-
+/*font-family: 'Sora', sans-serif;*/
+/*font-family: 'DM Mono', sans-serif;*/
 /* GLOBALS */
 :root {
 	--color-primary: #9894f5;
 	/* --color-secondary: #06b6d4; */
 	--color-background: #f9fafb;
 	--color-text: #111827;
-	font-family: 'Metrophobic', sans-serif;
-	font-style: normal;
+
 	font-weight: 300;
 }
 /*

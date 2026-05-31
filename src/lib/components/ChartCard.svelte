@@ -72,8 +72,7 @@
 			.select(el)
 			.append('svg')
 			.attr('width', W + m.left + m.right)
-			.attr('height', H + m.top + m.bottom)
-			.style('font-family', 'system-ui,sans-serif');
+			.attr('height', H + m.top + m.bottom);
 
 		const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 		const all = result.series.flatMap((s) =>
@@ -114,12 +113,12 @@
 			.attr('transform', `translate(0,${H})`)
 			.call(d3.axisBottom(x).tickFormat(d3.format('d')).ticks(6))
 			.call((g) => g.select('.domain').attr('stroke', 'rgba(255,255,255,.15)'))
-			.call((g) => g.selectAll('text').attr('fill', '#8ba8c4').attr('font-size', 10));
+			.call((g) => g.selectAll('text').attr('fill', '#8ba8c4').attr('font-size', '0.8rem'));
 
 		g.append('g')
 			.call(d3.axisLeft(y).ticks(4).tickFormat(d3.format('.2s')))
 			.call((g) => g.select('.domain').attr('stroke', 'rgba(255,255,255,.15)'))
-			.call((g) => g.selectAll('text').attr('fill', '#8ba8c4').attr('font-size', 10));
+			.call((g) => g.selectAll('text').attr('fill', '#8ba8c4').attr('font-size', '0.8rem'));
 
 		const color = d3.scaleOrdinal(d3.schemeTableau10).domain(result.series.map((s) => s.country));
 		const line = d3
@@ -279,7 +278,7 @@
 		<div class="tabs">
 			{#each ['line', 'bar'] as const as m}
 				<button class="tab" class:active={mode === m} onclick={() => (mode = m)}
-					>{m === 'line' ? '📈 Trend' : '📊 Compare'}</button
+					>{m === 'line' ? 'Trend' : 'Compare'}</button
 				>
 			{/each}
 		</div>
@@ -337,9 +336,10 @@
 		background: #0ea5e9;
 		border-color: #0ea5e9;
 		color: #fff;
+		cursor: auto;
 	}
 	.tab:hover:not(.active) {
-		background: rgba(255, 255, 255, 0.07);
+		background: #dbeafe;
 	}
 
 	.year-row {

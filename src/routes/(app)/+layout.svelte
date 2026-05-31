@@ -1,7 +1,6 @@
 <script lang="ts">
 	import '../globals.css';
 
-	import favicon from '$lib/assets/favicon.svg';
 	import globeIcon from '$lib/assets/globe-icon.svg';
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
 	import { setSelectedSidebar, sidebarState } from '$lib/core/stores/store.svelte.js';
@@ -14,7 +13,8 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={globeIcon} />
+	<title>Project Earth</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 	<link href="https://fonts.googleapis.com/css2?family=Metrophobic&display=swap" rel="stylesheet" />
@@ -72,17 +72,19 @@
 		}
 		* {
 			margin: 0;
+			font-family: 'Metrophobic', sans-serif;
+			font-weight: 300;
 		}
 		h3 {
 			text-decoration: underline;
 		}
 		.btn {
+			/*font-family: 'Metrophobic', sans-serif;*/
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
 			gap: 6px;
 			border-radius: 8px;
-			font-family: inherit;
 			font-weight: 500;
 			font-size: 14px;
 			line-height: 1;
@@ -96,7 +98,8 @@
 				transform 80ms ease,
 				opacity 120ms ease;
 			white-space: nowrap;
-			user-select: none;
+			/*user-select: none;*/
+			color: var(--color-background);
 		}
 		.btn:active {
 			transform: scale(0.97);
@@ -170,7 +173,7 @@
 		align-items: center;
 		padding: 0.6rem 1rem;
 		padding-top: 1rem;
-		min-height: 3dvh;
+		max-height: 82px;
 		font-size: 1.3rem;
 
 		border-bottom: black solid 1px;

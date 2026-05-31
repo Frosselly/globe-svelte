@@ -16,12 +16,16 @@
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 	import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
 	import TableIcon from 'phosphor-svelte/lib/TableIcon';
+	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
+	import XIcon from 'phosphor-svelte/lib/XIcon';
+
 	import AGTable from '$lib/components/table/AGTable.svelte';
 	import type { PageData } from './$types';
 	import { resolve } from '$app/paths';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { savedStore } from '$lib/core/stores/savedStore.svelte';
 	import { onMount } from 'svelte';
+	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 
 	let { data }: { data: PageData } = $props();
 
@@ -35,6 +39,7 @@
 		Number(page.url.searchParams.get('year') ?? new Date().getFullYear())
 	);
 	const currentCountry = $derived(page.url.searchParams.get('country') ?? null);
+	const iso2 = $derived(selectedCountryStore.country?.iso2);
 
 	// -- Sync map-selected country → URL when analysis page first mounts --------
 
@@ -47,18 +52,16 @@
 	//
 	onMount(() => {
 		if (currentCountry) {
-			selectedCountryStore.selectCountry(currentCountry.toUpperCase());
+			// selectedCountryStore.selectCountry(currentCountry.toUpperCase());
+			handleSelectCountry(currentCountry.toUpperCase());
 		}
 	});
 
 	$effect(() => {
-		const iso2 = selectedCountryStore.country?.iso2;
-
 		if (!iso2) return;
 
 		if (currentCountry === iso2) return;
-
-		navigate({ country: iso2 });
+		handleSelectCountry(iso2);
 	});
 
 	$effect(() => {
@@ -104,7 +107,7 @@
 
 	function handleSelectCountry(iso2: string) {
 		selectedCountryStore.selectCountry(iso2);
-		navigate({ country: iso2, view: 'line' });
+		navigate({ country: iso2, view: currentView });
 	}
 
 	// -- Combobox --------------
@@ -237,25 +240,20 @@
 				<div class="combobox-input-wrap">
 					<input {...combobox.input} class="combobox-input" placeholder="Search indicator…" />
 					<button {...combobox.trigger} class="combobox-chevron" class:open={combobox.open}>
-						<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-							<path
-								d="M2 4l4 4 4-4"
-								stroke="currentColor"
-								stroke-width="1.5"
-								stroke-linecap="round"
-							/>
-						</svg>
+						<CaretDownIcon size="12" />
 					</button>
 				</div>
 				<div {...combobox.content} class="combobox-menu">
-					{#each Object.entries(grouped) as [topic, opts]}
+					{#each Object.entries(grouped) as [topic, opts] (topic)}
 						<div class="combobox-group-label">{topic}</div>
 						{#each opts as opt (opt.key)}
 							<div {...combobox.getOption(opt.key)} class="combobox-option">
 								<span>{opt.label}</span>
 								<span class="option-right">
 									{#if opt.timeSeries}<span class="ts-badge">time series</span>{/if}
-									{#if combobox.isSelected(opt.key)}<span class="check">✓</span>{/if}
+									{#if combobox.isSelected(opt.key)}<span class="check"
+											><CheckIcon size="12" /></span
+										>{/if}
 								</span>
 							</div>
 						{/each}
@@ -275,7 +273,9 @@
 					{saving ? 'Saving…' : 'Save view'}
 				</button>
 			{/if}
-			<a href={resolve('/')} class="close-btn" title="Close" onclick={() => onClose()}>✕</a>
+			<a href={resolve('/')} class="close-btn" title="Close" onclick={() => onClose()}
+				><XIcon size="15" /></a
+			>
 		</div>
 	</div>
 
@@ -283,7 +283,7 @@
 
 	<!-- View tabs -->
 	<div class="options">
-		{#each VIEW_OPTIONS as opt}
+		{#each VIEW_OPTIONS as opt ('view-tabs-' + opt.value)}
 			<button
 				class="option"
 				class:selected={currentView === opt.value}
@@ -298,7 +298,12 @@
 		{#if currentCountry}
 			<span class="country-badge">
 				{data.rows.find((r) => r.iso2 === currentCountry)?.name ?? currentCountry}
-				<button onclick={() => navigate({ country: null })} title="Clear">×</button>
+				<button
+					onclick={() => {
+						handleSelectCountry(null);
+					}}
+					title="Clear">×</button
+				>
 			</span>
 		{/if}
 	</div>

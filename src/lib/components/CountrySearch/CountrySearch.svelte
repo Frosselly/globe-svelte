@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Combobox } from 'melt/builders';
 	import { selectedCountryStore } from '../../core/stores/store.svelte';
+	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 
 	interface CountrySearch {
 		common: string;
@@ -39,24 +40,28 @@
 
 <div {...combobox.content} class="dropdown">
 	{#each filtered as option (option)}
-		<div {...combobox.getOption(option)} class="dropdown-item">
+		<div {...combobox.getOption(option)} class="dropdown-item selectable">
 			<span><img src={option.svg} alt="" /></span>
 			<span>{option.common}</span>
 			{#if combobox.isSelected(option)}
-				✓
+				<CheckIcon size="12" />
 			{/if}
 		</div>
 	{:else}
-		<span>No results found</span>
+		<span class="dropdown-item">No results found</span>
 	{/each}
 </div>
 
 <style>
 	.search-input {
+		/*font-family: 'Metrophobic', sans-serif;*/
 		width: 260px;
 		padding: 8px 12px;
 		border: 1px solid #ccc;
 		border-radius: 4px;
+	}
+	.selectable {
+		cursor: pointer;
 	}
 
 	.dropdown {
@@ -76,7 +81,6 @@
 		display: flex;
 		gap: 8px;
 		padding: 8px 12px;
-		cursor: pointer;
 		background: #fff;
 	}
 

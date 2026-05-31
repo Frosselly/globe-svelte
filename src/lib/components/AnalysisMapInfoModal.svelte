@@ -43,8 +43,6 @@
 		border: 1px solid rgba(0, 0, 0, 0.08);
 		border-radius: 26px;
 
-		font-family: 'Sora', sans-serif;
-
 		box-shadow:
 			0 2px 10px rgba(0, 0, 0, 0.04),
 			0 10px 30px rgba(0, 0, 0, 0.05);
@@ -94,7 +92,6 @@
 		gap: 0.35rem;
 
 		font-size: 0.72rem;
-		font-family: 'DM Mono', monospace;
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -117,7 +114,6 @@
 
 	.stat-label {
 		font-size: 0.72rem;
-		font-family: 'DM Mono', monospace;
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;

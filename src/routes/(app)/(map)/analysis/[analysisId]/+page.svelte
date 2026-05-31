@@ -10,6 +10,7 @@
 	} from '$lib/components/map/mapStore.svelte';
 	import { savedStore } from '$lib/core/stores/savedStore.svelte';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
 
 	let { data }: { data: PageData } = $props();
 
@@ -119,9 +120,13 @@
 				<p class="map-hint">{option.label} colour-coded on the map.</p>
 			</div>
 		{:else if view.mode === 'line' && lineResults.length === 0}
-			<div class="state-error">⚠ No time-series data found for the saved countries.</div>
+			<div class="state-error">
+				<WarningIcon size="12" /> No time-series data found for the saved countries.
+			</div>
 		{:else if view.mode !== 'line' && rows.length === 0}
-			<div class="state-error">⚠ No data found for the saved countries and indicator.</div>
+			<div class="state-error">
+				<WarningIcon size="12" /> No data found for the saved countries and indicator.
+			</div>
 		{:else}
 			<Graph
 				view={view.mode}

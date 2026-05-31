@@ -245,7 +245,7 @@ export const POST: RequestHandler = async (event) => {
 	if (aiCodeValid) {
 		// Fast path — AI nailed it
 		return await fetchAndRespond({
-			event,
+			prompt,
 			user,
 			parsed,
 			validCode: parsed.indicator,
@@ -295,7 +295,7 @@ export const POST: RequestHandler = async (event) => {
 		const c = validCandidates[0]!;
 		// console.log(`[query]  → auto-resolved to "${c.id}" (${c.name})`);
 		return await fetchAndRespond({
-			event,
+			prompt,
 			user,
 			parsed,
 			validCode: c.id,
@@ -338,13 +338,13 @@ export const POST: RequestHandler = async (event) => {
 // -- Shared fetch + respond helper --------------------
 
 async function fetchAndRespond({
-	event,
+	prompt, // ← was: event
 	user,
 	parsed,
 	validCode,
 	validName
 }: {
-	event: Parameters<RequestHandler>[0];
+	prompt: string; // ← was: event: Parameters<RequestHandler>[0]
 	user: Awaited<ReturnType<typeof getUserFromEvent>>;
 	parsed: ParsedQuery;
 	validCode: string;
@@ -369,13 +369,7 @@ async function fetchAndRespond({
 			.insert(chatMessages)
 			.values({
 				userId: user.id,
-				userMessage:
-					(
-						await event.request
-							.clone()
-							.json()
-							.catch(() => ({}))
-					)?.prompt ?? '',
+				userMessage: prompt,
 				botReply: `Showing ${validName} for ${trimmed.map((s) => s.country).join(', ')}`,
 				parsedQuery: {
 					indicator: validCode,

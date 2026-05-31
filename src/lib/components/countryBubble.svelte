@@ -141,7 +141,6 @@
 		background: var(--color-background);
 		border: 0.5px solid rgba(0, 0, 0, 0.12);
 		border-radius: 28px;
-		font-family: 'Sora', sans-serif;
 		transition:
 			box-shadow 0.25s ease,
 			transform 0.25s ease;
@@ -195,7 +194,6 @@
 
 	.country-capital {
 		font-size: 12px;
-		font-family: 'DM Mono', monospace;
 		color: #888;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -219,7 +217,6 @@
 
 	.stat-label {
 		font-size: 11px;
-		font-family: 'DM Mono', monospace;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
 		color: #aaa;
@@ -259,7 +256,6 @@
 	.more-btn,
 	.close-btn {
 		width: 100%;
-		font-family: 'Sora', sans-serif;
 		font-size: 13px;
 		font-weight: 500;
 		color: #1a1a1a;
