@@ -123,7 +123,7 @@
 
 	.sidebar {
 		z-index: 1;
-		width: 40rem;
+		width: 41rem;
 		min-width: 35rem;
 		height: 100%;
 		flex-shrink: 0;

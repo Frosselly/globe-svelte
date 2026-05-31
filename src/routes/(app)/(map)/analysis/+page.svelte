@@ -26,6 +26,8 @@
 	import { savedStore } from '$lib/core/stores/savedStore.svelte';
 	import { onMount } from 'svelte';
 	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
+	import { calculateColorScale } from '$lib/components/map/mapUtils';
 
 	let { data }: { data: PageData } = $props();
 
@@ -40,6 +42,14 @@
 	);
 	const currentCountry = $derived(page.url.searchParams.get('country') ?? null);
 	const iso2 = $derived(selectedCountryStore.country?.iso2);
+	const colorScaleRows = $derived(
+		data.rows.filter((d) => d.value != null).map((d) => ({ value: d.value ?? 0 }))
+	);
+	const stops = $derived(calculateColorScale(colorScaleRows));
+
+	// gray = zero bucket, then 4 colors low→high
+	const grayColor = '#b0b0b0';
+	const rangeColors = ['#1a9850', '#91cf60', '#fee090', '#fc8d59'];
 
 	// -- Sync map-selected country → URL when analysis page first mounts --------
 
@@ -224,6 +234,16 @@
 		setIndicatorRows([]);
 		setDisplayMode('none');
 	}
+
+	function formatRange(i: number): string {
+		if (!stops?.length) return '';
+		if (i === 0) return '0';
+		// i=1 → (0, stops[0]], i=2 → (stops[0], stops[1]], etc.
+		const from = i === 1 ? 0 : stops[i - 2];
+		const to = stops[i - 1];
+		if (from === to) return formatLargeNumbers(to, 0);
+		return `${formatLargeNumbers(from, 0)} – ${formatLargeNumbers(to, 0)}`;
+	}
 </script>
 
 <!-- -- Template ----------- -->
@@ -334,6 +354,23 @@
 					>
 				</div>
 				<p class="map-hint">{data.option.label} colour-coded on the map.</p>
+			</div>
+			<div class="legend">
+				<div class="legend-title">{currentIndicator}</div>
+
+				{#each rangeColors as color, i}
+					<div class="legend-item">
+						<div class="legend-color" style:background={color}></div>
+						<span class="legend-label">{formatRange(i + 1)}</span>
+					</div>
+				{/each}
+
+				<div class="legend-divider"></div>
+
+				<div class="legend-item">
+					<div class="legend-color" style:background="#b0b0b0"></div>
+					<span class="legend-label">No value</span>
+				</div>
 			</div>
 		{:else if currentView === 'table'}
 			<!-- <AGTable columnDefs=
@@ -607,7 +644,53 @@ rowData/> -->
 		background: transparent !important;
 		pointer-events: none;
 	}
+	.legend {
+		margin-top: 0.8rem;
+		margin-left: 0.2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 12px 14px;
+		width: 10rem;
+		background: var(--color-background);
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+		pointer-events: auto;
+	}
 
+	.legend-title {
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-muted, #888);
+		margin-bottom: 6px;
+	}
+
+	.legend-divider {
+		height: 1px;
+		background: var(--color-border, #e5e5e5);
+		margin: 4px 0 6px;
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.legend-color {
+		width: 14px;
+		height: 14px;
+		border-radius: 3px;
+		flex-shrink: 0;
+	}
+
+	.legend-label {
+		font-size: 0.72rem;
+		color: var(--color-text, #333);
+		white-space: nowrap;
+	}
 	.map-controls {
 		display: flex;
 		flex-direction: column;

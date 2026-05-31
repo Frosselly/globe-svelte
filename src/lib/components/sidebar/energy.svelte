@@ -8,6 +8,7 @@
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import MediumGraph from '../mediumGraph.svelte';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 
 	const { e }: { e: FullCountry } = $props();
 
@@ -53,7 +54,7 @@
 </script>
 
 <section class="topicSection" id="energy">
-	<CollapsibleTopic topicName={'Energy'}>
+	<CollapsibleTopic topicName={'Energy'} bgColor={TOPIC_COLORS.energy}>
 		<div class="flex-col">
 			<div class="flex-row">
 				{#if e.renewableCurrent}
@@ -110,22 +111,26 @@
 				<br />
 
 				<div class="flex-col">
-					{#each (e.energyMixCurrent ?? [])
-						.slice()
-						.sort((a, b) => b.percentage - a.percentage) as item (item.name)}
-						<div class="flex-col">
-							<div class="between">
-								<div>
-									{item.name}
+					{#if e.energyMixCurrent}
+						{#each (e.energyMixCurrent ?? [])
+							.slice()
+							.sort((a, b) => b.percentage - a.percentage) as item (item.name)}
+							<div class="flex-col">
+								<div class="between">
+									<div>
+										{item.name}
+									</div>
+									<div>{item.percentage.toFixed(1)}%</div>
 								</div>
-								<div>{item.percentage.toFixed(1)}%</div>
-							</div>
 
-							<div class="progress-bar">
-								<div class="progress-fill" style="width: {item.percentage}%;"></div>
+								<div class="progress-bar">
+									<div class="progress-fill" style="width: {item.percentage}%;"></div>
+								</div>
 							</div>
-						</div>
-					{/each}
+						{/each}
+					{:else}
+						<div class="missing"><span class="text-gray">No data</span></div>
+					{/if}
 				</div>
 			</div>
 			<div class="flex-row">

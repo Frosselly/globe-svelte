@@ -2,8 +2,8 @@
 	import CaretUpIcon from 'phosphor-svelte/lib/CaretUpIcon';
 	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
 
-	let { topicName, children } = $props();
-	let isOpen = $state(true);
+	let { topicName, bgColor, children } = $props();
+	let isOpen = $state(false);
 
 	function toggleOpen() {
 		isOpen = !isOpen;
@@ -12,17 +12,19 @@
 
 <div>
 	<div class="toggleTopic" onclick={toggleOpen}>
-		<div class="between">
+		<div class="between topicTitle" style="background: {bgColor}">
 			<h2>{topicName}</h2>
 			<div class="icon" class:rotated={isOpen}>
-				{#if isOpen}
-					<CaretUpIcon size={20} />
+				<CaretUpIcon size={20} />
+				<!-- {#if isOpen}
 				{:else}
 					<CaretDownIcon size={20} />
-				{/if}
+				{/if} -->
 			</div>
 		</div>
-		<hr />
+		{#if isOpen}
+			<hr />
+		{/if}
 	</div>
 	<div class="content" class:open={isOpen}>
 		{@render children()}
@@ -30,6 +32,10 @@
 </div>
 
 <style>
+	.topicTitle {
+		border-radius: 12px;
+		padding: 0.8rem;
+	}
 	.toggleTopic {
 		cursor: pointer;
 		user-select: none;

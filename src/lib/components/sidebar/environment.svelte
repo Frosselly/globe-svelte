@@ -10,6 +10,7 @@
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
 	import { formatLargeNumbers, formatText } from '$lib/core/utils/utils';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 	const { c }: { c: FullCountry } = $props();
 
 	const props2 = {
@@ -41,7 +42,7 @@
 </script>
 
 <section class="topicSection" id="environment">
-	<CollapsibleTopic topicName="Environment">
+	<CollapsibleTopic topicName="Environment" bgColor={TOPIC_COLORS.environment}>
 		<div class="flex-col">
 			<div class="card flex-col wide">
 				<div class="text-gray bold align-center">Environmental Performance Index</div>
@@ -127,7 +128,7 @@
 					<WarningIcon size={20} /> Natural Hazards
 				</div>
 
-				<hr />
+				<br />
 				{#if c.naturalHazards}
 					<div class="flex-row">
 						{#each Object.entries(c.naturalHazards) as [hazardKey, hazardValue]}

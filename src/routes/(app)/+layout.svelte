@@ -73,7 +73,7 @@
 		* {
 			margin: 0;
 			font-family: 'Metrophobic', sans-serif;
-			font-weight: 300;
+			/*font-weight: 300;*/
 		}
 		h3 {
 			text-decoration: underline;

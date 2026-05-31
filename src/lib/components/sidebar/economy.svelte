@@ -15,6 +15,7 @@
 	import TruckIcon from 'phosphor-svelte/lib/TruckIcon';
 	import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 
 	// All data comes from cd.economy - one line, reactive, null-safe
 	// const e = $derived(cd.economy);
@@ -28,7 +29,7 @@
 </script>
 
 <section class="topicSection" id="economy">
-	<CollapsibleTopic topicName="Economy">
+	<CollapsibleTopic topicName="Economy" bgColor={TOPIC_COLORS.economy}>
 		<div class="flex-col">
 			<!-- GDP trend - the one "main" indicator with graph -->
 			<div class="flex-row">

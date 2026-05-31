@@ -9,6 +9,7 @@
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
 	import MediumGraph from '../mediumGraph.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 
 	const { c }: { c: FullCountry } = $props();
 
@@ -52,7 +53,7 @@
 </script>
 
 <section class="topicSection" id="military">
-	<CollapsibleTopic topicName={'Military'}>
+	<CollapsibleTopic topicName={'Military'} bgColor={TOPIC_COLORS.military}>
 		<div class="flex-col">
 			<div class="flex-row">
 				<div class="card flex-col flex">

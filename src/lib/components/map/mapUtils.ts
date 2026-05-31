@@ -13,28 +13,25 @@ export type IndicatorRow = { iso2: string; name: string; value: number | null };
 export function calculateColorScale(valueData: { value: number }[]) {
 	const vals = valueData
 		.map((d) => d.value)
-		.filter((v) => isFinite(v) && v !== null)
+		.filter((v) => Number.isFinite(v))
 		.sort((a, b) => a - b);
 
-	if (vals.length === 0) return [0, 1];
+	if (!vals.length) return [0, 0, 0, 0];
 
-	const rawStops = [
-		vals[0],
-		vals[Math.floor((vals.length - 1) * 0.25)],
-		vals[Math.floor((vals.length - 1) * 0.5)],
-		vals[Math.floor((vals.length - 1) * 0.75)],
-		vals[vals.length - 1]
-	];
-	//remove duplicates for maplibre and resort them
-	const uniqueStops = Array.from(new Set(rawStops)).sort((a, b) => a - b);
+	const nonZero = vals.filter((v) => v > 0);
+	if (!nonZero.length) return [0, 0, 0, 0];
 
-	if (uniqueStops.length < 2) {
-		return [uniqueStops[0], uniqueStops[0] + 0.000001];
-	}
+	const percentile = (p: number) => {
+		const i = (nonZero.length - 1) * p;
+		const lo = Math.floor(i);
+		const hi = Math.ceil(i);
+		if (lo === hi) return nonZero[lo];
+		return nonZero[lo] * (1 - (i - lo)) + nonZero[hi] * (i - lo);
+	};
 
-	return uniqueStops;
+	// 4 boundaries → 4 colored buckets: (0–p25], (p25–p50], (p50–p75], (p75–max]
+	return [percentile(0.25), percentile(0.5), percentile(0.75), percentile(1)];
 }
-
 export function setupMapLayers(map: any, opacity: [number, number]) {
 	cleanFlat(map);
 	map.addLayer({
@@ -59,17 +56,14 @@ export function setupMapLayers(map: any, opacity: [number, number]) {
 }
 
 export function createColorExpression(stops: number[]) {
-	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
+	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59'];
 	const interpolation: any[] = ['interpolate', ['linear'], ['get', 'value']];
 
-	//function to match stops to colors if one or other is larger it confomr to closest largest
-	//gets stops into 0-1 range and multiplies with available color amount to find closes color
-	stops.forEach((stop, index) => {
-		const colorIndex = Math.floor((index / (stops.length - 1)) * (colorRamp.length - 1));
-		interpolation.push(stop, colorRamp[colorIndex]);
+	stops.forEach((stop, i) => {
+		interpolation.push(stop, colorRamp[i]);
 	});
 
-	return ['case', ['!=', ['get', 'value'], null], interpolation, '#cccccc'];
+	return ['case', ['!=', ['get', 'value'], null], interpolation, '#b0b0b0'];
 }
 
 // MAIN prepare of data
