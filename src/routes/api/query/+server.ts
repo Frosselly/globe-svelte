@@ -30,6 +30,8 @@ import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { getIndicators, type Indicator } from '$lib/server/worldbank/indicators';
+import { checkAndIncrementUsage } from '$lib/server/db/rateLimit';
+import { AppError } from '$lib/server/errors';
 
 // -- AI schema -----------------
 
@@ -225,6 +227,14 @@ export const POST: RequestHandler = async (event) => {
 	if (!prompt) return json({ error: 'prompt required' }, { status: 400 });
 
 	const user = await getUserFromEvent(event);
+	if (!user) return json({ error: 'not logged in' }, { status: 400 });
+
+	const limit = await checkAndIncrementUsage(user?.id);
+	if (!limit.allowed) {
+		const msg = `You've reached your query limit. Try again in ${limit.retryAfter}s.`;
+		// throw new AppError(msg, 429);
+		return json({ error: msg }, { status: 400 });
+	}
 
 	// -- 1. AI parse -----------
 	const parsed = await parseWithAI(prompt);

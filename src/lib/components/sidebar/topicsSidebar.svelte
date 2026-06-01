@@ -250,7 +250,7 @@
 					{:else}
 						<div class="item-list">
 							{#each chats as msg (msg.id)}
-								<div class="item-card" class:item-has-q={!!msg.parsedQuery}>
+								<div class="item-card">
 									<div class="item-label">{msg.userMessage}</div>
 									{#if msg.parsedQuery}
 										<div class="item-meta">
@@ -421,9 +421,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 5px;
-	}
-	.item-has-q {
-		border-left: 3px solid #0ea5e9;
 	}
 	.item-top {
 		display: flex;

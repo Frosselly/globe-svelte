@@ -162,8 +162,8 @@
 	const VIEW_OPTIONS = [
 		{ icon: TrendUpIcon, text: 'Trend', value: 'line' as const },
 		{ icon: ChartBarHorizontalIcon, text: 'Compare', value: 'bar' as const },
-		{ icon: MapTrifoldIcon, text: 'Map', value: 'map' as const },
-		{ icon: TableIcon, text: 'Table', value: 'table' as const }
+		{ icon: MapTrifoldIcon, text: 'Map', value: 'map' as const }
+		// { icon: TableIcon, text: 'Table', value: 'table' as const }
 	];
 
 	const lineDisabled = $derived(!data.option.timeSeries);

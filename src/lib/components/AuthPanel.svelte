@@ -10,27 +10,112 @@
 	let error = $state('');
 	let busy = $state(false);
 
+	// Per-field validation errors
+	let fieldErrors = $state<{ email?: string; password?: string }>({});
+
+	// --- Validation rules ---
+
+	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+	const PASSWORD_RULES = [
+		{ test: (p: string) => p.length >= 8, msg: 'At least 8 characters' },
+		{ test: (p: string) => /[A-Z]/.test(p), msg: 'At least one uppercase letter' },
+		{ test: (p: string) => /[0-9]/.test(p), msg: 'At least one number' },
+		{ test: (p: string) => /[^A-Za-z0-9]/.test(p), msg: 'At least one special character' }
+	];
+
+	function validateEmail(value: string): string | undefined {
+		if (!value.trim()) return 'Email is required';
+		if (!EMAIL_RE.test(value.trim())) return 'Enter a valid email address';
+	}
+
+	function validatePassword(value: string): string | undefined {
+		if (!value) return 'Password is required';
+		if (mode === 'register') {
+			const failed = PASSWORD_RULES.find((r) => !r.test(value));
+			if (failed) return failed.msg;
+		} else {
+			if (value.length < 1) return 'Password is required';
+		}
+	}
+
+	function validate(): boolean {
+		const emailErr = validateEmail(email);
+		const passErr = validatePassword(pass);
+		fieldErrors = { email: emailErr, password: passErr };
+		return !emailErr && !passErr;
+	}
+
+	// Live validation after first blur
+	let emailTouched = $state(false);
+	let passTouched = $state(false);
+
+	$effect(() => {
+		if (emailTouched) fieldErrors.email = validateEmail(email);
+	});
+	$effect(() => {
+		if (passTouched) fieldErrors.password = validatePassword(pass);
+	});
+
+	// Password strength (register only)
+	let strength = $derived(
+		mode === 'register' ? PASSWORD_RULES.filter((r) => r.test(pass)).length : 0
+	);
+
+	const strengthLabel = $derived(
+		strength === 0
+			? ''
+			: strength === 1
+				? 'Weak'
+				: strength === 2
+					? 'Fair'
+					: strength === 3
+						? 'Good'
+						: 'Strong'
+	);
+
+	const strengthColor = $derived(
+		strength <= 1 ? '#ef4444' : strength === 2 ? '#f59e0b' : strength === 3 ? '#84cc16' : '#22c55e'
+	);
+
+	// Reset touch state when switching modes
+	function switchMode(m: 'login' | 'register') {
+		mode = m;
+		error = '';
+		fieldErrors = {};
+		emailTouched = false;
+		passTouched = false;
+	}
+
 	async function handleAuth() {
 		error = '';
+		emailTouched = true;
+		passTouched = true;
+		if (!validate()) return;
 		busy = true;
 		try {
-			const body: any = { action: mode, email, password: pass };
-			if (mode === 'register') body.displayName = name;
+			const body: any = { action: mode, email: email.trim().toLowerCase(), password: pass };
+			if (mode === 'register') body.displayName = name.trim() || undefined;
+
 			const r = await fetch('/api/auth', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body)
 			});
 			const d = await r.json();
-			if (!r.ok) error = d.error ?? 'Failed';
-			else {
+			if (!r.ok) {
+				error = d.error ?? 'Something went wrong';
+			} else {
 				authStore.user = d.user;
 				email = pass = name = '';
+				emailTouched = false;
+				passTouched = false;
 				onLogin();
 			}
 		} catch (e: any) {
-			error = e.message;
+			error = e.message ?? 'Network error';
 		}
+
 		busy = false;
 	}
 </script>
@@ -41,26 +126,89 @@
 	<div class="flex center">
 		<h2 class="section-h">Register to save views and use AI chat</h2>
 	</div>
-	<form class="auth-card">
+	<form
+		class="auth-card"
+		onsubmit={(e) => {
+			e.preventDefault();
+			handleAuth();
+		}}
+	>
 		<div class="auth-tabs">
-			<button class:atab-active={mode === 'login'} onclick={() => (mode = 'login')}>Sign in</button>
-			<button class:atab-active={mode === 'register'} onclick={() => (mode = 'register')}
-				>Register</button
+			<button type="button" class:atab-active={mode === 'login'} onclick={() => switchMode('login')}
+				>Sign in</button
+			>
+			<button
+				type="button"
+				class:atab-active={mode === 'register'}
+				onclick={() => switchMode('register')}>Register</button
 			>
 		</div>
+
 		{#if mode === 'register'}
-			<input class="auth-input" placeholder="Name (optional)" bind:value={name} />
+			<input
+				class="auth-input"
+				placeholder="Name (optional)"
+				autocomplete="name"
+				bind:value={name}
+			/>
 		{/if}
-		<input class="auth-input" type="email" placeholder="Email" bind:value={email} />
-		<input
-			class="auth-input"
-			type="password"
-			placeholder="Password"
-			bind:value={pass}
-			onkeydown={(e) => e.key === 'Enter' && handleAuth()}
-		/>
+
+		<div class="field-wrap">
+			<input
+				class="auth-input"
+				class:input-error={!!fieldErrors.email}
+				type="email"
+				placeholder="Email"
+				autocomplete="email"
+				bind:value={email}
+				onblur={() => (emailTouched = true)}
+			/>
+			{#if fieldErrors.email}
+				<p class="field-err">{fieldErrors.email}</p>
+			{/if}
+		</div>
+
+		<div class="field-wrap">
+			<input
+				class="auth-input"
+				class:input-error={!!fieldErrors.password}
+				type="password"
+				placeholder="Password"
+				autocomplete={mode === 'register' ? 'new-password' : 'current-password'}
+				bind:value={pass}
+				onblur={() => (passTouched = true)}
+				onkeydown={(e) => e.key === 'Enter' && handleAuth()}
+			/>
+			{#if fieldErrors.password}
+				<p class="field-err">{fieldErrors.password}</p>
+			{/if}
+
+			{#if mode === 'register' && pass.length > 0}
+				<div class="strength-bar">
+					{#each PASSWORD_RULES as _, i}
+						<div
+							class="strength-seg"
+							style:background={i < strength ? strengthColor : '#e5e7eb'}
+						></div>
+					{/each}
+					<span class="strength-label" style:color={strengthColor}>{strengthLabel}</span>
+				</div>
+				{#if mode === 'register'}
+					<ul class="pw-hints">
+						{#each PASSWORD_RULES as rule}
+							<li class:met={rule.test(pass)}>
+								<span class="hint-dot">{rule.test(pass) ? '✓' : '·'}</span>
+								{rule.msg}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			{/if}
+		</div>
+
 		{#if error}<p class="auth-err">{error}</p>{/if}
-		<button class="btn-primary" disabled={busy} onclick={handleAuth}>
+
+		<button class="btn-primary" type="submit" disabled={busy}>
 			{busy ? '…' : mode === 'login' ? 'Sign in' : 'Create account'}
 		</button>
 	</form>
@@ -75,11 +223,6 @@
 			}}>Sign out</button
 		>
 	</div>
-	<!-- User bar -->
-	<!-- <div class="user-bar">
-						<span class="user-name">{user.displayName ?? user.email}</span>
-						<button class="btn-ghost btn-sm" onclick={handleLogout}>Sign out</button>
-					</div> -->
 {/if}
 
 <style>
@@ -96,7 +239,8 @@
 		font-weight: 600;
 		font-size: 0.88rem;
 	}
-	/* Auth */
+
+	/* Auth card */
 	.auth-card {
 		background: #f9fafb;
 		border: 1px solid #e5e7eb;
@@ -124,6 +268,13 @@
 		background: #fff !important;
 		font-weight: 600;
 	}
+
+	/* Fields */
+	.field-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
 	.auth-input {
 		padding: 8px 11px;
 		border-radius: 7px;
@@ -131,12 +282,78 @@
 		font-size: 0.87rem;
 		width: 100%;
 		box-sizing: border-box;
+		transition: border-color 0.15s;
+	}
+	.auth-input:focus {
+		outline: none;
+		border-color: #0ea5e9;
+		box-shadow: 0 0 0 3px rgb(14 165 233 / 0.15);
+	}
+	.input-error {
+		border-color: #ef4444 !important;
+	}
+	.input-error:focus {
+		box-shadow: 0 0 0 3px rgb(239 68 68 / 0.15) !important;
+	}
+	.field-err {
+		color: #dc2626;
+		font-size: 0.78rem;
+		margin: 0;
 	}
 	.auth-err {
 		color: #dc2626;
 		font-size: 0.8rem;
 		margin: 0;
 	}
+
+	/* Password strength */
+	.strength-bar {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		margin-top: 2px;
+	}
+	.strength-seg {
+		flex: 1;
+		height: 3px;
+		border-radius: 2px;
+		transition: background 0.2s;
+	}
+	.strength-label {
+		font-size: 0.72rem;
+		font-weight: 600;
+		min-width: 36px;
+		text-align: right;
+		transition: color 0.2s;
+	}
+
+	/* Password hints */
+	.pw-hints {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.pw-hints li {
+		font-size: 0.75rem;
+		color: #9ca3af;
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		transition: color 0.15s;
+	}
+	.pw-hints li.met {
+		color: #22c55e;
+	}
+	.hint-dot {
+		font-size: 0.8rem;
+		width: 12px;
+		text-align: center;
+	}
+
+	/* Buttons */
 	.btn-primary {
 		background: #0ea5e9;
 		color: #fff;
@@ -145,6 +362,7 @@
 		border-radius: 8px;
 		cursor: pointer;
 		font-size: 0.9rem;
+		transition: background 0.15s;
 	}
 	.btn-primary:disabled {
 		opacity: 0.5;
@@ -160,6 +378,7 @@
 		border-radius: 6px;
 		padding: 5px 10px;
 		font-size: 0.82rem;
+		cursor: pointer;
 	}
 	.btn-ghost:hover {
 		background: #f3f4f6;

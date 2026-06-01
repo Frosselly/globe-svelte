@@ -268,9 +268,9 @@
 			<span class="chat-title">Data Chat</span>
 			<span class="chat-sub"> · World Bank · AI</span>
 		</div>
-		<button class="btn-icon" aria-label="toggle expand" onclick={() => (expanded = !expanded)}>
+		<!-- <button class="btn-icon" aria-label="toggle expand" onclick={() => (expanded = !expanded)}>
 			{expanded ? '⤫' : '⤢'}
-		</button>
+		</button> -->
 	</header>
 
 	<!-- Message list -->
@@ -282,7 +282,7 @@
 				</div>
 			{:else if m.kind === 'error'}
 				<div class="msg-error">
-					<span class="err-icon"><WarningIcon size="12" /></span>
+					<WarningIcon size="14" />
 					{m.text}
 				</div>
 			{:else if m.kind === 'chart'}
@@ -438,19 +438,16 @@
 	.msg-error {
 		display: flex;
 		gap: 8px;
-		align-items: flex-start;
+		align-items: center;
 		background: rgba(220, 38, 38, 0.12);
-		border: 1px solid rgba(220, 38, 38, 0.28);
+		border: 1px solid #dc2626;
 		border-radius: 10px;
 		padding: 10px 12px;
-		color: rgba(220, 38, 38, 0.28);
+		color: #dc2626;
 		font-size: 0.87rem;
 		line-height: 1.45;
 		align-self: flex-start;
 		max-width: 92%;
-	}
-	.err-icon {
-		flex-shrink: 0;
 	}
 
 	/* Chart card */

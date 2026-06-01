@@ -276,7 +276,7 @@
 
 		<!-- Mode tabs -->
 		<div class="tabs">
-			{#each ['line', 'bar'] as const as m}
+			{#each ['line'] as const as m}
 				<button class="tab" class:active={mode === m} onclick={() => (mode = m)}
 					>{m === 'line' ? 'Trend' : 'Compare'}</button
 				>

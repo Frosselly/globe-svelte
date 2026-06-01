@@ -8,7 +8,7 @@ import { db } from './db/client';
 const scryptAsync = promisify(scrypt);
 
 const SESSION_COOKIE = 'sid';
-const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 1 day in ms
 
 // -- Password helpers ----------
 
