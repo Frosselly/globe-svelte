@@ -10,11 +10,14 @@
 	import TranslateIcon from 'phosphor-svelte/lib/TranslateIcon';
 	import TrendDownIcon from 'phosphor-svelte/lib/TrendDownIcon';
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
+	import AirplaneTiltIcon from 'phosphor-svelte/lib/AirplaneTiltIcon';
+
 	import WifiHighIcon from 'phosphor-svelte/lib/WifiHighIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import MediumGraph from '../mediumGraph.svelte';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 
 	const { e }: { e: FullCountry } = $props();
 
@@ -73,7 +76,7 @@
 </script>
 
 <section class="topicSection" id="tourism">
-	<CollapsibleTopic topicName={'Tourism'}>
+	<CollapsibleTopic topicName={'Tourism'} Icon={AirplaneTiltIcon} bgColor={TOPIC_COLORS.tourism}>
 		<div class="flex-col">
 			<div class="flex-row">
 				<div class="card flex-col flex">
@@ -108,7 +111,7 @@
 							<div><b class="num-mid">{e.tourismRanking ? e.tourismRanking : '-'}</b></div>
 						</div>
 					</div>
-					<div class="card flex-row between">
+					<div class="card flex-row between flex">
 						<div class="text-gray">UNESCO Heritage Sites</div>
 						<div><b class="num-mid">{e.unescoSites ?? '-'}</b></div>
 					</div>

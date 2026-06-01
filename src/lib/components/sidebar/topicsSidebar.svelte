@@ -5,13 +5,14 @@
 	import Tourism from './tourism.svelte';
 	import Chat from '../chat.svelte';
 	import { fly } from 'svelte/transition';
-	import { onMount } from 'svelte';
+	import { onMount, type Component } from 'svelte';
 
 	import CurrencyDollarIcon from 'phosphor-svelte/lib/CurrencyDollarIcon';
 	import MapPinIcon from 'phosphor-svelte/lib/MapPinIcon';
 	import UserIcon from 'phosphor-svelte/lib/UserIcon';
+	import ClockCounterClockwiseIcon from 'phosphor-svelte/lib/ClockCounterClockwiseIcon';
+	import StarIcon from 'phosphor-svelte/lib/StarIcon';
 
-	import { mapState, setCurrentDataset, setDisplayMode } from '$lib/components/map/mapStore.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
 	import { selectedCountryStore } from '$lib/core/stores/store.svelte';
 	import Demographics from './demographics.svelte';
@@ -22,6 +23,11 @@
 	import { goto } from '$app/navigation';
 	import { OPTION_BY_KEY } from '$lib/assets/analysisOptions';
 	import { savedStore, type SavedView } from '$lib/core/stores/savedStore.svelte';
+	import ChartBarIcon from 'phosphor-svelte/lib/ChartBarIcon';
+	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
+	import MapTrifoldIcon from 'phosphor-svelte/lib/MapTrifoldIcon';
+	import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
+	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
 
 	// -- Props ------------------
 	let { visible, selectedSidebar = 'countryInfo', onDragStart = null } = $props();
@@ -116,7 +122,11 @@
 			day: 'numeric'
 		});
 	}
-	const MODE_ICON: Record<string, string> = { line: '📈', bar: '📊', map: '🗺️' };
+	const MODE_ICON: Record<string, Component> = {
+		line: TrendUpIcon,
+		bar: ChartBarIcon,
+		map: MapTrifoldIcon
+	};
 </script>
 
 {#if visible}
@@ -186,13 +196,13 @@
 					<!-- Sub-tabs -->
 					<div class="sub-tabs">
 						<button class:stab-active={savedTab === 'views'} onclick={() => (savedTab = 'views')}>
-							⭐ Saved views
+							<StarIcon size="12" /> Saved views
 						</button>
 						<button
 							class:stab-active={savedTab === 'history'}
 							onclick={() => (savedTab = 'history')}
 						>
-							🕐 Chat history
+							<ClockCounterClockwiseIcon size="12" /> Chat history
 						</button>
 					</div>
 
@@ -205,15 +215,18 @@
 						{:else}
 							<div class="item-list">
 								{#each views as v (v.id)}
+									{@const MODE_ICON_Component = MODE_ICON[v.mode]}
 									<div class="item-card">
 										<div class="item-top">
-											<span class="mode-ico">{MODE_ICON[v.mode] ?? '📊'}</span>
+											<span class="mode-ico">
+												<MODE_ICON_Component size="12" />
+											</span>
 											<span class="item-label">{v.label}</span>
 											<button
 												class="btn-del"
 												title="Delete"
 												disabled={deletingId === v.id}
-												onclick={() => savedStore.deleteView(v.id)}>🗑</button
+												onclick={() => savedStore.deleteView(v.id)}><TrashIcon size="12" /></button
 											>
 										</div>
 										<div class="item-meta">
@@ -222,7 +235,9 @@
 										</div>
 										<div class="item-foot">
 											<span class="muted-sm">{fmtDate(v.createdAt)}</span>
-											<button class="btn-show" onclick={() => replaySaved(v)}>Show ↓</button>
+											<button class="btn-show" onclick={() => replaySaved(v)}
+												>Show <CaretDownIcon size="12" /></button
+											>
 										</div>
 									</div>
 								{/each}
@@ -235,7 +250,7 @@
 					{:else}
 						<div class="item-list">
 							{#each chats as msg (msg.id)}
-								<div class="item-card" class:item-has-q={!!msg.parsedQuery}>
+								<div class="item-card">
 									<div class="item-label">{msg.userMessage}</div>
 									{#if msg.parsedQuery}
 										<div class="item-meta">
@@ -248,7 +263,9 @@
 										<div class="item-foot-actions">
 											{#if msg.savedViewId}<span class="badge-saved">⭐ saved</span>{/if}
 											{#if msg.parsedQuery}
-												<button class="btn-show" onclick={() => replayChat(msg)}>Replay ↓</button>
+												<button class="btn-show" onclick={() => replayChat(msg)}
+													>Replay <CaretDownIcon size="12" /></button
+												>
 											{/if}
 										</div>
 									</div>
@@ -355,6 +372,12 @@
 		border-top: 2px solid #000;
 	}
 
+	@media (max-width: 768px) {
+		:global(.topicSection) {
+			padding-inline: 0.4rem;
+		}
+	}
+
 	/* Sub-tabs */
 	.sub-tabs {
 		display: flex;
@@ -363,6 +386,9 @@
 		padding-bottom: 4px;
 	}
 	.sub-tabs button {
+		display: flex;
+		align-items: center;
+		gap: 4px;
 		padding: 6px 12px;
 		border: none;
 		background: transparent;
@@ -395,9 +421,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 5px;
-	}
-	.item-has-q {
-		border-left: 3px solid #0ea5e9;
 	}
 	.item-top {
 		display: flex;
@@ -442,6 +465,9 @@
 		cursor: pointer;
 	}
 	.btn-show {
+		display: flex;
+		gap: 4px;
+		align-items: center;
 		background: #eff6ff;
 		border: 1px solid #bfdbfe;
 		color: #1d4ed8;
@@ -484,5 +510,8 @@
 		min-height: 480px;
 		border-radius: 10px;
 		overflow: hidden;
+		margin-bottom: 4rem;
+		border: 1px solid #e5e7eb;
+		border-radius: 12px;
 	}
 </style>

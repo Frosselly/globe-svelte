@@ -1,7 +1,6 @@
 <script lang="ts">
 	import '../globals.css';
 
-	import favicon from '$lib/assets/favicon.svg';
 	import globeIcon from '$lib/assets/globe-icon.svg';
 	import CountrySearch from '$lib/components/CountrySearch/CountrySearch.svelte';
 	import { setSelectedSidebar, sidebarState } from '$lib/core/stores/store.svelte.js';
@@ -14,7 +13,8 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={globeIcon} />
+	<title>Project Earth</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 	<link href="https://fonts.googleapis.com/css2?family=Metrophobic&display=swap" rel="stylesheet" />
@@ -23,13 +23,12 @@
 <header>
 	<nav>
 		<a href="/"> <img class="icon" src={globeIcon} alt="" /></a>
-		<div class="countrySearch">
-			<CountrySearch
-				onSelect={(country) => {
-					// // console.log(country.cca2, country.name.common);
-				}}
-			/>
-		</div>
+
+		<CountrySearch
+			onSelect={(country) => {
+				// // console.log(country.cca2, country.name.common);
+			}}
+		/>
 	</nav>
 	<nav>
 		{#if data.user?.isAdmin}
@@ -72,17 +71,19 @@
 		}
 		* {
 			margin: 0;
+			font-family: 'Metrophobic', sans-serif;
+			/*font-weight: 300;*/
 		}
 		h3 {
 			text-decoration: underline;
 		}
 		.btn {
+			/*font-family: 'Metrophobic', sans-serif;*/
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
 			gap: 6px;
 			border-radius: 8px;
-			font-family: inherit;
 			font-weight: 500;
 			font-size: 14px;
 			line-height: 1;
@@ -96,7 +97,8 @@
 				transform 80ms ease,
 				opacity 120ms ease;
 			white-space: nowrap;
-			user-select: none;
+			/*user-select: none;*/
+			color: var(--color-background);
 		}
 		.btn:active {
 			transform: scale(0.97);
@@ -149,6 +151,13 @@
 			background: #f5f5f5;
 		}
 	}
+	@media (max-width: 768px) {
+		:global {
+			h2 {
+				font-size: 1.2rem;
+			}
+		}
+	}
 	.save-selected {
 		background: #8ee1fa;
 	}
@@ -159,10 +168,10 @@
 		padding: 2px;
 	}
 
-	.countrySearch {
+	/*.countrySearch {
 		max-height: 24px;
 		margin-bottom: 8px;
-	}
+	}*/
 	header {
 		z-index: 2;
 		display: flex;
@@ -170,7 +179,7 @@
 		align-items: center;
 		padding: 0.6rem 1rem;
 		padding-top: 1rem;
-		min-height: 3dvh;
+		max-height: 82px;
 		font-size: 1.3rem;
 
 		border-bottom: black solid 1px;

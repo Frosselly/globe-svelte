@@ -14,7 +14,10 @@
 	import ScalesIcon from 'phosphor-svelte/lib/ScalesIcon';
 	import TruckIcon from 'phosphor-svelte/lib/TruckIcon';
 	import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
+	import ChartLineIcon from 'phosphor-svelte/lib/ChartLineIcon';
+
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 
 	// All data comes from cd.economy - one line, reactive, null-safe
 	// const e = $derived(cd.economy);
@@ -28,11 +31,11 @@
 </script>
 
 <section class="topicSection" id="economy">
-	<CollapsibleTopic topicName="Economy">
+	<CollapsibleTopic topicName="Economy" Icon={ChartLineIcon} bgColor={TOPIC_COLORS.economy}>
 		<div class="flex-col">
 			<!-- GDP trend - the one "main" indicator with graph -->
 			<div class="flex-row">
-				<div class="card flex-col flex">
+				<div class="card flex-col flex" style="max-width: 16rem;">
 					<div class="text-gray bold">
 						GDP Trend
 						<HistoryBadge />

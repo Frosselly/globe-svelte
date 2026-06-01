@@ -47,6 +47,7 @@
 	let valueData: any = $state(null);
 	// let countryOutlinesJson: any = $state(null);
 	let interactionsSetup = false;
+	let mapSelectedCountry: any = $state(null);
 
 	let countryGeneralInfo = $state({
 		flag: '🇯🇵',
@@ -75,6 +76,30 @@
 				loadDataset(null, mode);
 			}
 		});
+	});
+	$effect(() => {
+		if (!map || !mapReady) return;
+		if (
+			selectedCountryStore.country &&
+			selectedCountryStore.country.iso2 &&
+			mapSelectedCountry !== selectedCountryStore.country.iso2
+		) {
+			if (mapSelectedCountry)
+				map.setFeatureState({ source: 'countries', id: mapSelectedCountry }, { selected: false });
+			mapSelectedCountry = selectedCountryStore.country.iso2 ?? '';
+			map.setFeatureState({ source: 'countries', id: mapSelectedCountry }, { selected: true });
+			// map.flyTo({
+			// 	center: selectedCountryStore.country.latlng,
+			// 	zoom,
+			// 	speed: 0.6,
+			// 	curve: 1.4,
+			// 	essential: true
+			// });
+		}
+		if (!selectedCountryStore.country) {
+			mapSelectedCountry = '';
+			map.setFeatureState({ source: 'countries', id: mapSelectedCountry }, { selected: false });
+		}
 	});
 
 	onMount(async () => {
@@ -307,7 +332,9 @@
 				deck = null;
 				mapState.deckInstance = null;
 			}
-
+			const label =
+				analysisOptions.find((o) => o.key === mapState.currentDataset)?.name ??
+				mapState.currentDataset;
 			if (mode === 'none') {
 				setupMapLayers(map, [0.5, 0]);
 				setupMapInteractionsOnce();
@@ -318,9 +345,7 @@
 					return;
 				}
 				const colorExpression = createColorExpression(scale);
-				const label =
-					analysisOptions.find((o) => o.key === mapState.currentDataset)?.name ??
-					mapState.currentDataset;
+
 				setupFlatDisplay(map, colorExpression, label);
 				setupMapInteractionsOnce();
 
@@ -336,7 +361,7 @@
 				if (map.getLayer('state-borders'))
 					map.setLayoutProperty('state-borders', 'visibility', 'none');
 
-				const newDeck = setupColumnsDisplay(map, geoData, valueData, scale);
+				const newDeck = setupColumnsDisplay(map, geoData, valueData, scale, label);
 				deck = newDeck;
 				mapState.deckInstance = newDeck;
 			}

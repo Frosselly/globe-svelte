@@ -1,4 +1,7 @@
 export function formatLargeNumbers(num: number, toFixed: number = 2): string {
+	if (!num) {
+		return '0';
+	}
 	const scales = [
 		{ value: 1e12, label: 'T' },
 		{ value: 1e9, label: 'B' },

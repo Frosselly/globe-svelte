@@ -30,6 +30,8 @@ import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { getIndicators, type Indicator } from '$lib/server/worldbank/indicators';
+import { checkAndIncrementUsage } from '$lib/server/db/rateLimit';
+import { AppError } from '$lib/server/errors';
 
 // -- AI schema -----------------
 
@@ -225,6 +227,14 @@ export const POST: RequestHandler = async (event) => {
 	if (!prompt) return json({ error: 'prompt required' }, { status: 400 });
 
 	const user = await getUserFromEvent(event);
+	if (!user) return json({ error: 'not logged in' }, { status: 400 });
+
+	const limit = await checkAndIncrementUsage(user?.id);
+	if (!limit.allowed) {
+		const msg = `You've reached your query limit. Try again in ${limit.retryAfter}s.`;
+		// throw new AppError(msg, 429);
+		return json({ error: msg }, { status: 400 });
+	}
 
 	// -- 1. AI parse -----------
 	const parsed = await parseWithAI(prompt);
@@ -245,7 +255,7 @@ export const POST: RequestHandler = async (event) => {
 	if (aiCodeValid) {
 		// Fast path — AI nailed it
 		return await fetchAndRespond({
-			event,
+			prompt,
 			user,
 			parsed,
 			validCode: parsed.indicator,
@@ -295,7 +305,7 @@ export const POST: RequestHandler = async (event) => {
 		const c = validCandidates[0]!;
 		// console.log(`[query]  → auto-resolved to "${c.id}" (${c.name})`);
 		return await fetchAndRespond({
-			event,
+			prompt,
 			user,
 			parsed,
 			validCode: c.id,
@@ -338,13 +348,13 @@ export const POST: RequestHandler = async (event) => {
 // -- Shared fetch + respond helper --------------------
 
 async function fetchAndRespond({
-	event,
+	prompt, // ← was: event
 	user,
 	parsed,
 	validCode,
 	validName
 }: {
-	event: Parameters<RequestHandler>[0];
+	prompt: string; // ← was: event: Parameters<RequestHandler>[0]
 	user: Awaited<ReturnType<typeof getUserFromEvent>>;
 	parsed: ParsedQuery;
 	validCode: string;
@@ -369,13 +379,7 @@ async function fetchAndRespond({
 			.insert(chatMessages)
 			.values({
 				userId: user.id,
-				userMessage:
-					(
-						await event.request
-							.clone()
-							.json()
-							.catch(() => ({}))
-					)?.prompt ?? '',
+				userMessage: prompt,
 				botReply: `Showing ${validName} for ${trimmed.map((s) => s.country).join(', ')}`,
 				parsedQuery: {
 					indicator: validCode,

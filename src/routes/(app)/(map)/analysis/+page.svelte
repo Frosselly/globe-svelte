@@ -16,12 +16,18 @@
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 	import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
 	import TableIcon from 'phosphor-svelte/lib/TableIcon';
+	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
+	import XIcon from 'phosphor-svelte/lib/XIcon';
+
 	import AGTable from '$lib/components/table/AGTable.svelte';
 	import type { PageData } from './$types';
 	import { resolve } from '$app/paths';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { savedStore } from '$lib/core/stores/savedStore.svelte';
 	import { onMount } from 'svelte';
+	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
+	import { formatLargeNumbers } from '$lib/core/utils/utils';
+	import { calculateColorScale } from '$lib/components/map/mapUtils';
 
 	let { data }: { data: PageData } = $props();
 
@@ -35,6 +41,15 @@
 		Number(page.url.searchParams.get('year') ?? new Date().getFullYear())
 	);
 	const currentCountry = $derived(page.url.searchParams.get('country') ?? null);
+	const iso2 = $derived(selectedCountryStore.country?.iso2);
+	const colorScaleRows = $derived(
+		data.rows.filter((d) => d.value != null).map((d) => ({ value: d.value ?? 0 }))
+	);
+	const stops = $derived(calculateColorScale(colorScaleRows));
+
+	// gray = zero bucket, then 4 colors low→high
+	const grayColor = '#b0b0b0';
+	const rangeColors = ['#1a9850', '#91cf60', '#fee090', '#fc8d59'];
 
 	// -- Sync map-selected country → URL when analysis page first mounts --------
 
@@ -47,18 +62,17 @@
 	//
 	onMount(() => {
 		if (currentCountry) {
-			selectedCountryStore.selectCountry(currentCountry.toUpperCase());
+			// selectedCountryStore.selectCountry(currentCountry.toUpperCase());
+			handleSelectCountry(currentCountry.toUpperCase());
 		}
 	});
 
 	$effect(() => {
-		const iso2 = selectedCountryStore.country?.iso2;
-
 		if (!iso2) return;
 
 		if (currentCountry === iso2) return;
 
-		navigate({ country: iso2 });
+		handleSelectCountry(iso2);
 	});
 
 	$effect(() => {
@@ -104,7 +118,7 @@
 
 	function handleSelectCountry(iso2: string) {
 		selectedCountryStore.selectCountry(iso2);
-		navigate({ country: iso2, view: 'line' });
+		navigate({ country: iso2, view: currentView });
 	}
 
 	// -- Combobox --------------
@@ -148,8 +162,8 @@
 	const VIEW_OPTIONS = [
 		{ icon: TrendUpIcon, text: 'Trend', value: 'line' as const },
 		{ icon: ChartBarHorizontalIcon, text: 'Compare', value: 'bar' as const },
-		{ icon: MapTrifoldIcon, text: 'Map', value: 'map' as const },
-		{ icon: TableIcon, text: 'Table', value: 'table' as const }
+		{ icon: MapTrifoldIcon, text: 'Map', value: 'map' as const }
+		// { icon: TableIcon, text: 'Table', value: 'table' as const }
 	];
 
 	const lineDisabled = $derived(!data.option.timeSeries);
@@ -221,6 +235,16 @@
 		setIndicatorRows([]);
 		setDisplayMode('none');
 	}
+
+	function formatRange(i: number): string {
+		if (!stops?.length) return '';
+		if (i === 0) return '0';
+		// i=1 → (0, stops[0]], i=2 → (stops[0], stops[1]], etc.
+		const from = i === 1 ? 0 : stops[i - 2];
+		const to = stops[i - 1];
+		if (from === to) return formatLargeNumbers(to, 0);
+		return `${formatLargeNumbers(from, 0)} – ${formatLargeNumbers(to, 0)}`;
+	}
 </script>
 
 <!-- -- Template ----------- -->
@@ -237,25 +261,20 @@
 				<div class="combobox-input-wrap">
 					<input {...combobox.input} class="combobox-input" placeholder="Search indicator…" />
 					<button {...combobox.trigger} class="combobox-chevron" class:open={combobox.open}>
-						<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-							<path
-								d="M2 4l4 4 4-4"
-								stroke="currentColor"
-								stroke-width="1.5"
-								stroke-linecap="round"
-							/>
-						</svg>
+						<CaretDownIcon size="12" />
 					</button>
 				</div>
 				<div {...combobox.content} class="combobox-menu">
-					{#each Object.entries(grouped) as [topic, opts]}
+					{#each Object.entries(grouped) as [topic, opts] (topic)}
 						<div class="combobox-group-label">{topic}</div>
 						{#each opts as opt (opt.key)}
 							<div {...combobox.getOption(opt.key)} class="combobox-option">
 								<span>{opt.label}</span>
 								<span class="option-right">
 									{#if opt.timeSeries}<span class="ts-badge">time series</span>{/if}
-									{#if combobox.isSelected(opt.key)}<span class="check">✓</span>{/if}
+									{#if combobox.isSelected(opt.key)}<span class="check"
+											><CheckIcon size="12" /></span
+										>{/if}
 								</span>
 							</div>
 						{/each}
@@ -275,7 +294,9 @@
 					{saving ? 'Saving…' : 'Save view'}
 				</button>
 			{/if}
-			<a href={resolve('/')} class="close-btn" title="Close" onclick={() => onClose()}>✕</a>
+			<a href={resolve('/')} class="close-btn" title="Close" onclick={() => onClose()}
+				><XIcon size="15" /></a
+			>
 		</div>
 	</div>
 
@@ -283,7 +304,7 @@
 
 	<!-- View tabs -->
 	<div class="options">
-		{#each VIEW_OPTIONS as opt}
+		{#each VIEW_OPTIONS as opt ('view-tabs-' + opt.value)}
 			<button
 				class="option"
 				class:selected={currentView === opt.value}
@@ -298,7 +319,12 @@
 		{#if currentCountry}
 			<span class="country-badge">
 				{data.rows.find((r) => r.iso2 === currentCountry)?.name ?? currentCountry}
-				<button onclick={() => navigate({ country: null })} title="Clear">×</button>
+				<button
+					onclick={() => {
+						handleSelectCountry(null);
+					}}
+					title="Clear">×</button
+				>
 			</span>
 		{/if}
 	</div>
@@ -329,6 +355,23 @@
 					>
 				</div>
 				<p class="map-hint">{data.option.label} colour-coded on the map.</p>
+			</div>
+			<div class="legend">
+				<div class="legend-title">{currentIndicator}</div>
+
+				{#each rangeColors as color, i}
+					<div class="legend-item">
+						<div class="legend-color" style:background={color}></div>
+						<span class="legend-label">{formatRange(i + 1)}</span>
+					</div>
+				{/each}
+
+				<div class="legend-divider"></div>
+
+				<div class="legend-item">
+					<div class="legend-color" style:background="#b0b0b0"></div>
+					<span class="legend-label">No value</span>
+				</div>
 			</div>
 		{:else if currentView === 'table'}
 			<!-- <AGTable columnDefs=
@@ -602,7 +645,53 @@ rowData/> -->
 		background: transparent !important;
 		pointer-events: none;
 	}
+	.legend {
+		margin-top: 0.8rem;
+		margin-left: 0.2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 12px 14px;
+		width: 10rem;
+		background: var(--color-background);
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+		pointer-events: auto;
+	}
 
+	.legend-title {
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-muted, #888);
+		margin-bottom: 6px;
+	}
+
+	.legend-divider {
+		height: 1px;
+		background: var(--color-border, #e5e5e5);
+		margin: 4px 0 6px;
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.legend-color {
+		width: 14px;
+		height: 14px;
+		border-radius: 3px;
+		flex-shrink: 0;
+	}
+
+	.legend-label {
+		font-size: 0.72rem;
+		color: var(--color-text, #333);
+		white-space: nowrap;
+	}
 	.map-controls {
 		display: flex;
 		flex-direction: column;

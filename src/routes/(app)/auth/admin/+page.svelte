@@ -193,7 +193,6 @@
 		margin: 40px auto;
 		width: 95%;
 		max-width: 1200px;
-		font-family: sans-serif;
 	}
 	.header h2 {
 		margin-bottom: 20px;

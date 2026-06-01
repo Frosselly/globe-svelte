@@ -7,6 +7,7 @@
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
+	import { TOPIC_COLORS } from '$lib/core/globals';
 
 	const { c }: { c: FullCountry } = $props();
 
@@ -64,7 +65,7 @@
 </script>
 
 <section class="topicSection" id="demographics">
-	<CollapsibleTopic topicName="Demographics">
+	<CollapsibleTopic topicName="Demographics" Icon={CityIcon} bgColor={TOPIC_COLORS.demographics}>
 		<div class="flex-col">
 			<div class="flex-row">
 				<div class="card flex-col flex">
@@ -192,13 +193,17 @@
 					{#each c.ethnicGroups as group}
 						<div class="between">
 							<div class="text-gray align-center">{group.group}</div>
-							<div class="bold">{group.percentage}%</div>
+							{#if group.percentage}
+								<div class="bold">{group.percentage}%</div>
+							{/if}
 						</div>
 					{/each}
 				{/if}
+
+				<hr />
 				<div class="between">
 					<div class="text-gray align-center"><GraduationCapIcon size={18} /> Literacy Rate</div>
-					<div class="bold">{c.literacy ? c.literacy[0].value : '-'}%</div>
+					<div class="bold">{c.literacy ? formatLargeNumbers(c.literacy[0].value, 2) : '-'}%</div>
 				</div>
 			</div>
 		</div>

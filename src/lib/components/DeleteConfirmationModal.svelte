@@ -96,7 +96,6 @@
 		background: var(--color-background, #fff);
 		border: 0.5px solid rgba(0, 0, 0, 0.12);
 		border-radius: 28px;
-		font-family: 'Sora', sans-serif;
 		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
 	}
 
@@ -137,7 +136,6 @@
 
 	.modal-sub {
 		font-size: 12px;
-		font-family: 'DM Mono', monospace;
 		color: #aaa;
 		letter-spacing: 0.04em;
 		text-align: center;
@@ -160,7 +158,6 @@
 	.delete-btn,
 	.cancel-btn {
 		width: 100%;
-		font-family: 'Sora', sans-serif;
 		font-size: 13px;
 		font-weight: 500;
 		border-radius: 14px;

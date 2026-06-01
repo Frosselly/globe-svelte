@@ -1,30 +1,15 @@
 <script lang="ts">
-	import { modeState, selectedCountryStore, sidebarState } from '$lib/core/stores/store.svelte.js';
+	import { selectedCountryStore, sidebarState } from '$lib/core/stores/store.svelte.js';
 	import TopicsSidebar from '$lib/components/sidebar/topicsSidebar.svelte';
 	import Map from '$lib/components/map/map.svelte';
-	import { page } from '$app/state';
-	import { mapState } from '$lib/components/map/mapStore.svelte.js';
 
 	let { data, children } = $props();
-	const selectedCountryNav = $derived(page.url.searchParams.get('country'));
-	let selectedMode = $derived(modeState.selected);
-
-	// $effect(() => {
-	// 	// console.log('data.user', data?.user);
-	// });
 
 	let topicsVisible = $state(false);
 
 	let lng = $state(-5.0684);
 	let lat = $state(26.5199);
 	let zoom = $state(2.67);
-
-	// $effect(() => {
-	// 	const iso2 = selectedCountryNav?.toUpperCase();
-	// 	if (iso2 && selectedCountryStore.country?.iso2?.toUpperCase() !== iso2) {
-	// 		selectedCountryStore.selectCountry(iso2);
-	// 	}
-	// });
 
 	// Lazy-load history once a snapshot is ready (but not loading)
 	$effect(() => {
@@ -38,8 +23,7 @@
 	});
 
 	// -- Mobile drag --------
-	// sidebarHeightVh: how tall the sidebar is as % of viewport height
-	let sidebarHeightVh = $state(45); // default: sidebar takes 45vh on mobile
+	let sidebarHeightVh = $state(45);
 	let isDragging = false;
 	let dragStartY = 0;
 	let dragStartHeight = 0;
@@ -56,7 +40,6 @@
 
 	function onDragMove(e: PointerEvent) {
 		if (!isDragging) return;
-		// Moving UP increases sidebar height
 		const deltaVh = -((e.clientY - dragStartY) / window.innerHeight) * 100;
 		sidebarHeightVh = Math.min(85, Math.max(15, dragStartHeight + deltaVh));
 	}
@@ -65,20 +48,13 @@
 		isDragging = false;
 		window.removeEventListener('pointermove', onDragMove);
 		window.removeEventListener('pointerup', onDragEnd);
-		// Tell MapLibre to re-measure its container
-		// mapRef?.resize();
 	}
-
-	// Map instance ref so we can call resize()
-	let mapRef: { resize: () => void } | null = $state(null);
 </script>
 
 <main>
 	<article class="window" style="--sidebar-h: {sidebarHeightVh}vh">
-		<!-- Persistent map -->
 		<div class="main-content map-layer">
 			<Map
-				bind:this={mapRef}
 				toggleTopics={() => {
 					topicsVisible = !topicsVisible;
 				}}
@@ -90,15 +66,14 @@
 			/>
 
 			<div class="mapInfo">
-				Longitude: {lng.toFixed(4)}
-				| Latitude: {lat.toFixed(4)}
-				| Zoom: {zoom.toFixed(2)}
+				<span><strong>Lon</strong> {lng.toFixed(4)}</span>
+				<span><strong>Lat</strong> {lat.toFixed(4)}</span>
+				<span><strong>Zoom</strong> {zoom.toFixed(2)}</span>
 			</div>
-		</div>
 
-		<!-- Route overlay area -->
-		<div class="main-content analysis-layer">
-			{@render children?.()}
+			<div class="analysis-layer">
+				{@render children?.()}
+			</div>
 		</div>
 
 		<!-- Persistent sidebar -->
@@ -110,7 +85,7 @@
 
 <style>
 	main {
-		max-height: 95%;
+		max-height: calc(100vh - 82px);
 		height: 100%;
 
 		display: flex;
@@ -134,27 +109,21 @@
 		min-width: 0;
 	}
 
-	/* Map always fills available space next to sidebar */
 	.map-layer {
 		flex: 1 1 0;
-		position: relative; /* for mapInfo positioning */
+		position: relative;
 	}
 
-	/* Analysis sits on top of the map absolutely */
 	.analysis-layer {
 		position: absolute;
-		top: 0;
-		left: 0;
-		right: 40rem; /* same width as sidebar, so it doesn't overlap it */
-		bottom: 0;
+		inset: 0;
 		z-index: 10;
 		pointer-events: none;
-		/* background-color: var(--color-background); */
 	}
 
 	.sidebar {
 		z-index: 1;
-		width: 40rem;
+		width: 41rem;
 		min-width: 35rem;
 		height: 100%;
 		flex-shrink: 0;
@@ -163,18 +132,31 @@
 	}
 
 	.mapInfo {
-		background-color: rgba(255, 255, 255, 0.9);
-		color: #0e0e0e;
-		padding: 6px 12px;
-		font-family: monospace;
-		z-index: 1;
 		position: absolute;
-		top: 0;
-		left: 0;
-		margin: 12px;
-		border-radius: 4px;
+		top: 12px;
+		left: 12px;
+
+		display: flex;
+		gap: 12px;
+		align-items: center;
+
+		padding: 8px 12px;
+		border-radius: 999px;
+
+		background: rgba(255, 255, 255, 0.85);
+		backdrop-filter: blur(12px);
+
+		font-size: 13px;
+		color: #222;
+
+		box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 	}
 
+	.mapInfo strong {
+		font-weight: 600;
+		color: #666;
+		margin-right: 4px;
+	}
 	@media (max-width: 1200px) {
 		.window {
 			flex-direction: column;
@@ -184,22 +166,17 @@
 			width: 100%;
 			min-width: 100%;
 			max-width: 100%;
-			height: var(--sidebar-h, 45vh); /* ← driven by drag */
+			height: var(--sidebar-h, 45vh);
 			flex-shrink: 0;
 			position: relative;
-			z-index: 20; /* above map */
+			z-index: 20;
 		}
 
 		.map-layer {
 			width: 100%;
-			flex: 1 1 0; /* takes remaining space */
+			flex: 1 1 0;
 			min-height: 15vh;
 			height: auto;
-		}
-
-		.analysis-layer {
-			right: 0;
-			bottom: var(--sidebar-h, 45vh); /* stays above sidebar */
 		}
 	}
 </style>

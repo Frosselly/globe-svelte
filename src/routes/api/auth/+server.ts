@@ -7,6 +7,7 @@ import {
 	setSessionCookie,
 	clearSessionCookie
 } from '$lib/server/user';
+import { validateEmail, validatePassword } from '$lib/server/authValidation';
 
 export const POST: RequestHandler = async (event) => {
 	const body = await event.request.json().catch(() => null);
@@ -18,18 +19,38 @@ export const POST: RequestHandler = async (event) => {
 		// -- Register ----------
 		case 'register': {
 			const { email, password, displayName } = body;
-			if (!email || !password)
-				return json({ error: 'email and password required' }, { status: 400 });
+
+			const emailError = validateEmail(email);
+			if (emailError) {
+				return json({ error: emailError }, { status: 400 });
+			}
+
+			const passwordError = validatePassword(password, true);
+			if (passwordError) {
+				return json({ error: passwordError }, { status: 400 });
+			}
+
 			try {
-				const user = await registerUser(email, password, displayName);
-				// Auto-login after register
-				const loginResult = await loginUser(email, password);
-				if (loginResult) setSessionCookie(event, loginResult.token);
+				const normalizedEmail = email.trim().toLowerCase();
+
+				const user = await registerUser(
+					normalizedEmail,
+					password,
+					displayName?.trim() || undefined
+				);
+
+				const loginResult = await loginUser(normalizedEmail, password);
+
+				if (loginResult) {
+					setSessionCookie(event, loginResult.token);
+				}
+
 				return json({ user });
 			} catch (e: any) {
 				if (e.message?.includes('unique') || e.code === '23505') {
 					return json({ error: 'Email already in use' }, { status: 409 });
 				}
+
 				console.error(e);
 				return json({ error: 'Registration failed' }, { status: 500 });
 			}

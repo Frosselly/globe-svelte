@@ -53,8 +53,8 @@
 	}
 
 	body {
-		font-family:
-			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+		/*font-family:
+			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;*/
 		background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
 		min-height: 100vh;
 	}
