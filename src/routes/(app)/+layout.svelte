@@ -23,13 +23,12 @@
 <header>
 	<nav>
 		<a href="/"> <img class="icon" src={globeIcon} alt="" /></a>
-		<div class="countrySearch">
-			<CountrySearch
-				onSelect={(country) => {
-					// // console.log(country.cca2, country.name.common);
-				}}
-			/>
-		</div>
+
+		<CountrySearch
+			onSelect={(country) => {
+				// // console.log(country.cca2, country.name.common);
+			}}
+		/>
 	</nav>
 	<nav>
 		{#if data.user?.isAdmin}
@@ -152,6 +151,13 @@
 			background: #f5f5f5;
 		}
 	}
+	@media (max-width: 768px) {
+		:global {
+			h2 {
+				font-size: 1.2rem;
+			}
+		}
+	}
 	.save-selected {
 		background: #8ee1fa;
 	}
@@ -162,10 +168,10 @@
 		padding: 2px;
 	}
 
-	.countrySearch {
+	/*.countrySearch {
 		max-height: 24px;
 		margin-bottom: 8px;
-	}
+	}*/
 	header {
 		z-index: 2;
 		display: flex;

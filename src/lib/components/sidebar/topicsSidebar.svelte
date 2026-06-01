@@ -372,6 +372,12 @@
 		border-top: 2px solid #000;
 	}
 
+	@media (max-width: 768px) {
+		:global(.topicSection) {
+			padding-inline: 0.4rem;
+		}
+	}
+
 	/* Sub-tabs */
 	.sub-tabs {
 		display: flex;

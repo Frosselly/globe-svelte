@@ -65,7 +65,7 @@
 </script>
 
 <section class="topicSection" id="demographics">
-	<CollapsibleTopic topicName="Demographics" bgColor={TOPIC_COLORS.demographics}>
+	<CollapsibleTopic topicName="Demographics" Icon={CityIcon} bgColor={TOPIC_COLORS.demographics}>
 		<div class="flex-col">
 			<div class="flex-row">
 				<div class="card flex-col flex">

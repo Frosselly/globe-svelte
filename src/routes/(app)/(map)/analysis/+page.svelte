@@ -71,6 +71,7 @@
 		if (!iso2) return;
 
 		if (currentCountry === iso2) return;
+
 		handleSelectCountry(iso2);
 	});
 

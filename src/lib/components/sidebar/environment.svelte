@@ -11,6 +11,7 @@
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
 	import { formatLargeNumbers, formatText } from '$lib/core/utils/utils';
 	import { TOPIC_COLORS } from '$lib/core/globals';
+	import LeafIcon from 'phosphor-svelte/lib/LeafIcon';
 	const { c }: { c: FullCountry } = $props();
 
 	const props2 = {
@@ -42,7 +43,7 @@
 </script>
 
 <section class="topicSection" id="environment">
-	<CollapsibleTopic topicName="Environment" bgColor={TOPIC_COLORS.environment}>
+	<CollapsibleTopic topicName="Environment" Icon={LeafIcon} bgColor={TOPIC_COLORS.environment}>
 		<div class="flex-col">
 			<div class="card flex-col wide">
 				<div class="text-gray bold align-center">Environmental Performance Index</div>

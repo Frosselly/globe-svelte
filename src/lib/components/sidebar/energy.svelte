@@ -3,6 +3,8 @@
 	import ChartBarIcon from 'phosphor-svelte/lib/ChartBarIcon';
 	import FactoryIcon from 'phosphor-svelte/lib/FactoryIcon';
 	import LeafIcon from 'phosphor-svelte/lib/LeafIcon';
+	import LightningIcon from 'phosphor-svelte/lib/LightningIcon';
+
 	import TargetIcon from 'phosphor-svelte/lib/TargetIcon';
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import { formatLargeNumbers } from '$lib/core/utils/utils';
@@ -54,11 +56,11 @@
 </script>
 
 <section class="topicSection" id="energy">
-	<CollapsibleTopic topicName={'Energy'} bgColor={TOPIC_COLORS.energy}>
+	<CollapsibleTopic topicName="Energy" Icon={LightningIcon} bgColor={TOPIC_COLORS.energy}>
 		<div class="flex-col">
 			<div class="flex-row">
 				{#if e.renewableCurrent}
-					<div class="card flex-col flex">
+					<div class="card flex-col flex" style="max-width: 16rem;">
 						<div class="text-gray bold">Renewable Growth</div>
 						<br />
 						<div>

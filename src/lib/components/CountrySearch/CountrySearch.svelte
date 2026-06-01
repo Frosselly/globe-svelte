@@ -55,7 +55,9 @@
 <style>
 	.search-input {
 		/*font-family: 'Metrophobic', sans-serif;*/
-		width: 260px;
+		width: 100%;
+		max-width: 260px;
+		min-width: 155px;
 		padding: 8px 12px;
 		border: 1px solid #ccc;
 		border-radius: 4px;

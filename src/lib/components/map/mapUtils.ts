@@ -50,7 +50,10 @@ export function setupMapLayers(map: any, opacity: [number, number]) {
 		type: 'line',
 		source: 'countries',
 		layout: {},
-		paint: { 'line-color': '#627BC1', 'line-width': 2 },
+		paint: {
+			'line-color': '#627BC1',
+			'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2, 0]
+		},
 		filter: ['!=', ['get', 'iso_a2_eh'], 'AQ']
 	});
 }
@@ -145,6 +148,7 @@ function createLabel(countryName: string, labelName: string, value: string) {
 		activePopup.remove();
 		activePopup = null;
 	}
+
 	const componentDom = document.createElement('div');
 	activePopup = mount(AnalysisMapInfoModal, {
 		target: componentDom,
@@ -190,7 +194,7 @@ function hexToRgb(hex: string, alpha: number = 200): [number, number, number, nu
 }
 
 export function getColumnColor(value: number, stops: number[]): [number, number, number, number] {
-	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59', '#d73027'];
+	const colorRamp = ['#1a9850', '#91cf60', '#fee090', '#fc8d59'];
 
 	// If the value is null or undefined
 	if (value == null) return [200, 200, 200, 200];
@@ -209,7 +213,13 @@ export function getColumnColor(value: number, stops: number[]): [number, number,
 	return hexToRgb(colorRamp[0]);
 }
 
-export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], stops: number[]) {
+export function setupColumnsDisplay(
+	map: any,
+	geoData: any,
+	valueData: any[],
+	stops: number[],
+	labelName: string
+) {
 	if (map.getLayer('state-fills')) map.removeLayer('state-fills');
 	if (map.getLayer('state-borders')) map.removeLayer('state-borders');
 	const b3 = Object.fromEntries(valueData.map((d: any) => [d.iso3, d]));
@@ -237,11 +247,12 @@ export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], st
 		console.warn('[columns] no data');
 		return null;
 	}
+	activePopup = new maplibregl.Popup({ closeButton: false, className: 'custom-popup', offset: 25 });
 	const layer = new ColumnLayer({
 		id: 'column-layer',
 		data: cols,
 		diskResolution: 12,
-		radius: 50000,
+		radius: 100000,
 		extruded: true,
 		getPosition: (d: any) => d.position,
 		getElevation: (d: any) => d.height,
@@ -255,6 +266,14 @@ export function setupColumnsDisplay(map: any, geoData: any, valueData: any[], st
 			blend: true
 		},
 		onHover: (i: any) => {
+			if (!i.object && activePopup) {
+				activePopup.remove();
+				activePopup = null;
+			}
+			if (i.object) {
+				createLabel(i.object.name, labelName, i.object.value);
+				activePopup.setLngLat(i.object.position).addTo(map);
+			}
 			map.getCanvas().style.cursor = i.object ? 'pointer' : '';
 		}
 	});

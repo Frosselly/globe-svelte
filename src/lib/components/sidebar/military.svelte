@@ -5,6 +5,8 @@
 	import TargetIcon from 'phosphor-svelte/lib/TargetIcon';
 	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
 	import WarehouseIcon from 'phosphor-svelte/lib/WarehouseIcon';
+	import ShieldIcon from 'phosphor-svelte/lib/ShieldIcon';
+
 	import CollapsibleTopic from '../CollapsibleTopic/CollapsibleTopic.svelte';
 	import type { FullCountry } from '$lib/core/stores/store.svelte';
 	import MediumGraph from '../mediumGraph.svelte';
@@ -53,10 +55,10 @@
 </script>
 
 <section class="topicSection" id="military">
-	<CollapsibleTopic topicName={'Military'} bgColor={TOPIC_COLORS.military}>
+	<CollapsibleTopic topicName={'Military'} Icon={ShieldIcon} bgColor={TOPIC_COLORS.military}>
 		<div class="flex-col">
 			<div class="flex-row">
-				<div class="card flex-col flex">
+				<div class="card flex-col flex" style="max-width: 16rem; min-width: 10rem;">
 					<div class="text-gray bold">Defense Budget</div>
 					<br />
 					{#if c.budgetCurrent}
