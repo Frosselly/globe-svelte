@@ -393,7 +393,7 @@ rowData/> -->
 	<hr />
 
 	<!-- Time slider -->
-	{#if data.history}
+	<!-- {#if data.history}
 		<div class="time-slider">
 			<button onclick={() => setYear(Math.max(MIN_YEAR, currentYear - 1))}>‹</button>
 			<span class="year-label">{MIN_YEAR}</span>
@@ -408,7 +408,7 @@ rowData/> -->
 			<button onclick={() => setYear(Math.min(MAX_YEAR, currentYear + 1))}>›</button>
 			<span class="year-current">{currentYear}</span>
 		</div>
-	{/if}
+	{/if} -->
 </div>
 
 <style>
