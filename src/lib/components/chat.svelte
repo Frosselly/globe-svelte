@@ -275,7 +275,7 @@
 
 	<!-- Message list -->
 	<div class="chat-list" bind:this={listEl}>
-		{#each messages as m, i (i)}
+		{#each messages as m, i}
 			{#if m.kind === 'text'}
 				<div class="msg {m.from}">
 					<span class="msg-text">{m.text}</span>
@@ -315,7 +315,7 @@
 					</div>
 
 					<div class="candidate-list">
-						{#each m.data.candidates as c, i (c.id + i)}
+						{#each m.data.candidates as c}
 							<button
 								class="candidate"
 								class:candidate-picked={m.data.pickedId === c.id}
@@ -361,39 +361,48 @@
 	.chat-root {
 		display: flex;
 		flex-direction: column;
-		background: #fff;
-
+		background: #ffffff;
+		color: #111827;
 		overflow: hidden;
 		height: 100%;
 		min-height: 420px;
 	}
+
 	.chat-root.expanded {
 		position: fixed;
 		inset: 4vh 4vw;
 		z-index: 1000;
-		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
 	}
 
+	/* Header */
 	.chat-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		padding: 12px 14px;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid #e5e7eb;
+		background: #ffffff;
 		flex-shrink: 0;
 	}
+
 	.chat-title {
 		font-weight: 700;
 		font-size: 0.98rem;
+		color: #111827;
 	}
+
 	.chat-sub {
 		font-size: 0.8rem;
+		color: #6b7280;
 	}
+
 	.btn-icon {
 		background: transparent;
 		border: none;
 		font-size: 1rem;
 		cursor: pointer;
+		color: #374151;
 	}
 
 	/* Message list */
@@ -404,20 +413,24 @@
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+		background: #ffffff;
 	}
 
-	/* Text bubbles */
+	/* Messages */
 	.msg {
 		display: flex;
 		max-width: 92%;
 	}
+
 	.msg.user {
 		align-self: flex-end;
 		flex-direction: row-reverse;
 	}
+
 	.msg.bot {
 		align-self: flex-start;
 	}
+
 	.msg-text {
 		padding: 8px 11px;
 		border: 1px solid #e5e7eb;
@@ -426,12 +439,17 @@
 		line-height: 1.45;
 		word-break: break-word;
 		white-space: pre-wrap;
+		background: #ffffff;
+		color: #111827;
 	}
+
 	.msg.user .msg-text {
-		border: 1px solid #e5e7eb;
+		background: #eff6ff;
+		border-color: #bfdbfe;
 	}
+
 	.msg.bot .msg-text {
-		background: rgba(255, 255, 255, 0.04);
+		background: #f9fafb;
 	}
 
 	/* Error */
@@ -439,8 +457,8 @@
 		display: flex;
 		gap: 8px;
 		align-items: center;
-		background: rgba(220, 38, 38, 0.12);
-		border: 1px solid #dc2626;
+		background: #fef2f2;
+		border: 1px solid #fecaca;
 		border-radius: 10px;
 		padding: 10px 12px;
 		color: #dc2626;
@@ -452,20 +470,22 @@
 
 	/* Chart card */
 	.chart-card {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.07);
+		background: #ffffff;
+		border: 1px solid #e5e7eb;
 		border-radius: 10px;
 		overflow: hidden;
 		flex-shrink: 0;
 	}
+
 	.chart-footer {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 6px 12px 8px;
-		border-top: 1px solid rgba(255, 255, 255, 0.04);
+		border-top: 1px solid #e5e7eb;
 		gap: 8px;
 	}
+
 	.btn-save {
 		display: flex;
 		gap: 4px;
@@ -479,34 +499,40 @@
 		cursor: pointer;
 		white-space: nowrap;
 	}
+
 	.btn-save:hover:not(:disabled) {
 		background: #dbeafe;
 	}
+
 	.btn-save:disabled {
 		opacity: 0.45;
 		cursor: default;
 	}
+
 	.saved-badge {
 		font-size: 0.75rem;
-		color: #6ee7b7;
+		color: #10b981;
 	}
+
 	.auth-hint {
 		font-size: 0.74rem;
-		color: #7ba3c8;
+		color: #6b7280;
 	}
+
 	.auth-hint a {
-		color: #38bdf8;
+		color: #0ea5e9;
 	}
+
 	.chart-src {
 		font-size: 0.72rem;
-		color: rgba(255, 255, 255, 0.26);
+		color: #9ca3af;
 		margin-left: auto;
 	}
 
 	/* Disambiguation card */
 	.disambig-card {
-		background: rgba(14, 165, 233, 0.06);
-		border: 1px solid rgba(14, 165, 233, 0.2);
+		background: #f0f9ff;
+		border: 1px solid #bae6fd;
 		border-radius: 10px;
 		padding: 12px;
 		display: flex;
@@ -515,83 +541,122 @@
 		align-self: flex-start;
 		max-width: 100%;
 	}
+
 	.disambig-header {
 		display: flex;
 		gap: 10px;
 		align-items: flex-start;
 	}
+
 	.disambig-icon {
 		font-size: 1.2rem;
 		flex-shrink: 0;
 		margin-top: 2px;
+		color: #0ea5e9;
 	}
+
 	.disambig-title {
 		font-size: 0.9rem;
 		font-weight: 600;
-		color: #e6eef8;
-	}
-	.disambig-sub {
-		font-size: 0.78rem;
-		color: #7ba3c8;
-		margin-top: 2px;
+		color: #0ea5e9;
 	}
 
+	.disambig-sub {
+		font-size: 0.78rem;
+		color: #6b7280;
+	}
+
+	/* Candidates */
+	/* Container list */
 	.candidate-list {
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
-	}
-	.candidate {
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		border-radius: 8px;
-		padding: 9px 12px;
-		cursor: pointer;
-		text-align: left;
-		transition:
-			background 0.15s,
-			border-color 0.15s;
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-	}
-	.candidate:hover:not(:disabled):not(.candidate-dimmed) {
-		background: rgba(14, 165, 233, 0.12);
-		border-color: rgba(14, 165, 233, 0.35);
-	}
-	.candidate-picked {
-		background: rgba(14, 165, 233, 0.16) !important;
-		border-color: #0ea5e9 !important;
-	}
-	.candidate-dimmed {
-		opacity: 0.35;
-		cursor: default;
-	}
-	.candidate:disabled {
-		cursor: default;
+		padding: 4px 0;
 	}
 
+	/* Base option */
+	.candidate {
+		background: #ffffff;
+		border: 1px solid #e5e7eb;
+		border-radius: 10px;
+		padding: 10px 12px;
+		cursor: pointer;
+		text-align: left;
+
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+
+		transition:
+			background 0.15s ease,
+			transform 0.12s ease,
+			box-shadow 0.15s ease;
+	}
+
+	/* Hover = lift, not color chaos */
+	.candidate:hover:not(:disabled):not(.candidate-dimmed) {
+		background: #f8fafc;
+		border-color: #bae6fd;
+		/*box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);*/
+		transform: translateY(-1px);
+	}
+
+	/* Active / selected */
+	.candidate-picked {
+		background: #eff6ff !important;
+		border-color: #0ea5e9 !important;
+		/*box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.15);*/
+	}
+
+	/* Disabled / dimmed state (more explicit than opacity only) */
+	.candidate-dimmed {
+		opacity: 0.55;
+		pointer-events: none;
+		filter: grayscale(0.2);
+	}
+
+	/* Title row */
 	.candidate-name {
-		font-size: 0.86rem;
-		color: #dce9f6;
-		font-weight: 500;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #0f172a;
 	}
+
+	/* Secondary info */
 	.candidate-src {
-		font-size: 0.73rem;
-		color: #5a7fa0;
+		font-size: 0.75rem;
+		color: #64748b;
 	}
+
+	/* Loading state */
 	.candidate-loading {
-		font-size: 0.73rem;
-		color: #38bdf8;
+		font-size: 0.75rem;
+		color: #0ea5e9;
 		font-style: italic;
 		margin-top: 2px;
 	}
 
-	/* Loading dots */
+	/* Optional: add a subtle left accent for selected item */
+	.candidate-picked::before {
+		content: '';
+		width: 3px;
+		height: 100%;
+		background: #0ea5e9;
+		position: absolute;
+		left: 0;
+		top: 0;
+		border-radius: 10px 0 0 10px;
+	}
+	.candidate {
+		position: relative;
+	}
+	/* Typing dots */
 	.typing::after {
 		content: '';
 		animation: dots 1.2s steps(3, end) infinite;
 	}
+
 	@keyframes dots {
 		0% {
 			content: '';
@@ -612,35 +677,41 @@
 		display: flex;
 		gap: 8px;
 		padding: 10px 12px;
-		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		border-top: 1px solid #e5e7eb;
+		background: #ffffff;
 		flex-shrink: 0;
 	}
+
 	.chat-input {
 		flex: 1;
 		padding: 9px 12px;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		background: rgba(255, 255, 255, 0.03);
-		color: inherit;
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
+		background: #ffffff;
+		color: #111827;
 		font-size: 0.88rem;
 	}
+
 	.chat-input:focus {
 		outline: none;
-		border-color: #000;
+		border-color: #0ea5e9;
+		box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 	}
+
 	.btn-send {
 		color: #0ea5e9;
-		border: none;
-		background-color: #eff6ff;
-		padding: 9px 16px;
 		border: 1px solid #bfdbfe;
+		background: #eff6ff;
+		padding: 9px 16px;
 		border-radius: 8px;
 		font-size: 1.1rem;
 		cursor: pointer;
 	}
+
 	.btn-send:hover:not(:disabled) {
 		background: #dbeafe;
 	}
+
 	.btn-send:disabled {
 		opacity: 0.5;
 		cursor: default;
